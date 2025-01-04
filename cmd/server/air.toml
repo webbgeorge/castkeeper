@@ -1,0 +1,8 @@
+# Config file for [Air](https://github.com/cosmtrek/air) in TOML format
+
+[build]
+cmd = "echo 'change detected'"
+full_bin = "make run"
+include_ext = ["go"]
+exclude_dir = ["web/node_modules"]
+exclude_regex = ["_test\\.go", "_templ\\.go"]

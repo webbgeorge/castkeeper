@@ -1,0 +1,12 @@
+package pages
+
+import (
+    "github.com/webbgeorge/castkeeper/pkg/components"
+)
+
+templ Error(message string) {
+	@components.Layout() {
+		<h1 class="text-xl mb-4">Error</h1>
+		<p>{message}</p>
+	}
+}

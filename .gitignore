@@ -1,0 +1,5 @@
+*_templ.go
+*_templ.txt
+postgresql-data
+web/node_modules
+web/static

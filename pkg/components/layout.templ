@@ -1,0 +1,34 @@
+package components
+
+import (
+	"fmt"
+	"github.com/webbgeorge/castkeeper"
+)
+
+func jsURL() string {
+	return fmt.Sprintf("/static/bundle.js?cb=%s", castkeeper.Version)
+}
+
+func cssURL() string {
+	return fmt.Sprintf("/static/bundle.css?cb=%s", castkeeper.Version)
+}
+
+templ Layout() {
+	<!DOCTYPE html>
+	<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>App</title>
+		<link rel="stylesheet" href={cssURL()} />
+	</head>
+	<body>
+		<header class="navbar p-6 bg-primary text-white">
+			<h2 class="text-lg">Castkeeper</h2>
+		</header>
+		<main class="p-6">
+			{ children... }
+		</main>
+		<script src={jsURL()} />
+	</body>
+	</html>
+}
