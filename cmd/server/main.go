@@ -9,9 +9,12 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
+	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"github.com/webbgeorge/castkeeper/web"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 const (
@@ -38,6 +41,14 @@ func main() {
 		log.Fatalf("failed to create otel configuration", err)
 	}
 
+	// TODO DB config from config file
+	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("failed to connect to database", err)
+	}
+
+	db.AutoMigrate(&podcasts.Podcast{})
+
 	server, err := framework.NewServer(otelRes, ":8080")
 	if err != nil {
 		log.Fatalf("failed to start server", err)
@@ -53,5 +64,7 @@ func main() {
 			}
 			return framework.Render(ctx, w, 200, pages.Home())
 		}).
+		AddRoute("GET /podcasts/subscribe", podcasts.NewSubscribeGetHandler()).
+		AddRoute("POST /podcasts/subscribe", podcasts.NewSubscribePostHandler(db)).
 		Start()
 }

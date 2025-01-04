@@ -16,19 +16,19 @@ func cssURL() string {
 templ Layout() {
 	<!DOCTYPE html>
 	<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<title>App</title>
-		<link rel="stylesheet" href={cssURL()} />
-	</head>
-	<body>
-		<header class="navbar p-6 bg-primary text-white">
-			<h2 class="text-lg">Castkeeper</h2>
-		</header>
-		<main class="p-6">
-			{ children... }
-		</main>
-		<script src={jsURL()} />
-	</body>
+		<head>
+			<meta charset="utf-8"/>
+			<title>App</title>
+			<link rel="stylesheet" href={ cssURL() }/>
+		</head>
+		<body>
+			<header class="navbar p-6 bg-primary text-white">
+				<h2 class="text-lg">CastKeeper</h2>
+			</header>
+			<main class="p-6">
+				{ children... }
+			</main>
+			<script src={ jsURL() }></script>
+		</body>
 	</html>
 }

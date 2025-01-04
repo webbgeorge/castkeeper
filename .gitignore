@@ -3,3 +3,4 @@
 postgresql-data
 web/node_modules
 web/static
+test.db

@@ -1,0 +1,35 @@
+package pages
+
+import (
+    "github.com/webbgeorge/castkeeper/pkg/components"
+)
+
+templ Subscribe(isSubmitted bool, err error) {
+	@components.Layout() {
+		<h1 class="text-xl mb-4">Subscribe</h1>
+    if isSubmitted {
+      if err != nil {
+        <div role="alert" class="alert alert-error">
+          Error: { err.Error() }
+        </div>
+      } else {
+        <div role="alert" class="alert alert-success">
+          Success!
+        </div>
+      }
+    }
+    <form method="POST">
+      <div>
+        <label for="feedUrlInput" class="form-control w-full max-w-xs mb-4">
+          <div class="label">
+            <span class="label-text">Feed URL</span>
+          </div>
+          <input name="feedUrl" id="feedUrlInput" type="text" class="input input-bordered w-full max-w-xs" />
+        </label>
+      </div>
+      <div>
+        <button type="submit" class="btn btn-primary">Subscribe</button>
+      </div>
+    </form>
+	}
+}
