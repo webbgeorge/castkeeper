@@ -7,6 +7,7 @@ import (
 
 	"github.com/webbgeorge/castkeeper"
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
+	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/web"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -15,27 +16,31 @@ import (
 
 const (
 	applicationName = "castkeeper"
-	envName         = "test" // TODO from config
 )
 
 func main() {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatalf("failed to read config: %v", err)
+	}
+
 	otelRes, err := resource.Merge(
 		resource.Default(),
 		resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String(applicationName),
-			semconv.DeploymentEnvironmentKey.String(envName),
+			semconv.DeploymentEnvironmentKey.String(cfg.EnvName),
 			semconv.ServiceInstanceIDKey.String(framework.GetHostID()),
 			semconv.ServiceVersionKey.String(castkeeper.Version),
 		),
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to create otel configuration", err)
 	}
 
 	server, err := framework.NewServer(otelRes, ":8080")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to start server", err)
 	}
 
 	middleware := framework.DefaultMiddlewareStack()

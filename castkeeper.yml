@@ -1,0 +1,9 @@
+# config file for development
+
+EnvName: local
+
+Database:
+  Driver: sqlite
+
+ObjectStorage:
+  Driver: local
