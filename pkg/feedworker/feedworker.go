@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// TODO config? also, this is probably too frequent
+// TODO config? reduce this to 10 secs once lastchecked logic is in
 const feedPollFrequency = time.Minute * 5
 
 type FeedWorker struct {
@@ -27,6 +27,7 @@ func (w *FeedWorker) Start(ctx context.Context) error {
 		}
 
 		for _, pod := range pods {
+			// TODO check last checked time
 			err := w.ProcessPodcast(ctx, pod)
 			if err != nil {
 				// TODO log failure and continue loop
