@@ -2,6 +2,7 @@ package podcasts
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
@@ -22,17 +23,19 @@ func NewSubscribePostHandler(db *gorm.DB) framework.Handler {
 			return framework.Render(ctx, w, 200, pages.Subscribe(true, err))
 		}
 
-		// TODO get feedurl from request, fetch the feed and verify it is a podcast
-
-		podcast := Podcast{
-			// TODO get from feed data
-			Name: "TODO",
-
-			// TODO use gorilla form to get from a struct
-			FeedURL: r.PostFormValue("feedUrl"),
+		// TODO use gorilla form to get from a struct
+		feedURL := r.PostFormValue("feedUrl")
+		podcast, err := PodcastFromFeed(ctx, feedURL)
+		if err != nil {
+			return framework.Render(ctx, w, 200, pages.Subscribe(true, err))
 		}
 
 		if err = db.Create(&podcast).Error; err != nil {
+			if errors.Is(err, gorm.ErrDuplicatedKey) {
+				// TODO better error handling in view (send string instead?)
+				err2 := errors.New("already subscribed to this feed")
+				return framework.Render(ctx, w, 200, pages.Subscribe(true, err2))
+			}
 			return err
 		}
 

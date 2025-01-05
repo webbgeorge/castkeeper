@@ -42,7 +42,10 @@ func main() {
 	}
 
 	// TODO DB config from config file
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	db, err := gorm.Open(
+		sqlite.Open("test.db"),
+		&gorm.Config{TranslateError: true},
+	)
 	if err != nil {
 		log.Fatalf("failed to connect to database", err)
 	}
