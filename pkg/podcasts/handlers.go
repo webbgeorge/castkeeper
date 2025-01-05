@@ -25,10 +25,11 @@ func NewSubscribePostHandler(db *gorm.DB) framework.Handler {
 
 		// TODO use gorilla form to get from a struct
 		feedURL := r.PostFormValue("feedUrl")
-		podcast, err := PodcastFromFeed(ctx, feedURL)
+		feed, err := ParseFeed(ctx, feedURL)
 		if err != nil {
 			return framework.Render(ctx, w, 200, pages.Subscribe(true, err))
 		}
+		podcast := PodcastFromFeed(feedURL, feed)
 
 		if err = db.Create(&podcast).Error; err != nil {
 			if errors.Is(err, gorm.ErrDuplicatedKey) {

@@ -3,16 +3,16 @@ package main
 import (
 	"context"
 	"log"
-	"net/http"
 
 	"github.com/webbgeorge/castkeeper"
-	"github.com/webbgeorge/castkeeper/pkg/components/pages"
 	"github.com/webbgeorge/castkeeper/pkg/config"
+	"github.com/webbgeorge/castkeeper/pkg/feedworker"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
-	"github.com/webbgeorge/castkeeper/web"
+	"github.com/webbgeorge/castkeeper/pkg/webserver"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	"golang.org/x/sync/errgroup"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -51,23 +51,30 @@ func main() {
 	}
 
 	db.AutoMigrate(&podcasts.Podcast{})
+	db.AutoMigrate(&podcasts.Episode{})
 
-	server, err := framework.NewServer(otelRes, ":8080")
-	if err != nil {
-		log.Fatalf("failed to start server", err)
+	g, ctx := errgroup.WithContext(context.Background())
+
+	g.Go(func() error {
+		return webserver.Start(ctx, otelRes, db)
+	})
+
+	g.Go(func() error {
+		fw := feedworker.FeedWorker{
+			DB: db,
+		}
+		return fw.Start(ctx)
+	})
+
+	// TODO enable when built
+	// g.Go(func() error {
+	// 	dw := downloadworker.DownloadWorker{
+	// 		DB: db,
+	// 	}
+	// 	return dw.Start(ctx)
+	// })
+
+	if err := g.Wait(); err != nil {
+		log.Fatalf("fatal error: %s", err.Error())
 	}
-
-	middleware := framework.DefaultMiddlewareStack()
-
-	server.SetServerMiddlewares(middleware...).
-		AddFileServer("GET /static/", http.FileServer(http.FS(web.StaticAssets))).
-		AddRoute("GET /", func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-			if r.URL.Path != "/" {
-				return framework.HttpNotFound()
-			}
-			return framework.Render(ctx, w, 200, pages.Home())
-		}).
-		AddRoute("GET /podcasts/subscribe", podcasts.NewSubscribeGetHandler()).
-		AddRoute("POST /podcasts/subscribe", podcasts.NewSubscribePostHandler(db)).
-		Start()
 }
