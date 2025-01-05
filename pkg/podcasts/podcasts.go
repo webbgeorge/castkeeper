@@ -48,6 +48,14 @@ func (p *Podcast) BeforeSave(tx *gorm.DB) error {
 	return nil
 }
 
+func (e *Episode) BeforeSave(tx *gorm.DB) error {
+	err := validate.Struct(e)
+	if err != nil {
+		return fmt.Errorf("episode not valid: %w", err)
+	}
+	return nil
+}
+
 func ParseFeed(ctx context.Context, feedURL string) (*gofeed.Feed, error) {
 	fp := gofeed.NewParser()
 	feed, err := fp.ParseURLWithContext(feedURL, ctx)
@@ -70,7 +78,7 @@ func PodcastFromFeed(feedURL string, feed *gofeed.Feed) Podcast {
 	episodes := EpisodesFromFeed(feed)
 	if len(episodes) > 0 {
 		// feed items are sorted oldest to newest
-		lastEpisodeAt = &episodes[0].PublishedAt
+		lastEpisodeAt = &episodes[len(episodes)-1].PublishedAt
 	}
 
 	podcast := Podcast{
@@ -87,10 +95,11 @@ func PodcastFromFeed(feedURL string, feed *gofeed.Feed) Podcast {
 func EpisodesFromFeed(feed *gofeed.Feed) []Episode {
 	episodes := make([]Episode, 0)
 	for _, item := range feed.Items {
-		pub, err := time.Parse(time.RFC822, item.Published)
+		pub, err := parseRSSTime(item.Published)
 		if err != nil {
 			// TODO log warning
-			pub = time.Now() // tolerate invalid date rather than fail
+			fmt.Printf("error parsing time: %s", err) // TODO logger
+			pub = time.Now()                          // tolerate invalid date rather than fail
 		}
 
 		desc := item.Description
@@ -149,4 +158,17 @@ func truncate(s string, l int) string {
 		return s[:l-1]
 	}
 	return s
+}
+
+func parseRSSTime(s string) (time.Time, error) {
+	formats := []string{time.RFC822, time.RFC822Z, time.RFC1123, time.RFC1123Z}
+	var t time.Time
+	var err error
+	for _, f := range formats {
+		t, err = time.Parse(f, s)
+		if err == nil {
+			return t, nil
+		}
+	}
+	return time.Time{}, fmt.Errorf("failed to parse time '%s'", s)
 }

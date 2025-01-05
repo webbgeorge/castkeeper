@@ -2,6 +2,7 @@ package feedworker
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
@@ -29,6 +30,7 @@ func (w *FeedWorker) Start(ctx context.Context) error {
 			err := w.ProcessPodcast(ctx, pod)
 			if err != nil {
 				// TODO log failure and continue loop
+				fmt.Printf("error processing podcast %s: %s", pod.ID, err) // TODO use logger
 			}
 		}
 
@@ -71,6 +73,21 @@ func (w *FeedWorker) ProcessPodcast(ctx context.Context, podcast podcasts.Podcas
 		if err := w.DB.Create(&ep).Error; err != nil {
 			return err
 		}
+	}
+
+	now := time.Now()
+	var lastEpisodeAt *time.Time
+	if len(episodes) > 0 {
+		// feed items are sorted oldest to newest
+		lastEpisodeAt = &episodes[len(episodes)-1].PublishedAt
+	}
+
+	result := w.DB.
+		Model(&podcast).
+		Select("LastCheckedAt", "LastEpisodeAt").
+		Updates(podcasts.Podcast{LastCheckedAt: &now, LastEpisodeAt: lastEpisodeAt})
+	if result.Error != nil {
+		return result.Error
 	}
 
 	return nil
