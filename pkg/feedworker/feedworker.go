@@ -83,12 +83,9 @@ func (w *FeedWorker) ProcessPodcast(ctx context.Context, podcast podcasts.Podcas
 		lastEpisodeAt = &episodes[len(episodes)-1].PublishedAt
 	}
 
-	result := w.DB.
-		Model(&podcast).
-		Select("LastCheckedAt", "LastEpisodeAt").
-		Updates(podcasts.Podcast{LastCheckedAt: &now, LastEpisodeAt: lastEpisodeAt})
-	if result.Error != nil {
-		return result.Error
+	err = podcasts.UpdatePodcastTimes(ctx, w.DB, &podcast, &now, lastEpisodeAt)
+	if err != nil {
+		return err
 	}
 
 	return nil

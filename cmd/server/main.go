@@ -6,8 +6,10 @@ import (
 
 	"github.com/webbgeorge/castkeeper"
 	"github.com/webbgeorge/castkeeper/pkg/config"
+	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/feedworker"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
+	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"github.com/webbgeorge/castkeeper/pkg/webserver"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -53,6 +55,10 @@ func main() {
 	db.AutoMigrate(&podcasts.Podcast{})
 	db.AutoMigrate(&podcasts.Episode{})
 
+	objstore := &objectstorage.LocalObjectStorage{
+		BasePath: "/Users/georgewebb/workspace/castkeeper/testout",
+	}
+
 	g, ctx := errgroup.WithContext(context.Background())
 
 	g.Go(func() error {
@@ -66,13 +72,13 @@ func main() {
 		return fw.Start(ctx)
 	})
 
-	// TODO enable when built
-	// g.Go(func() error {
-	// 	dw := downloadworker.DownloadWorker{
-	// 		DB: db,
-	// 	}
-	// 	return dw.Start(ctx)
-	// })
+	g.Go(func() error {
+		dw := downloadworker.DownloadWorker{
+			DB: db,
+			OS: objstore,
+		}
+		return dw.Start(ctx)
+	})
 
 	if err := g.Wait(); err != nil {
 		log.Fatalf("fatal error: %s", err.Error())

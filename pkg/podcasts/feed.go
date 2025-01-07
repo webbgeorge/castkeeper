@@ -62,10 +62,20 @@ func EpisodesFromFeed(feed *gofeed.Feed) []Episode {
 			desc = item.ITunesExt.Summary
 		}
 
+		if item.Enclosures == nil ||
+			len(item.Enclosures) == 0 ||
+			item.Enclosures[0] == nil ||
+			item.Enclosures[0].URL == "" {
+			// TODO log warning
+			// skip episode if no download URL
+			continue
+		}
+
 		episode := Episode{
 			Title:       truncate(item.Title, 1000),
 			Description: truncate(desc, 10000),
 			GUID:        episodeGUID(item),
+			DownloadURL: item.Enclosures[0].URL,
 			PublishedAt: pub,
 		}
 
