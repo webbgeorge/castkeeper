@@ -18,22 +18,31 @@ const (
 
 type Podcast struct {
 	gorm.Model
+	GUID          string `gorm:"primaryKey" validate:"required,gte=1,lte=1000"`
 	Title         string `validate:"required,gte=1,lte=1000"`
 	FeedURL       string `validate:"required,http_url,lte=1000"`
-	GUID          string `gorm:"uniqueIndex" validate:"required,gte=1,lte=1000"`
 	LastCheckedAt *time.Time
 	LastEpisodeAt *time.Time
 }
 
 type Episode struct {
 	gorm.Model
-	PodcastID   uint   `validate:"required"`
-	Title       string `validate:"required,gte=1,lte=1000"`
-	Description string `validate:"lte=10000"`
-	GUID        string `gorm:"uniqueIndex" validate:"required,gte=1,lte=1000"`
-	DownloadURL string `validate:"required,http_url,lte=1000"`
+	GUID        string  `gorm:"primaryKey" validate:"required,gte=1,lte=1000"`
+	PodcastGUID string  `validate:"required"`
+	Podcast     Podcast `validate:"-" gorm:"foreignKey:PodcastGUID"`
+	Title       string  `validate:"required,gte=1,lte=1000"`
+	Description string  `validate:"lte=10000"`
+	DownloadURL string  `validate:"required,http_url,lte=1000"`
+	MimeType    string  `validate:"required,oneof=audio/mpeg audio/x-m4a video/mp4 video/quicktime"`
 	PublishedAt time.Time
 	Status      string `validate:"required,oneof=pending failed success"`
+}
+
+var MimeToExt = map[string]string{
+	"audio/mpeg":      "mp3",
+	"audio/x-m4a":     "m4a",
+	"video/mp4":       "mp4",
+	"video/quicktime": "mov",
 }
 
 var validate = validator.New(validator.WithRequiredStructEnabled())
@@ -97,9 +106,9 @@ func GetPendingEpisode(ctx context.Context, db *gorm.DB) (Episode, error) {
 	return episode, nil
 }
 
-func GetPodcast(ctx context.Context, db *gorm.DB, id uint) (Podcast, error) {
+func GetPodcast(ctx context.Context, db *gorm.DB, guid string) (Podcast, error) {
 	var podcast Podcast
-	result := db.First(&podcast, id)
+	result := db.First(&podcast, guid)
 	if result.Error != nil {
 		return podcast, result.Error
 	}

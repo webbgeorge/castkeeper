@@ -37,9 +37,9 @@ func PodcastFromFeed(feedURL string, feed *gofeed.Feed) Podcast {
 	}
 
 	podcast := Podcast{
+		GUID:          feedGUID(feed),
 		Title:         truncate(feed.Title, 1000),
 		FeedURL:       feedURL,
-		GUID:          feedGUID(feed),
 		LastCheckedAt: nil,
 		LastEpisodeAt: lastEpisodeAt,
 	}
@@ -71,11 +71,18 @@ func EpisodesFromFeed(feed *gofeed.Feed) []Episode {
 			continue
 		}
 
+		if _, ok := MimeToExt[item.Enclosures[0].Type]; !ok {
+			// TODO log warning
+			// skip episode with unsupported file types
+			continue
+		}
+
 		episode := Episode{
+			GUID:        episodeGUID(item),
 			Title:       truncate(item.Title, 1000),
 			Description: truncate(desc, 10000),
-			GUID:        episodeGUID(item),
 			DownloadURL: item.Enclosures[0].URL,
+			MimeType:    item.Enclosures[0].Type,
 			PublishedAt: pub,
 		}
 

@@ -31,7 +31,7 @@ func (w *FeedWorker) Start(ctx context.Context) error {
 			err := w.ProcessPodcast(ctx, pod)
 			if err != nil {
 				// TODO log failure and continue loop
-				fmt.Printf("error processing podcast %s: %s", pod.ID, err) // TODO use logger
+				fmt.Printf("error processing podcast %s: %s", pod.GUID, err) // TODO use logger
 			}
 		}
 
@@ -68,7 +68,7 @@ func (w *FeedWorker) ProcessPodcast(ctx context.Context, podcast podcasts.Podcas
 			continue
 		}
 
-		ep.PodcastID = podcast.ID
+		ep.PodcastGUID = podcast.GUID
 		ep.Status = podcasts.EpisodeStatusPending
 
 		if err := w.DB.Create(&ep).Error; err != nil {

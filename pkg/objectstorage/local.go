@@ -6,26 +6,30 @@ import (
 	"net/http"
 	"os"
 	"path"
+
+	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 )
 
 type LocalObjectStorage struct {
 	BasePath string
 }
 
-func (s *LocalObjectStorage) SaveFromURL(url, podcastGUID, episodeGUID string) error {
-	dir := path.Join(s.BasePath, podcastGUID)
+func (s *LocalObjectStorage) DownloadFromSource(episode podcasts.Episode) error {
+	dir := path.Join(s.BasePath, episode.PodcastGUID)
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		return err
 	}
 
-	f, err := os.Create(path.Join(dir, episodeGUID))
+	fileName := fmt.Sprintf("%s.%s", episode.GUID, podcasts.MimeToExt[episode.MimeType])
+
+	f, err := os.Create(path.Join(dir, fileName))
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
-	resp, err := http.Get(url)
+	resp, err := http.Get(episode.DownloadURL)
 	if err != nil {
 		return err
 	}

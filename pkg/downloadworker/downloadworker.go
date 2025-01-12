@@ -27,7 +27,8 @@ func (w *DownloadWorker) Start(ctx context.Context) error {
 
 		err := w.ProcessEpisode(ctx)
 		if err != nil {
-			if errors.As(err, &podcasts.ErrEpisodeNotFound) {
+			notFoundErr := podcasts.ErrEpisodeNotFound // copy first to avoid changing value
+			if errors.As(err, &notFoundErr) {
 				time.Sleep(5 * time.Second)
 				// don't log if no eps in queue
 				fmt.Println("not found", err) // TODO
@@ -53,29 +54,20 @@ func (w *DownloadWorker) ProcessEpisode(ctx context.Context) error {
 		return fmt.Errorf("failed to get a pending episode: %w", err)
 	}
 
-	podcast, err := podcasts.GetPodcast(ctx, w.DB, episode.PodcastID)
-	if err != nil {
-		return fmt.Errorf("failed to fetch podcast for episode '%d': %w", episode.ID, err)
-	}
-
-	err = w.ProcessDownload(ctx, episode, podcast)
+	err = w.OS.DownloadFromSource(episode)
 	if err != nil {
 		// TODO allow for multiple failed attempts instead of immediately failing
 		upErr := podcasts.UpdateEpisodeStatus(ctx, w.DB, &episode, podcasts.EpisodeStatusFailed)
 		if upErr != nil {
-			return fmt.Errorf("failed to update episode '%d' status to failed: %w", episode.ID, upErr)
+			return fmt.Errorf("failed to update episode '%d' status to failed: %w", episode.GUID, upErr)
 		}
-		return fmt.Errorf("failed to download episode '%d': %w", episode.ID, err)
+		return fmt.Errorf("failed to download episode '%d': %w", episode.GUID, err)
 	}
 
 	err = podcasts.UpdateEpisodeStatus(ctx, w.DB, &episode, podcasts.EpisodeStatusSuccess)
 	if err != nil {
-		return fmt.Errorf("failed to update episode '%s' status to success: %w", episode.ID, err)
+		return fmt.Errorf("failed to update episode '%s' status to success: %w", episode.GUID, err)
 	}
 
 	return nil
-}
-
-func (w *DownloadWorker) ProcessDownload(ctx context.Context, episode podcasts.Episode, podcast podcasts.Podcast) error {
-	return w.OS.SaveFromURL(episode.DownloadURL, podcast.GUID, episode.GUID)
 }

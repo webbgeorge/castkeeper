@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 
 	"github.com/webbgeorge/castkeeper"
 	"github.com/webbgeorge/castkeeper/pkg/config"
@@ -17,6 +18,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 const (
@@ -43,10 +45,18 @@ func main() {
 		log.Fatalf("failed to create otel configuration", err)
 	}
 
+	logger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
+		logger.Config{LogLevel: logger.Warn, IgnoreRecordNotFoundError: true},
+	)
+
 	// TODO DB config from config file
 	db, err := gorm.Open(
 		sqlite.Open("test.db"),
-		&gorm.Config{TranslateError: true},
+		&gorm.Config{
+			TranslateError: true,
+			Logger:         logger,
+		},
 	)
 	if err != nil {
 		log.Fatalf("failed to connect to database", err)

@@ -1,6 +1,8 @@
 package objectstorage
 
+import "github.com/webbgeorge/castkeeper/pkg/podcasts"
+
 type ObjectStorage interface {
-	SaveFromURL(url, podcastGUID, episodeGUID string) error
-	// Load(podcastGUID, episodeGUID string) (io.Reader, error)
+	DownloadFromSource(episode podcasts.Episode) error
+	// Load(episode podcasts.Episode) (io.Reader, error)
 }
