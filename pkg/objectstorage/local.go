@@ -48,3 +48,14 @@ func (s *LocalObjectStorage) DownloadFromSource(episode podcasts.Episode) error 
 
 	return nil
 }
+
+func (s *LocalObjectStorage) Load(episode podcasts.Episode) (io.ReadSeekCloser, error) {
+	filePath := path.Join(s.BasePath, episode.PodcastGUID, fmt.Sprintf("%s.%s", episode.GUID, podcasts.MimeToExt[episode.MimeType]))
+
+	f, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return f, nil
+}

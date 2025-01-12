@@ -1,0 +1,28 @@
+
+package pages
+
+import (
+	"fmt"
+	"github.com/webbgeorge/castkeeper/pkg/components"
+	"github.com/webbgeorge/castkeeper/pkg/podcasts"
+)
+
+templ ViewPodcast(pod podcasts.Podcast, eps []podcasts.Episode) {
+	@components.Layout() {
+		<h1 class="text-xl mb-4">{ pod.Title }</h1>
+		<div>
+			<div><h2>Episodes</h2></div>
+			<div>
+				for _, ep := range eps {
+					<div>
+						<h3>{ ep.Title }</h3>
+						<p>{ ep.Status }</p>
+						<p>
+							<a href={ templ.URL(fmt.Sprintf("/episodes/%s/download", ep.GUID)) }>Download</a>
+						</p>
+					</div>
+				}
+			</div>
+		</div>
+	}
+}

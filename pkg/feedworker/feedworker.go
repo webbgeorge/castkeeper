@@ -60,7 +60,7 @@ func (w *FeedWorker) ProcessPodcast(ctx context.Context, podcast podcasts.Podcas
 		w.Logger.WarnContext(ctx, fmt.Sprintf("some episodes of podcast '%s' had parsing errors: %v", podcast.GUID, errs))
 	}
 
-	existingEpisodes, err := podcasts.ListEpisodes(ctx, w.DB)
+	existingEpisodes, err := podcasts.ListEpisodes(ctx, w.DB, podcast.GUID)
 	if err != nil {
 		return err
 	}

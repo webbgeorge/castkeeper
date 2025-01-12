@@ -74,9 +74,9 @@ func ListPodcasts(ctx context.Context, db *gorm.DB) ([]Podcast, error) {
 	return podcasts, nil
 }
 
-func ListEpisodes(ctx context.Context, db *gorm.DB) ([]Episode, error) {
+func ListEpisodes(ctx context.Context, db *gorm.DB, podcastGUID string) ([]Episode, error) {
 	var episodes []Episode
-	result := db.Find(&episodes)
+	result := db.Find(&episodes, "podcast_guid = ?", podcastGUID)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -114,11 +114,20 @@ func GetPendingEpisode(ctx context.Context, db *gorm.DB, hasNotFailedSince time.
 
 func GetPodcast(ctx context.Context, db *gorm.DB, guid string) (Podcast, error) {
 	var podcast Podcast
-	result := db.First(&podcast, guid)
+	result := db.First(&podcast, "guid = ?", guid)
 	if result.Error != nil {
 		return podcast, result.Error
 	}
 	return podcast, nil
+}
+
+func GetEpisode(ctx context.Context, db *gorm.DB, guid string) (Episode, error) {
+	var episode Episode
+	result := db.First(&episode, "guid = ?", guid)
+	if result.Error != nil {
+		return episode, result.Error
+	}
+	return episode, nil
 }
 
 func UpdateEpisodeStatus(ctx context.Context, db *gorm.DB, episode *Episode, status string) error {

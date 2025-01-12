@@ -76,7 +76,7 @@ func main() {
 	g, ctx := errgroup.WithContext(context.Background())
 
 	g.Go(func() error {
-		return webserver.Start(ctx, otelRes, db)
+		return webserver.Start(ctx, otelRes, db, objstore)
 	})
 
 	g.Go(func() error {

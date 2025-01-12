@@ -1,9 +1,27 @@
 package pages
 
-import "github.com/webbgeorge/castkeeper/pkg/components"
+import (
+	"fmt"
+	"github.com/webbgeorge/castkeeper/pkg/components"
+	"github.com/webbgeorge/castkeeper/pkg/podcasts"
+)
 
-templ Home() {
+templ Home(pods []podcasts.Podcast) {
 	@components.Layout() {
 		<h1 class="text-xl mb-4">CastKeeper</h1>
+		<div>
+			<a href="/podcasts/subscribe">Add a podcast</a>
+		</div>
+		<div>
+			<div><h2>Subscribed Podcasts</h2></div>
+			<div>
+				for _, pod := range pods {
+					<div>
+						<h3>{ pod.Title }</h3>
+						<p><a href={ templ.URL(fmt.Sprintf("/podcasts/%s", pod.GUID)) }>View</a></p>
+					</div>
+				}
+			</div>
+		</div>
 	}
 }
