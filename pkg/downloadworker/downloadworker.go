@@ -12,6 +12,11 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	maxFailures       = 5
+	failureRetryAfter = time.Minute * 5
+)
+
 type DownloadWorker struct {
 	DB     *gorm.DB
 	OS     objectstorage.ObjectStorage
@@ -47,17 +52,24 @@ func (w *DownloadWorker) Start(ctx context.Context) error {
 }
 
 func (w *DownloadWorker) ProcessEpisode(ctx context.Context) (*podcasts.Episode, error) {
-	episode, err := podcasts.GetPendingEpisode(ctx, w.DB)
+	hasNotFailedSince := time.Now().Add(-failureRetryAfter)
+	episode, err := podcasts.GetPendingEpisode(ctx, w.DB, hasNotFailedSince)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get a pending episode: %w", err)
 	}
 
 	err = w.OS.DownloadFromSource(episode)
 	if err != nil {
-		// TODO allow for multiple failed attempts instead of immediately failing
-		upErr := podcasts.UpdateEpisodeStatus(ctx, w.DB, &episode, podcasts.EpisodeStatusFailed)
-		if upErr != nil {
-			return nil, fmt.Errorf("failed to update episode '%d' status to failed: %w", episode.GUID, upErr)
+		if episode.FailureCount < maxFailures {
+			upErr := podcasts.UpdateEpisodeFailureCount(ctx, w.DB, &episode, episode.FailureCount+1)
+			if upErr != nil {
+				return nil, fmt.Errorf("failed to update episode '%d' failure count: %w", episode.GUID, upErr)
+			}
+		} else {
+			upErr := podcasts.UpdateEpisodeStatus(ctx, w.DB, &episode, podcasts.EpisodeStatusFailed)
+			if upErr != nil {
+				return nil, fmt.Errorf("failed to update episode '%d' status to failed: %w", episode.GUID, upErr)
+			}
 		}
 		return nil, fmt.Errorf("failed to download episode '%d': %w", episode.GUID, err)
 	}

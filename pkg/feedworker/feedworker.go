@@ -10,8 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
-// TODO config? reduce this to 10 secs once lastchecked logic is in
-const feedPollFrequency = time.Minute * 5
+const (
+	feedPollFrequency = time.Second * 10
+	minCheckInterval  = time.Minute * 5
+)
 
 type FeedWorker struct {
 	DB     *gorm.DB
@@ -29,7 +31,10 @@ func (w *FeedWorker) Start(ctx context.Context) error {
 		}
 
 		for _, pod := range pods {
-			// TODO check last checked time
+			if pod.LastCheckedAt != nil && pod.LastCheckedAt.Add(minCheckInterval).After(time.Now()) {
+				w.Logger.DebugContext(ctx, fmt.Sprintf("podcast '%s' checked too recently, skipping", pod.GUID))
+				continue
+			}
 			err := w.ProcessPodcast(ctx, pod)
 			if err != nil {
 				w.Logger.ErrorContext(ctx, fmt.Sprintf("feedworker failed to process podcast '%s': %s", pod.GUID, err.Error()))
