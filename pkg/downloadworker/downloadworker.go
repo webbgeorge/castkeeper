@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
@@ -12,8 +13,9 @@ import (
 )
 
 type DownloadWorker struct {
-	DB *gorm.DB
-	OS objectstorage.ObjectStorage
+	DB     *gorm.DB
+	OS     objectstorage.ObjectStorage
+	Logger *slog.Logger
 }
 
 func (w *DownloadWorker) Start(ctx context.Context) error {
@@ -25,33 +27,29 @@ func (w *DownloadWorker) Start(ctx context.Context) error {
 		default:
 		}
 
-		err := w.ProcessEpisode(ctx)
+		episode, err := w.ProcessEpisode(ctx)
 		if err != nil {
 			notFoundErr := podcasts.ErrEpisodeNotFound // copy first to avoid changing value
 			if errors.As(err, &notFoundErr) {
-				time.Sleep(5 * time.Second)
-				// don't log if no eps in queue
-				fmt.Println("not found", err) // TODO
+				time.Sleep(5 * time.Second) // no jobs on queue, wait before next poll
 				continue
 			}
 
-			// TODO log err
-			fmt.Println("err processing episode", err)
+			w.Logger.ErrorContext(ctx, fmt.Sprintf("downloadworker failed to process episode: %s", err.Error()))
 
 			// small sleep to avoid hammering DB on repeated errs
 			time.Sleep(time.Second)
 			continue
 		}
 
-		// TODO log success
-		fmt.Println("success downloading episode")
+		w.Logger.InfoContext(ctx, fmt.Sprintf("successfully downloaded episode '%s'", episode.GUID))
 	}
 }
 
-func (w *DownloadWorker) ProcessEpisode(ctx context.Context) error {
+func (w *DownloadWorker) ProcessEpisode(ctx context.Context) (*podcasts.Episode, error) {
 	episode, err := podcasts.GetPendingEpisode(ctx, w.DB)
 	if err != nil {
-		return fmt.Errorf("failed to get a pending episode: %w", err)
+		return nil, fmt.Errorf("failed to get a pending episode: %w", err)
 	}
 
 	err = w.OS.DownloadFromSource(episode)
@@ -59,15 +57,15 @@ func (w *DownloadWorker) ProcessEpisode(ctx context.Context) error {
 		// TODO allow for multiple failed attempts instead of immediately failing
 		upErr := podcasts.UpdateEpisodeStatus(ctx, w.DB, &episode, podcasts.EpisodeStatusFailed)
 		if upErr != nil {
-			return fmt.Errorf("failed to update episode '%d' status to failed: %w", episode.GUID, upErr)
+			return nil, fmt.Errorf("failed to update episode '%d' status to failed: %w", episode.GUID, upErr)
 		}
-		return fmt.Errorf("failed to download episode '%d': %w", episode.GUID, err)
+		return nil, fmt.Errorf("failed to download episode '%d': %w", episode.GUID, err)
 	}
 
 	err = podcasts.UpdateEpisodeStatus(ctx, w.DB, &episode, podcasts.EpisodeStatusSuccess)
 	if err != nil {
-		return fmt.Errorf("failed to update episode '%s' status to success: %w", episode.GUID, err)
+		return nil, fmt.Errorf("failed to update episode '%s' status to success: %w", episode.GUID, err)
 	}
 
-	return nil
+	return &episode, nil
 }

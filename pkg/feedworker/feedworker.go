@@ -3,6 +3,7 @@ package feedworker
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
@@ -13,7 +14,8 @@ import (
 const feedPollFrequency = time.Minute * 5
 
 type FeedWorker struct {
-	DB *gorm.DB
+	DB     *gorm.DB
+	Logger *slog.Logger
 }
 
 func (w *FeedWorker) Start(ctx context.Context) error {
@@ -23,15 +25,14 @@ func (w *FeedWorker) Start(ctx context.Context) error {
 	for {
 		pods, err := podcasts.ListPodcasts(ctx, w.DB)
 		if err != nil {
-			// TODO log failure and continue loop
+			w.Logger.ErrorContext(ctx, fmt.Sprintf("feedworker failed to list podcasts: %s", err.Error()))
 		}
 
 		for _, pod := range pods {
 			// TODO check last checked time
 			err := w.ProcessPodcast(ctx, pod)
 			if err != nil {
-				// TODO log failure and continue loop
-				fmt.Printf("error processing podcast %s: %s", pod.GUID, err) // TODO use logger
+				w.Logger.ErrorContext(ctx, fmt.Sprintf("feedworker failed to process podcast '%s': %s", pod.GUID, err.Error()))
 			}
 		}
 
@@ -48,7 +49,11 @@ func (w *FeedWorker) ProcessPodcast(ctx context.Context, podcast podcasts.Podcas
 	if err != nil {
 		return err
 	}
-	episodes := podcasts.EpisodesFromFeed(feed)
+	episodes, errs := podcasts.EpisodesFromFeed(feed)
+
+	if len(errs) > 0 {
+		w.Logger.WarnContext(ctx, fmt.Sprintf("some episodes of podcast '%s' had parsing errors: %v", podcast.GUID, errs))
+	}
 
 	existingEpisodes, err := podcasts.ListEpisodes(ctx, w.DB)
 	if err != nil {

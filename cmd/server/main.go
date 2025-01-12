@@ -13,6 +13,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"github.com/webbgeorge/castkeeper/pkg/webserver"
+	"go.opentelemetry.io/contrib/bridges/otelslog"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"golang.org/x/sync/errgroup"
@@ -45,7 +46,10 @@ func main() {
 		log.Fatalf("failed to create otel configuration", err)
 	}
 
-	logger := logger.New(
+	otelLogger := otelslog.NewLogger("context")
+
+	// TODO use otel slog logger
+	gormLog := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{LogLevel: logger.Warn, IgnoreRecordNotFoundError: true},
 	)
@@ -55,7 +59,7 @@ func main() {
 		sqlite.Open("test.db"),
 		&gorm.Config{
 			TranslateError: true,
-			Logger:         logger,
+			Logger:         gormLog,
 		},
 	)
 	if err != nil {
@@ -77,15 +81,17 @@ func main() {
 
 	g.Go(func() error {
 		fw := feedworker.FeedWorker{
-			DB: db,
+			DB:     db,
+			Logger: otelLogger,
 		}
 		return fw.Start(ctx)
 	})
 
 	g.Go(func() error {
 		dw := downloadworker.DownloadWorker{
-			DB: db,
-			OS: objstore,
+			DB:     db,
+			OS:     objstore,
+			Logger: otelLogger,
 		}
 		return dw.Start(ctx)
 	})

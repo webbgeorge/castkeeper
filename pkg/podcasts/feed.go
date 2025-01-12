@@ -3,6 +3,7 @@ package podcasts
 import (
 	"context"
 	"crypto/sha256"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"sort"
@@ -30,7 +31,7 @@ func ParseFeed(ctx context.Context, feedURL string) (*gofeed.Feed, error) {
 
 func PodcastFromFeed(feedURL string, feed *gofeed.Feed) Podcast {
 	var lastEpisodeAt *time.Time
-	episodes := EpisodesFromFeed(feed)
+	episodes, _ := EpisodesFromFeed(feed)
 	if len(episodes) > 0 {
 		// feed items are sorted oldest to newest
 		lastEpisodeAt = &episodes[len(episodes)-1].PublishedAt
@@ -47,13 +48,13 @@ func PodcastFromFeed(feedURL string, feed *gofeed.Feed) Podcast {
 	return podcast
 }
 
-func EpisodesFromFeed(feed *gofeed.Feed) []Episode {
+func EpisodesFromFeed(feed *gofeed.Feed) ([]Episode, []error) {
 	episodes := make([]Episode, 0)
+	errs := make([]error, 0)
 	for _, item := range feed.Items {
 		pub, err := parseRSSTime(item.Published)
 		if err != nil {
-			// TODO log warning
-			fmt.Printf("error parsing time: %s", err) // TODO logger
+			errs = append(errs, fmt.Errorf("error parsing time, still processing episode: %w", err))
 			pub = time.Time{}
 		}
 
@@ -66,14 +67,16 @@ func EpisodesFromFeed(feed *gofeed.Feed) []Episode {
 			len(item.Enclosures) == 0 ||
 			item.Enclosures[0] == nil ||
 			item.Enclosures[0].URL == "" {
-			// TODO log warning
-			// skip episode if no download URL
+			errs = append(errs, fmt.Errorf("could not read download URL, skipping episode '%s'", episodeGUID(item)))
 			continue
 		}
 
 		if _, ok := MimeToExt[item.Enclosures[0].Type]; !ok {
-			// TODO log warning
-			// skip episode with unsupported file types
+			errs = append(errs, fmt.Errorf(
+				"unsupported file type '%s', skipping episode '%s'",
+				item.Enclosures[0].Type,
+				episodeGUID(item),
+			))
 			continue
 		}
 
@@ -89,7 +92,7 @@ func EpisodesFromFeed(feed *gofeed.Feed) []Episode {
 		episodes = append(episodes, episode)
 	}
 
-	return episodes
+	return episodes, errs
 }
 
 func feedGUID(feed *gofeed.Feed) string {
@@ -110,7 +113,7 @@ func feedGUID(feed *gofeed.Feed) string {
 
 	h := sha256.New()
 	_, _ = h.Write([]byte(hashIn))
-	return string(h.Sum(nil))
+	return base64.URLEncoding.EncodeToString(h.Sum(nil))
 }
 
 func episodeGUID(feedItem *gofeed.Item) string {
@@ -122,7 +125,7 @@ func episodeGUID(feedItem *gofeed.Item) string {
 	hashIn := feedItem.Title + feedItem.Published
 	h := sha256.New()
 	_, _ = h.Write([]byte(hashIn))
-	return string(h.Sum(nil))
+	return base64.URLEncoding.EncodeToString(h.Sum(nil))
 }
 
 func truncate(s string, l int) string {
