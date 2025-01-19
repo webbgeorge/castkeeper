@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
+	"github.com/webbgeorge/castkeeper/pkg/components/partials"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
+	"github.com/webbgeorge/castkeeper/pkg/itunes"
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"gorm.io/gorm"
@@ -29,24 +31,24 @@ func NewHomeHandler(db *gorm.DB) framework.Handler {
 	}
 }
 
-func NewSubscribeGetHandler() framework.Handler {
+func NewSubscribeHandler() framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return framework.Render(ctx, w, 200, pages.Subscribe(false, nil))
+		return framework.Render(ctx, w, 200, pages.Subscribe())
 	}
 }
 
-func NewSubscribePostHandler(db *gorm.DB) framework.Handler {
+func NewSubmitSubscribeHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		err := r.ParseForm()
 		if err != nil {
-			return framework.Render(ctx, w, 200, pages.Subscribe(true, err))
+			return framework.Render(ctx, w, 200, partials.SubscribeSubmit(err))
 		}
 
 		// TODO use gorilla form to get from a struct
 		feedURL := r.PostFormValue("feedUrl")
 		feed, err := podcasts.ParseFeed(ctx, feedURL)
 		if err != nil {
-			return framework.Render(ctx, w, 200, pages.Subscribe(true, err))
+			return framework.Render(ctx, w, 200, partials.SubscribeSubmit(err))
 		}
 		podcast := podcasts.PodcastFromFeed(feedURL, feed)
 
@@ -54,12 +56,12 @@ func NewSubscribePostHandler(db *gorm.DB) framework.Handler {
 			if errors.Is(err, gorm.ErrDuplicatedKey) {
 				// TODO better error handling in view (send string instead?)
 				err2 := errors.New("already subscribed to this feed")
-				return framework.Render(ctx, w, 200, pages.Subscribe(true, err2))
+				return framework.Render(ctx, w, 200, partials.SubscribeSubmit(err2))
 			}
 			return err
 		}
 
-		return framework.Render(ctx, w, 200, pages.Subscribe(true, nil))
+		return framework.Render(ctx, w, 200, partials.SubscribeSubmit(nil))
 	}
 }
 
@@ -99,5 +101,13 @@ func NewDownloadPodcastHandler(db *gorm.DB, os objectstorage.ObjectStorage) fram
 
 		http.ServeContent(w, r, "", time.Time{}, f)
 		return nil
+	}
+}
+
+func NewSearchPostHandler(itunesAPI *itunes.ItunesAPI) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		results, err := itunesAPI.Search(r.PostFormValue("query"))
+		// TODO probably don't feed in raw error
+		return framework.Render(ctx, w, 200, partials.Search(results, err))
 	}
 }

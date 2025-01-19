@@ -1,0 +1,14 @@
+package partials
+
+templ SubscribeSubmit(err error) {
+	if err != nil {
+		<div role="alert" class="alert alert-error">
+			// TODO error handling
+			Error: { err.Error() }
+		</div>
+	} else {
+		<div role="alert" class="alert alert-success">
+			Success!
+		</div>
+	}
+}

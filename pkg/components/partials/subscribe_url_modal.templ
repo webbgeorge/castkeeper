@@ -1,0 +1,38 @@
+package partials
+
+templ SubscribeURLModal() {
+	<div>
+		<button class="btn btn-neutral" onclick="addFeedUrlModal.showModal()">Subscribe with Feed URL</button>
+		<dialog id="addFeedUrlModal" class="modal">
+			<div class="modal-box">
+				<form method="dialog">
+					<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+				</form>
+				<h3 class="text-lg font-bold">Subscribe with Feed URL</h3>
+				<div class="subscribeResult my-4"></div>
+				<form
+					method="POST"
+					class="w-full"
+					hx-post="/partials/podcasts/subscribe"
+					hx-target="previous .subscribeResult"
+					hx-swap="innerHTML"
+				>
+					<div>
+						<label for="feedUrlInput" class="form-control mb-4">
+							<div class="label">
+								<span class="label-text">Feed URL</span>
+							</div>
+							<input name="feedUrl" id="feedUrlInput" type="text" class="input input-bordered w-full"/>
+						</label>
+					</div>
+					<div class="flex justify-end">
+						<button type="submit" class="btn btn-primary">Subscribe</button>
+					</div>
+				</form>
+			</div>
+			<form method="dialog" class="modal-backdrop">
+				<button>close</button>
+			</form>
+		</dialog>
+	</div>
+}

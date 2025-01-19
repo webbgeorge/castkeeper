@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/webbgeorge/castkeeper"
@@ -10,6 +11,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/feedworker"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
+	"github.com/webbgeorge/castkeeper/pkg/itunes"
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"github.com/webbgeorge/castkeeper/pkg/webserver"
@@ -73,10 +75,14 @@ func main() {
 		BasePath: "/Users/georgewebb/workspace/castkeeper/testout",
 	}
 
+	itunesAPI := &itunes.ItunesAPI{
+		HTTPClient: http.DefaultClient,
+	}
+
 	g, ctx := errgroup.WithContext(context.Background())
 
 	g.Go(func() error {
-		return webserver.Start(ctx, otelRes, db, objstore)
+		return webserver.Start(ctx, otelRes, db, objstore, itunesAPI)
 	})
 
 	g.Go(func() error {

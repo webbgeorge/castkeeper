@@ -1,0 +1,48 @@
+package partials
+
+import (
+	"fmt"
+	"github.com/webbgeorge/castkeeper/pkg/itunes"
+	"strconv"
+)
+
+templ Search(results []itunes.SearchResult, err error) {
+	if err != nil {
+		// TODO error style and content
+		<div>Error: { err.Error() }</div>
+	} else {
+		<div class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
+			for _, res := range results {
+				<div class="card bg-base-100 shadow-xl">
+					<figure class="aspect-square">
+						<img
+							class="object-cover"
+							src={ res.ArtworkURL() }
+							alt={ res.CollectionName }
+						/>
+					</figure>
+					<div class="card-body">
+						<h2 class="card-title">{ res.CollectionName }</h2>
+						<p>
+							{ res.ArtistName }
+							<br/>
+							{ strconv.Itoa(res.TrackCount) } episodes
+						</p>
+						<div class="subscribeResult"></div>
+						<div class="card-actions justify-end">
+							<button
+								class="btn btn-primary"
+								hx-post="/partials/podcasts/subscribe"
+								hx-vals={ fmt.Sprintf("{\"feedUrl\": \"%s\"}", res.FeedURL) }
+								hx-target="previous .subscribeResult"
+								hx-swap="innerHTML"
+							>
+								Subscribe
+							</button>
+						</div>
+					</div>
+				</div>
+			}
+		</div>
+	}
+}
