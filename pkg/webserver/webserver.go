@@ -31,8 +31,9 @@ func Start(
 		AddFileServer("GET /static/", http.FileServer(http.FS(web.StaticAssets))).
 		AddRoute("GET /", NewHomeHandler(db)).
 		AddRoute("GET /podcasts/subscribe", NewSubscribeHandler()).
-		AddRoute("POST /partials/podcasts/subscribe", NewSubmitSubscribeHandler(db)).
+		AddRoute("POST /partials/podcasts/subscribe", NewSubmitSubscribeHandler(db, os)).
 		AddRoute("GET /podcasts/{guid}", NewViewPodcastHandler(db)).
+		AddRoute("GET /podcasts/{guid}/image", NewDownloadImageHandler(db, os)).
 		AddRoute("GET /episodes/{guid}/download", NewDownloadPodcastHandler(db, os)).
 		AddRoute("POST /partials/search", NewSearchPostHandler(itunesAPI)).
 		Start(ctx)

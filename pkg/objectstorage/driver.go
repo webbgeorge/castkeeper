@@ -7,6 +7,8 @@ import (
 )
 
 type ObjectStorage interface {
-	DownloadFromSource(episode podcasts.Episode) error
-	Load(episode podcasts.Episode) (io.ReadSeekCloser, error)
+	DownloadEpisodeFromSource(episode podcasts.Episode) error
+	LoadEpisode(episode podcasts.Episode) (io.ReadSeekCloser, error)
+	DownloadImageFromSource(podcast podcasts.Podcast) error
+	LoadImage(podcast podcasts.Podcast) (io.ReadSeekCloser, error)
 }

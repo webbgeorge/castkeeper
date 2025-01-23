@@ -58,7 +58,7 @@ func (w *DownloadWorker) ProcessEpisode(ctx context.Context) (*podcasts.Episode,
 		return nil, fmt.Errorf("failed to get a pending episode: %w", err)
 	}
 
-	err = w.OS.DownloadFromSource(episode)
+	err = w.OS.DownloadEpisodeFromSource(episode)
 	if err != nil {
 		if episode.FailureCount < maxFailures {
 			upErr := podcasts.UpdateEpisodeFailureCount(ctx, w.DB, &episode, episode.FailureCount+1)

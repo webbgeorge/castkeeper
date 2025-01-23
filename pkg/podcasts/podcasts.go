@@ -17,16 +17,19 @@ const (
 )
 
 type Podcast struct {
-	gorm.Model
 	GUID          string `gorm:"primaryKey" validate:"required,gte=1,lte=1000"`
 	Title         string `validate:"required,gte=1,lte=1000"`
+	Author        string `validate:"required,gte=1,lte=1000"`
+	ImageURL      string `validate:"lte=1000"`
 	FeedURL       string `validate:"required,http_url,lte=1000"`
 	LastCheckedAt *time.Time
 	LastEpisodeAt *time.Time
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+	DeletedAt     gorm.DeletedAt `gorm:"index"`
 }
 
 type Episode struct {
-	gorm.Model
 	GUID         string  `gorm:"primaryKey" validate:"required,gte=1,lte=1000"`
 	PodcastGUID  string  `validate:"required"`
 	Podcast      Podcast `validate:"-" gorm:"foreignKey:PodcastGUID"`
@@ -34,10 +37,14 @@ type Episode struct {
 	Description  string  `validate:"lte=10000"`
 	DownloadURL  string  `validate:"required,http_url,lte=1000"`
 	MimeType     string  `validate:"required,oneof=audio/mpeg audio/x-m4a video/mp4 video/quicktime"`
+	DurationSecs int     `validate:"gte=0"`
 	PublishedAt  time.Time
 	Status       string `validate:"required,oneof=pending failed success"`
 	FailureCount int    `validate:"gte=0"`
 	LastFailedAt *time.Time
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
+	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 
 var MimeToExt = map[string]string{

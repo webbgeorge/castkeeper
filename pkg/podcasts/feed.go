@@ -6,7 +6,10 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mmcdole/gofeed"
@@ -37,9 +40,21 @@ func PodcastFromFeed(feedURL string, feed *gofeed.Feed) Podcast {
 		lastEpisodeAt = &episodes[len(episodes)-1].PublishedAt
 	}
 
+	author := "unknown"
+	if feed.Authors != nil && len(feed.Authors) > 0 && feed.Authors[0] != nil {
+		author = feed.Authors[0].Name
+	}
+
+	imageURL := ""
+	if feed.Image != nil && feed.Image.URL != "" {
+		imageURL = feed.Image.URL
+	}
+
 	podcast := Podcast{
 		GUID:          feedGUID(feed),
 		Title:         truncate(feed.Title, 1000),
+		Author:        author,
+		ImageURL:      imageURL,
 		FeedURL:       feedURL,
 		LastCheckedAt: nil,
 		LastEpisodeAt: lastEpisodeAt,
@@ -81,12 +96,13 @@ func EpisodesFromFeed(feed *gofeed.Feed) ([]Episode, []error) {
 		}
 
 		episode := Episode{
-			GUID:        episodeGUID(item),
-			Title:       truncate(item.Title, 1000),
-			Description: truncate(desc, 10000),
-			DownloadURL: item.Enclosures[0].URL,
-			MimeType:    item.Enclosures[0].Type,
-			PublishedAt: pub,
+			GUID:         episodeGUID(item),
+			Title:        truncate(item.Title, 1000),
+			Description:  truncate(desc, 10000),
+			DownloadURL:  item.Enclosures[0].URL,
+			MimeType:     item.Enclosures[0].Type,
+			DurationSecs: parseDuration(item),
+			PublishedAt:  pub,
 		}
 
 		episodes = append(episodes, episode)
@@ -146,4 +162,36 @@ func parseRSSTime(s string) (time.Time, error) {
 		}
 	}
 	return time.Time{}, fmt.Errorf("failed to parse time '%s'", s)
+}
+
+func parseDuration(item *gofeed.Item) int {
+	if item.ITunesExt == nil || item.ITunesExt.Duration == "" {
+		return 0
+	}
+
+	durStr := item.ITunesExt.Duration
+	colonCount := strings.Count(durStr, ":")
+
+	if colonCount == 0 {
+		duration, _ := strconv.Atoi(durStr)
+		return duration
+	}
+
+	if colonCount > 2 {
+		return 0
+	}
+
+	format := "15:04:05"
+	if colonCount == 1 {
+		format = "04:05"
+	}
+
+	t, err := time.Parse(format, durStr)
+	if err != nil {
+		return 0
+	}
+
+	// use 0000 origin instead of the default time.Time{} 0001
+	dur := t.Sub(time.Date(0, 1, 1, 0, 0, 0, 0, time.UTC))
+	return int(math.Round(dur.Seconds()))
 }

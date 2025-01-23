@@ -8,20 +8,41 @@ import (
 
 templ Home(pods []podcasts.Podcast) {
 	@components.Layout() {
-		<h1 class="text-xl mb-4">CastKeeper</h1>
-		<div>
-			<a href="/podcasts/subscribe">Add a podcast</a>
+		<div class="flex justify-between mb-4">
+			<h1 class="text-xl">Your Podcasts</h1>
+			<a href="/podcasts/subscribe" class="btn btn-primary">Add a podcast</a>
 		</div>
-		<div>
-			<div><h2>Subscribed Podcasts</h2></div>
-			<div>
-				for _, pod := range pods {
-					<div>
-						<h3>{ pod.Title }</h3>
-						<p><a href={ templ.URL(fmt.Sprintf("/podcasts/%s", pod.GUID)) }>View</a></p>
+		<div class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
+			// TODO empty state
+			for _, pod := range pods {
+				<div class="card bg-base-100 shadow-xl">
+					<figure class="aspect-square">
+						<img
+							class="object-cover"
+							src={ fmt.Sprintf("/podcasts/%s/image", pod.GUID) }
+							alt={ pod.Title }
+						/>
+					</figure>
+					<div class="card-body">
+						<h2 class="card-title">{ pod.Title }</h2>
+						<p>
+							{ pod.Author }
+							<br/>
+							// TODO
+							<!-- { strconv.Itoa(res.TrackCount) } episodes -->
+						</p>
+						<div class="subscribeResult"></div>
+						<div class="card-actions justify-end">
+							<a
+								class="btn btn-primary"
+								href={ templ.URL(fmt.Sprintf("/podcasts/%s", pod.GUID)) }
+							>
+								View
+							</a>
+						</div>
 					</div>
-				}
-			</div>
+				</div>
+			}
 		</div>
 	}
 }

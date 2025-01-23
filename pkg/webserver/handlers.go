@@ -37,7 +37,7 @@ func NewSubscribeHandler() framework.Handler {
 	}
 }
 
-func NewSubmitSubscribeHandler(db *gorm.DB) framework.Handler {
+func NewSubmitSubscribeHandler(db *gorm.DB, os objectstorage.ObjectStorage) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		err := r.ParseForm()
 		if err != nil {
@@ -59,6 +59,12 @@ func NewSubmitSubscribeHandler(db *gorm.DB) framework.Handler {
 				return framework.Render(ctx, w, 200, partials.SubscribeSubmit(err2))
 			}
 			return err
+		}
+
+		// TODO save image
+		err = os.DownloadImageFromSource(podcast)
+		if err != nil {
+			// TODO log warning and continue
 		}
 
 		return framework.Render(ctx, w, 200, partials.SubscribeSubmit(nil))
@@ -90,7 +96,7 @@ func NewDownloadPodcastHandler(db *gorm.DB, os objectstorage.ObjectStorage) fram
 			return err
 		}
 
-		f, err := os.Load(ep)
+		f, err := os.LoadEpisode(ep)
 		if err != nil {
 			return err
 		}
@@ -98,6 +104,28 @@ func NewDownloadPodcastHandler(db *gorm.DB, os objectstorage.ObjectStorage) fram
 
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.%s", ep.GUID, podcasts.MimeToExt[ep.MimeType]))
 		w.Header().Set("Content-Type", ep.MimeType)
+
+		http.ServeContent(w, r, "", time.Time{}, f)
+		return nil
+	}
+}
+
+func NewDownloadImageHandler(db *gorm.DB, os objectstorage.ObjectStorage) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		pod, err := podcasts.GetPodcast(ctx, db, r.PathValue("guid"))
+		if err != nil {
+			// TODO handle not found error
+			return err
+		}
+
+		f, err := os.LoadImage(pod)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		// TODO
+		// w.Header().Set("Content-Type", ep.MimeType)
 
 		http.ServeContent(w, r, "", time.Time{}, f)
 		return nil
