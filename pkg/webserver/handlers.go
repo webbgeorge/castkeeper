@@ -39,35 +39,28 @@ func NewSubscribeHandler() framework.Handler {
 
 func NewSubmitSubscribeHandler(db *gorm.DB, os objectstorage.ObjectStorage) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		err := r.ParseForm()
-		if err != nil {
-			return framework.Render(ctx, w, 200, partials.SubscribeSubmit(err))
-		}
-
-		// TODO use gorilla form to get from a struct
 		feedURL := r.PostFormValue("feedUrl")
 		feed, err := podcasts.ParseFeed(ctx, feedURL)
 		if err != nil {
-			return framework.Render(ctx, w, 200, partials.SubscribeSubmit(err))
+			// TODO log err
+			return framework.Render(ctx, w, 200, partials.SubscribeSubmit("Invalid feed"))
 		}
+
 		podcast := podcasts.PodcastFromFeed(feedURL, feed)
 
 		if err = db.Create(&podcast).Error; err != nil {
 			if errors.Is(err, gorm.ErrDuplicatedKey) {
-				// TODO better error handling in view (send string instead?)
-				err2 := errors.New("already subscribed to this feed")
-				return framework.Render(ctx, w, 200, partials.SubscribeSubmit(err2))
+				return framework.Render(ctx, w, 200, partials.SubscribeSubmit("Already subscribed to this feed"))
 			}
 			return err
 		}
 
-		// TODO save image
 		err = os.DownloadImageFromSource(podcast)
 		if err != nil {
 			// TODO log warning and continue
 		}
 
-		return framework.Render(ctx, w, 200, partials.SubscribeSubmit(nil))
+		return framework.Render(ctx, w, 200, partials.SubscribeSubmit(""))
 	}
 }
 
@@ -134,8 +127,19 @@ func NewDownloadImageHandler(db *gorm.DB, os objectstorage.ObjectStorage) framew
 
 func NewSearchPostHandler(itunesAPI *itunes.ItunesAPI) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		results, err := itunesAPI.Search(r.PostFormValue("query"))
-		// TODO probably don't feed in raw error
-		return framework.Render(ctx, w, 200, partials.Search(results, err))
+		q := r.PostFormValue("query")
+		if len(q) == 0 {
+			return framework.Render(ctx, w, 200, partials.Search(nil, "Search query cannot be empty"))
+		}
+		if len(q) >= 250 {
+			return framework.Render(ctx, w, 200, partials.Search(nil, "Search query must be less than 250 characters"))
+		}
+
+		results, err := itunesAPI.Search(q)
+		if err != nil {
+			// TODO log err
+			return framework.Render(ctx, w, 200, partials.Search(nil, "There was an unexpected error"))
+		}
+		return framework.Render(ctx, w, 200, partials.Search(results, ""))
 	}
 }

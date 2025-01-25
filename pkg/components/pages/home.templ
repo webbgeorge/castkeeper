@@ -12,32 +12,45 @@ templ Home(pods []podcasts.Podcast) {
 			<h1 class="text-xl">Your Podcasts</h1>
 			<a href="/podcasts/subscribe" class="btn btn-primary">Add a podcast</a>
 		</div>
-		<div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
-			// TODO empty state
-			for _, pod := range pods {
-				<div class="card card-compact md:card-normal bg-base-100 shadow-xl">
-					<figure class="aspect-square">
-						<img
-							class="object-cover"
-							src={ fmt.Sprintf("/podcasts/%s/image", pod.GUID) }
-							alt={ pod.Title }
-						/>
-					</figure>
-					<div class="card-body">
-						<h2 class="card-title">{ pod.Title }</h2>
-						<p>{ pod.Author }</p>
-						<div class="subscribeResult"></div>
-						<div class="card-actions justify-end">
-							<a
-								class="btn btn-primary"
-								href={ templ.URL(fmt.Sprintf("/podcasts/%s", pod.GUID)) }
-							>
-								View
-							</a>
-						</div>
+		if len(pods) == 0 {
+			<div class="hero bg-base-200 py-12">
+				<div class="hero-content text-center">
+					<div class="max-w-md">
+						<h1 class="text-3xl font-bold">No podcasts yet</h1>
+						<p class="py-6">
+							Add some podcasts to get started.
+						</p>
+						<a href="/podcasts/subscribe" class="btn btn-primary">Add a podcast</a>
 					</div>
 				</div>
-			}
-		</div>
+			</div>
+		} else {
+			<div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
+				for _, pod := range pods {
+					<div class="card card-compact md:card-normal bg-base-100 shadow-xl">
+						<figure class="aspect-square">
+							<img
+								class="object-cover"
+								src={ fmt.Sprintf("/podcasts/%s/image", pod.GUID) }
+								alt={ pod.Title }
+							/>
+						</figure>
+						<div class="card-body">
+							<h2 class="card-title">{ pod.Title }</h2>
+							<p>{ pod.Author }</p>
+							<div class="subscribeResult"></div>
+							<div class="card-actions justify-end">
+								<a
+									class="btn btn-primary"
+									href={ templ.URL(fmt.Sprintf("/podcasts/%s", pod.GUID)) }
+								>
+									View
+								</a>
+							</div>
+						</div>
+					</div>
+				}
+			</div>
+		}
 	}
 }

@@ -6,47 +6,58 @@ import (
 	"strconv"
 )
 
-templ Search(results []itunes.SearchResult, err error) {
-	if err != nil {
+templ Search(results []itunes.SearchResult, errText string) {
+	if errText != "" {
 		<div role="alert" class="alert alert-error">
-			// TODO error handling
-			Error: { err.Error() }
+			{ errText }
 		</div>
 	} else {
-		// TODO no results state
-		<div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
-			for _, res := range results {
-				<div class="card card-compact md:card-normal bg-base-100 shadow-xl">
-					<figure class="aspect-square">
-						<img
-							class="object-cover"
-							src={ res.ArtworkURL() }
-							alt={ res.CollectionName }
-						/>
-					</figure>
-					<div class="card-body">
-						<h2 class="card-title">{ res.CollectionName }</h2>
-						<p>
-							{ res.ArtistName }
-							<br/>
-							{ strconv.Itoa(res.TrackCount) } episodes
+		if len(results) == 0 {
+			<div class="hero bg-base-200 my-8">
+				<div class="hero-content text-center">
+					<div class="max-w-md">
+						<h1 class="text-3xl font-bold">No results found</h1>
+						<p class="py-6">
+							You may want to try different keywords or checking for typos.
 						</p>
-						<div class="subscribeResult"></div>
-						<div class="card-actions justify-end">
-							// TODO disable button during loading
-							<button
-								class="btn btn-primary"
-								hx-post="/partials/podcasts/subscribe"
-								hx-vals={ fmt.Sprintf("{\"feedUrl\": \"%s\"}", res.FeedURL) }
-								hx-target="previous .subscribeResult"
-								hx-swap="innerHTML"
-							>
-								Add Podcast
-							</button>
-						</div>
 					</div>
 				</div>
-			}
-		</div>
+			</div>
+		} else {
+			<div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
+				for _, res := range results {
+					<div class="card card-compact md:card-normal bg-base-100 shadow-xl">
+						<figure class="aspect-square">
+							<img
+								class="object-cover"
+								src={ res.ArtworkURL() }
+								alt={ res.CollectionName }
+							/>
+						</figure>
+						<div class="card-body">
+							<h2 class="card-title">{ res.CollectionName }</h2>
+							<p>
+								{ res.ArtistName }
+								<br/>
+								{ strconv.Itoa(res.TrackCount) } episodes
+							</p>
+							<div class="subscribeResult"></div>
+							<div class="card-actions justify-end">
+								<button
+									class="btn btn-primary"
+									hx-post="/partials/podcasts/subscribe"
+									hx-vals={ fmt.Sprintf("{\"feedUrl\": \"%s\"}", res.FeedURL) }
+									hx-target="previous .subscribeResult"
+									hx-swap="innerHTML"
+									hx-disabled-elt="this"
+								>
+									Add Podcast
+								</button>
+							</div>
+						</div>
+					</div>
+				}
+			</div>
+		}
 	}
 }

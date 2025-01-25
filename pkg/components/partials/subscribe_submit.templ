@@ -1,14 +1,13 @@
 package partials
 
-templ SubscribeSubmit(err error) {
-	if err != nil {
+templ SubscribeSubmit(errText string) {
+	if errText != "" {
 		<div role="alert" class="alert alert-error">
-			// TODO error handling
-			Error: { err.Error() }
+			{ errText }
 		</div>
 	} else {
 		<div role="alert" class="alert alert-success">
-			Success!
+			Podcast added
 		</div>
 	}
 }

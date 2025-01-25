@@ -16,6 +16,7 @@ templ SubscribeURLModal() {
 					hx-post="/partials/podcasts/subscribe"
 					hx-target="previous .subscribeResult"
 					hx-swap="innerHTML"
+					hx-disabled-elt="find button"
 				>
 					<div>
 						<label for="feedUrlInput" class="form-control mb-4">
@@ -26,7 +27,6 @@ templ SubscribeURLModal() {
 						</label>
 					</div>
 					<div class="flex justify-end">
-						// TODO disable button during loading
 						<button type="submit" class="btn btn-primary">Add Podcast</button>
 					</div>
 				</form>
