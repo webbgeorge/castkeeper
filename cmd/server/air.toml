@@ -3,6 +3,6 @@
 [build]
 cmd = "echo 'change detected'"
 full_bin = "make run"
-include_ext = ["go", "templ"]
-exclude_dir = ["web/node_modules"]
+include_ext = ["go", "templ", "js", "css", "json"]
+exclude_dir = ["web/node_modules", "web/static"]
 exclude_regex = ["_test\\.go", "_templ\\.go"]
