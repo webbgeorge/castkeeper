@@ -5,15 +5,21 @@ import (
 	"fmt"
 	"github.com/webbgeorge/castkeeper/pkg/components"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
+	"strconv"
 	"time"
 )
 
 templ ViewPodcast(pod podcasts.Podcast, eps []podcasts.Episode) {
 	@components.Layout() {
-		<h1 class="text-xl mb-4">{ pod.Title }</h1>
-		<div class="flex gap-6">
-			<div class="max-w-96">
-				<div class="card bg-base-100 shadow-xl mb-4">
+		<div class="breadcrumbs text-sm my-4">
+			<ul>
+				<li><a href="/">Home</a></li>
+				<li>{ pod.Title }</li>
+			</ul>
+		</div>
+		<div class="flex flex-col md:flex-row gap-6">
+			<div class="self-center md:self-auto max-w-96 md:max-w-48 lg:max-w-96">
+				<div class="card card-compact lg:card-normal bg-base-100 shadow-xl mb-4">
 					<figure class="aspect-square">
 						<img
 							class="object-cover"
@@ -23,12 +29,18 @@ templ ViewPodcast(pod podcasts.Podcast, eps []podcasts.Episode) {
 					</figure>
 					<div class="card-body">
 						<h2 class="card-title">{ pod.Title }</h2>
+						<p>
+							{ pod.Author }
+							<br/>
+							{ strconv.Itoa(len(eps)) } episodes
+						</p>
+						<p>{ pod.Description }</p>
 					</div>
 				</div>
 			</div>
-			<div class="card card-compact bg-base-100 shadow-xl overflow-x-auto">
-				<div class="card-body">
-					<table class="table">
+			<div class="grow card card-compact bg-base-100 shadow-xl">
+				<div class="card-body overflow-x-auto">
+					<table class="table table-sm lg:table-md">
 						<thead>
 							<tr>
 								<th>Title</th>

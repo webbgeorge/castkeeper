@@ -54,6 +54,7 @@ func PodcastFromFeed(feedURL string, feed *gofeed.Feed) Podcast {
 		GUID:          feedGUID(feed),
 		Title:         truncate(feed.Title, 1000),
 		Author:        author,
+		Description:   truncate(feed.Description, 10000),
 		ImageURL:      imageURL,
 		FeedURL:       feedURL,
 		LastCheckedAt: nil,

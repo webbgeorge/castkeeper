@@ -8,14 +8,14 @@ import (
 
 templ Home(pods []podcasts.Podcast) {
 	@components.Layout() {
-		<div class="flex justify-between mb-4">
+		<div class="flex justify-between items-center my-6">
 			<h1 class="text-xl">Your Podcasts</h1>
 			<a href="/podcasts/subscribe" class="btn btn-primary">Add a podcast</a>
 		</div>
-		<div class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
+		<div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
 			// TODO empty state
 			for _, pod := range pods {
-				<div class="card bg-base-100 shadow-xl">
+				<div class="card card-compact md:card-normal bg-base-100 shadow-xl">
 					<figure class="aspect-square">
 						<img
 							class="object-cover"
@@ -25,12 +25,7 @@ templ Home(pods []podcasts.Podcast) {
 					</figure>
 					<div class="card-body">
 						<h2 class="card-title">{ pod.Title }</h2>
-						<p>
-							{ pod.Author }
-							<br/>
-							// TODO
-							<!-- { strconv.Itoa(res.TrackCount) } episodes -->
-						</p>
+						<p>{ pod.Author }</p>
 						<div class="subscribeResult"></div>
 						<div class="card-actions justify-end">
 							<a

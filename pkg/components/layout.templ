@@ -3,6 +3,7 @@ package components
 import (
 	"fmt"
 	"github.com/webbgeorge/castkeeper"
+	"time"
 )
 
 func jsURL() string {
@@ -18,16 +19,24 @@ templ Layout() {
 	<html lang="en">
 		<head>
 			<meta charset="utf-8"/>
-			<title>App</title>
+			<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1"/>
+			<title>CastKeeper</title>
 			<link rel="stylesheet" href={ cssURL() }/>
 		</head>
-		<body class="bg-base-200 text-base-content">
-			<header class="navbar p-6 bg-base-300 text-white">
+		<body class="bg-base-200 text-base-content min-h-screen flex flex-col">
+			<header class="navbar py-6 px-4 sm:px-6 bg-base-300 text-white">
 				<h2 class="text-lg"><a href="/">CastKeeper</a></h2>
 			</header>
-			<main class="p-6">
+			<main class="grow mx-4 sm:mx-6">
 				{ children... }
 			</main>
+			<footer class="my-6 mx-4 sm:mx-6 text-center">
+				CastKeeper is licensed under the <a class="link" target="_blank" href="https://opensource.org/license/mit/">MIT License</a>.
+				<br/>
+				Copyright &copy; { time.Now().Format("2006") } George Webb
+				<br/>
+				<a class="link" target="_blank" href="https://github.com/webbgeorge/castkeeper">GitHub</a>
+			</footer>
 			<script src={ jsURL() }></script>
 		</body>
 	</html>

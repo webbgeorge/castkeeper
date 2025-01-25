@@ -2,13 +2,13 @@ package partials
 
 templ SubscribeURLModal() {
 	<div>
-		<button class="btn btn-neutral" onclick="addFeedUrlModal.showModal()">Subscribe with Feed URL</button>
+		<button class="btn btn-neutral" onclick="addFeedUrlModal.showModal()">Add Feed URL</button>
 		<dialog id="addFeedUrlModal" class="modal">
 			<div class="modal-box">
 				<form method="dialog">
 					<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
 				</form>
-				<h3 class="text-lg font-bold">Subscribe with Feed URL</h3>
+				<h3 class="text-lg font-bold">Add Feed URL</h3>
 				<div class="subscribeResult my-4"></div>
 				<form
 					method="POST"
@@ -27,7 +27,7 @@ templ SubscribeURLModal() {
 					</div>
 					<div class="flex justify-end">
 						// TODO disable button during loading
-						<button type="submit" class="btn btn-primary">Subscribe</button>
+						<button type="submit" class="btn btn-primary">Add Podcast</button>
 					</div>
 				</form>
 			</div>

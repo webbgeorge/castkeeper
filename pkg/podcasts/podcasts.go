@@ -20,6 +20,7 @@ type Podcast struct {
 	GUID          string `gorm:"primaryKey" validate:"required,gte=1,lte=1000"`
 	Title         string `validate:"required,gte=1,lte=1000"`
 	Author        string `validate:"required,gte=1,lte=1000"`
+	Description   string `validate:"lte=10000"`
 	ImageURL      string `validate:"lte=1000"`
 	FeedURL       string `validate:"required,http_url,lte=1000"`
 	LastCheckedAt *time.Time

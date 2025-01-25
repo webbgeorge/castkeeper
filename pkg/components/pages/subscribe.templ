@@ -7,8 +7,14 @@ import (
 
 templ Subscribe() {
 	@components.Layout() {
-		<h1 class="text-xl mb-4">Subscribe</h1>
-		<div class="w-full card bg-base-100 shadow-xl">
+		<div class="breadcrumbs text-sm my-4">
+			<ul>
+				<li><a href="/">Home</a></li>
+				<li>Add Podcast</li>
+			</ul>
+		</div>
+		<h1 class="text-xl mb-6">Add Podcast</h1>
+		<div class="w-full card card-compact md:card-normal bg-base-100 shadow-xl">
 			<div class="card-body">
 				<form
 					hx-post="/partials/search"

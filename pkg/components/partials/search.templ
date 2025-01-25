@@ -14,9 +14,9 @@ templ Search(results []itunes.SearchResult, err error) {
 		</div>
 	} else {
 		// TODO no results state
-		<div class="grid gap-4 grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
+		<div class="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6">
 			for _, res := range results {
-				<div class="card bg-base-100 shadow-xl">
+				<div class="card card-compact md:card-normal bg-base-100 shadow-xl">
 					<figure class="aspect-square">
 						<img
 							class="object-cover"
@@ -41,7 +41,7 @@ templ Search(results []itunes.SearchResult, err error) {
 								hx-target="previous .subscribeResult"
 								hx-swap="innerHTML"
 							>
-								Subscribe
+								Add Podcast
 							</button>
 						</div>
 					</div>
