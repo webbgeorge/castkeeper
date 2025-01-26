@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-templ Search(results []itunes.SearchResult, errText string) {
+templ SearchResults(results []itunes.SearchResult, errText string) {
 	if errText != "" {
 		<div role="alert" class="alert alert-error">
 			{ errText }
@@ -41,13 +41,13 @@ templ Search(results []itunes.SearchResult, errText string) {
 								<br/>
 								{ strconv.Itoa(res.TrackCount) } episodes
 							</p>
-							<div class="subscribeResult"></div>
+							<div class="addPodcastResult"></div>
 							<div class="card-actions justify-end">
 								<button
 									class="btn btn-primary"
-									hx-post="/partials/podcasts/subscribe"
+									hx-post="/partials/add-podcast"
 									hx-vals={ fmt.Sprintf("{\"feedUrl\": \"%s\"}", res.FeedURL) }
-									hx-target="previous .subscribeResult"
+									hx-target="previous .addPodcastResult"
 									hx-swap="innerHTML"
 									hx-disabled-elt="this"
 								>

@@ -31,26 +31,26 @@ func NewHomeHandler(db *gorm.DB) framework.Handler {
 	}
 }
 
-func NewSubscribeHandler() framework.Handler {
+func NewSearchPodcastsHandler() framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return framework.Render(ctx, w, 200, pages.Subscribe())
+		return framework.Render(ctx, w, 200, pages.SearchPodcasts())
 	}
 }
 
-func NewSubmitSubscribeHandler(feedService *podcasts.FeedService, db *gorm.DB, os objectstorage.ObjectStorage) framework.Handler {
+func NewAddPodcastHandler(feedService *podcasts.FeedService, db *gorm.DB, os objectstorage.ObjectStorage) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		feedURL := r.PostFormValue("feedUrl")
 		feed, err := feedService.ParseFeed(ctx, feedURL)
 		if err != nil {
 			framework.GetLogger(ctx).ErrorContext(ctx, "error parsing feed", "error", err)
-			return framework.Render(ctx, w, 200, partials.SubscribeSubmit("Invalid feed"))
+			return framework.Render(ctx, w, 200, partials.AddPodcast("Invalid feed"))
 		}
 
 		podcast := podcasts.PodcastFromFeed(feedURL, feed)
 
 		if err = db.Create(&podcast).Error; err != nil {
 			if errors.Is(err, gorm.ErrDuplicatedKey) {
-				return framework.Render(ctx, w, 200, partials.SubscribeSubmit("Already subscribed to this feed"))
+				return framework.Render(ctx, w, 200, partials.AddPodcast("This podcast is already added"))
 			}
 			return err
 		}
@@ -60,7 +60,7 @@ func NewSubmitSubscribeHandler(feedService *podcasts.FeedService, db *gorm.DB, o
 			framework.GetLogger(ctx).WarnContext(ctx, "failed to download image, continuing without", "error", err)
 		}
 
-		return framework.Render(ctx, w, 200, partials.SubscribeSubmit(""))
+		return framework.Render(ctx, w, 200, partials.AddPodcast(""))
 	}
 }
 
@@ -81,7 +81,7 @@ func NewViewPodcastHandler(db *gorm.DB) framework.Handler {
 	}
 }
 
-func NewDownloadPodcastHandler(db *gorm.DB, os objectstorage.ObjectStorage) framework.Handler {
+func NewDownloadEpisodeHandler(db *gorm.DB, os objectstorage.ObjectStorage) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		ep, err := podcasts.GetEpisode(ctx, db, r.PathValue("guid"))
 		if err != nil {
@@ -125,21 +125,21 @@ func NewDownloadImageHandler(db *gorm.DB, os objectstorage.ObjectStorage) framew
 	}
 }
 
-func NewSearchPostHandler(itunesAPI *itunes.ItunesAPI) framework.Handler {
+func NewSearchResultsHandler(itunesAPI *itunes.ItunesAPI) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		q := r.PostFormValue("query")
 		if len(q) == 0 {
-			return framework.Render(ctx, w, 200, partials.Search(nil, "Search query cannot be empty"))
+			return framework.Render(ctx, w, 200, partials.SearchResults(nil, "Search query cannot be empty"))
 		}
 		if len(q) >= 250 {
-			return framework.Render(ctx, w, 200, partials.Search(nil, "Search query must be less than 250 characters"))
+			return framework.Render(ctx, w, 200, partials.SearchResults(nil, "Search query must be less than 250 characters"))
 		}
 
 		results, err := itunesAPI.Search(ctx, q)
 		if err != nil {
 			framework.GetLogger(ctx).ErrorContext(ctx, "itunes search failed", "error", err)
-			return framework.Render(ctx, w, 200, partials.Search(nil, "There was an unexpected error"))
+			return framework.Render(ctx, w, 200, partials.SearchResults(nil, "There was an unexpected error"))
 		}
-		return framework.Render(ctx, w, 200, partials.Search(results, ""))
+		return framework.Render(ctx, w, 200, partials.SearchResults(results, ""))
 	}
 }

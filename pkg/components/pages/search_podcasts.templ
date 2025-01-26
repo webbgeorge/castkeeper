@@ -5,7 +5,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/components/partials"
 )
 
-templ Subscribe() {
+templ SearchPodcasts() {
 	@components.Layout() {
 		<div class="breadcrumbs text-sm my-4">
 			<ul>
@@ -17,7 +17,7 @@ templ Subscribe() {
 		<div class="w-full card card-compact md:card-normal bg-base-100 shadow-xl">
 			<div class="card-body">
 				<form
-					hx-post="/partials/search"
+					hx-post="/partials/search-results"
 					hx-target="#search-partial"
 					hx-swap="innerHTML"
 					class="join w-full"
@@ -33,7 +33,7 @@ templ Subscribe() {
 				</form>
 				<div class="flex justify-end items-center gap-4 mt-4">
 					<div>OR</div>
-					@partials.SubscribeURLModal()
+					@partials.AddFeedUrlModal()
 				</div>
 			</div>
 		</div>

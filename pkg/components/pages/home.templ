@@ -10,7 +10,7 @@ templ Home(pods []podcasts.Podcast) {
 	@components.Layout() {
 		<div class="flex justify-between items-center my-6">
 			<h1 class="text-xl">Your Podcasts</h1>
-			<a href="/podcasts/subscribe" class="btn btn-primary">Add a podcast</a>
+			<a href="/podcasts/search" class="btn btn-primary">Add a podcast</a>
 		</div>
 		if len(pods) == 0 {
 			<div class="hero bg-base-200 py-12">
@@ -20,7 +20,7 @@ templ Home(pods []podcasts.Podcast) {
 						<p class="py-6">
 							Add some podcasts to get started.
 						</p>
-						<a href="/podcasts/subscribe" class="btn btn-primary">Add a podcast</a>
+						<a href="/podcasts/search" class="btn btn-primary">Add a podcast</a>
 					</div>
 				</div>
 			</div>
@@ -38,7 +38,6 @@ templ Home(pods []podcasts.Podcast) {
 						<div class="card-body">
 							<h2 class="card-title">{ pod.Title }</h2>
 							<p>{ pod.Author }</p>
-							<div class="subscribeResult"></div>
 							<div class="card-actions justify-end">
 								<a
 									class="btn btn-primary"

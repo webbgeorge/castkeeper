@@ -1,6 +1,6 @@
 package partials
 
-templ SubscribeURLModal() {
+templ AddFeedUrlModal() {
 	<div>
 		<button class="btn btn-neutral" onclick="addFeedUrlModal.showModal()">Add Feed URL</button>
 		<dialog id="addFeedUrlModal" class="modal">
@@ -9,12 +9,12 @@ templ SubscribeURLModal() {
 					<button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
 				</form>
 				<h3 class="text-lg font-bold">Add Feed URL</h3>
-				<div class="subscribeResult my-4"></div>
+				<div class="addPodcastResult my-4"></div>
 				<form
 					method="POST"
 					class="w-full"
-					hx-post="/partials/podcasts/subscribe"
-					hx-target="previous .subscribeResult"
+					hx-post="/partials/add-podcast"
+					hx-target="previous .addPodcastResult"
 					hx-swap="innerHTML"
 					hx-disabled-elt="find button"
 				>
