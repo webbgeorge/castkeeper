@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"log/slog"
 	"time"
 
 	slogGorm "github.com/orandin/slog-gorm"
@@ -16,6 +16,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"github.com/webbgeorge/castkeeper/pkg/webserver"
 	"golang.org/x/sync/errgroup"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -26,31 +27,14 @@ func main() {
 		log.Fatalf("failed to read config: %v", err)
 	}
 
-	// TODO remove when cfg is being used
-	fmt.Println(cfg)
-
-	gormLogger := slogGorm.New(
-		slogGorm.WithHandler(logger.Handler()),
-	)
-
-	// TODO DB config from config file
-	db, err := gorm.Open(
-		sqlite.Open("test.db"),
-		&gorm.Config{
-			TranslateError: true,
-			Logger:         gormLogger,
-		},
-	)
+	db, err := configureDatabase(cfg, logger)
 	if err != nil {
 		log.Fatalf("failed to connect to database", err)
 	}
 
-	db.AutoMigrate(&podcasts.Podcast{})
-	db.AutoMigrate(&podcasts.Episode{})
-
 	objstore := &objectstorage.LocalObjectStorage{
 		HTTPClient: framework.NewHTTPClient(time.Second * 5),
-		BasePath:   "/Users/georgewebb/workspace/castkeeper/testout",
+		BasePath:   cfg.ObjectStorage.LocalBasePath,
 	}
 	feedService := &podcasts.FeedService{
 		HTTPClient: framework.NewHTTPClient(time.Second * 5),
@@ -75,16 +59,53 @@ func main() {
 	})
 
 	g.Go(func() error {
-		dw := downloadworker.DownloadWorker{
-			// _ = downloadworker.DownloadWorker{
+		// dw := downloadworker.DownloadWorker{
+		_ = downloadworker.DownloadWorker{
 			DB: db,
 			OS: objstore,
 		}
-		return dw.Start(ctx)
-		// return nil
+		// return dw.Start(ctx)
+		return nil
 	})
 
 	if err := g.Wait(); err != nil {
 		log.Fatalf("fatal error: %s", err.Error())
+	}
+}
+
+func configureDatabase(cfg config.Config, logger *slog.Logger) (*gorm.DB, error) {
+	gormLogger := slogGorm.New(
+		slogGorm.WithHandler(logger.Handler()),
+	)
+
+	db, err := gorm.Open(
+		dbDialector(cfg),
+		&gorm.Config{
+			TranslateError: true,
+			Logger:         gormLogger,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.AutoMigrate(&podcasts.Podcast{}); err != nil {
+		return nil, err
+	}
+	if err := db.AutoMigrate(&podcasts.Episode{}); err != nil {
+		return nil, err
+	}
+
+	return db, nil
+}
+
+func dbDialector(cfg config.Config) gorm.Dialector {
+	switch cfg.Database.Driver {
+	case config.DatabaseDriverPostgres:
+		return postgres.Open(cfg.Database.DSN)
+	case config.DatabaseDriverSqlite:
+		return sqlite.Open(cfg.Database.DSN)
+	default:
+		return nil
 	}
 }

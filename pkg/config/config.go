@@ -39,10 +39,12 @@ type WebServerConfig struct {
 
 type DatabaseConfig struct {
 	Driver string `validate:"required,oneof=postgres sqlite"`
+	DSN    string `validate:"required" secret:"true"`
 }
 
 type ObjectStorageConfig struct {
-	Driver string `validate:"required,oneof=local awss3"`
+	Driver        string `validate:"required,oneof=local awss3"`
+	LocalBasePath string `validate:"required_if=Driver local"`
 }
 
 func LoadConfig() (Config, *slog.Logger, error) {

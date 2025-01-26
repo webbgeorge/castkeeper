@@ -3,6 +3,8 @@ EnvName: local
 
 Database:
   Driver: sqlite
+  DSN: data/test.db
 
 ObjectStorage:
   Driver: local
+  LocalBasePath: ./data/objects
