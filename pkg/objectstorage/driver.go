@@ -2,14 +2,10 @@ package objectstorage
 
 import (
 	"context"
-	"io"
-
-	"github.com/webbgeorge/castkeeper/pkg/podcasts"
+	"net/http"
 )
 
 type ObjectStorage interface {
-	DownloadEpisodeFromSource(ctx context.Context, episode podcasts.Episode) error
-	LoadEpisode(ctx context.Context, episode podcasts.Episode) (io.ReadSeekCloser, error)
-	DownloadImageFromSource(ctx context.Context, podcast podcasts.Podcast) error
-	LoadImage(ctx context.Context, podcast podcasts.Podcast) (io.ReadSeekCloser, error)
+	SaveRemoteFile(ctx context.Context, remoteLocation, podcastGUID, fileName string) error
+	ServeFile(ctx context.Context, r *http.Request, w http.ResponseWriter, podcastGUID, fileName string) error
 }

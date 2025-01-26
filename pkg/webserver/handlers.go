@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
 	"github.com/webbgeorge/castkeeper/pkg/components/partials"
@@ -55,7 +54,9 @@ func NewAddPodcastHandler(feedService *podcasts.FeedService, db *gorm.DB, os obj
 			return err
 		}
 
-		err = os.DownloadImageFromSource(ctx, podcast)
+		// TODO detect filetype
+		fileName := fmt.Sprintf("%s.%s", podcast.GUID, "jpg")
+		err = os.SaveRemoteFile(ctx, podcast.ImageURL, podcast.GUID, fileName)
 		if err != nil {
 			framework.GetLogger(ctx).WarnContext(ctx, "failed to download image, continuing without", "error", err)
 		}
@@ -89,17 +90,11 @@ func NewDownloadEpisodeHandler(db *gorm.DB, os objectstorage.ObjectStorage) fram
 			return err
 		}
 
-		f, err := os.LoadEpisode(ctx, ep)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.%s", ep.GUID, podcasts.MimeToExt[ep.MimeType]))
 		w.Header().Set("Content-Type", ep.MimeType)
 
-		http.ServeContent(w, r, "", time.Time{}, f)
-		return nil
+		fileName := fmt.Sprintf("%s.%s", ep.GUID, podcasts.MimeToExt[ep.MimeType])
+		return os.ServeFile(ctx, r, w, ep.PodcastGUID, fileName)
 	}
 }
 
@@ -111,17 +106,12 @@ func NewDownloadImageHandler(db *gorm.DB, os objectstorage.ObjectStorage) framew
 			return err
 		}
 
-		f, err := os.LoadImage(ctx, pod)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
 		// TODO
 		// w.Header().Set("Content-Type", ep.MimeType)
 
-		http.ServeContent(w, r, "", time.Time{}, f)
-		return nil
+		// TODO detect file type
+		fileName := fmt.Sprintf("%s.%s", pod.GUID, "jpg")
+		return os.ServeFile(ctx, r, w, pod.GUID, fileName)
 	}
 }
 

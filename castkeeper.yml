@@ -1,5 +1,10 @@
-# config file for development
+# config file for local development only
+
 EnvName: local
+LogLevel: info
+
+WebServer:
+  Port: 8080
 
 Database:
   Driver: sqlite
