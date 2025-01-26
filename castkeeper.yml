@@ -1,5 +1,4 @@
 # config file for development
-
 EnvName: local
 
 Database:

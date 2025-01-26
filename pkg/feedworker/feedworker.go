@@ -3,9 +3,9 @@ package feedworker
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"time"
 
+	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"gorm.io/gorm"
 )
@@ -16,8 +16,8 @@ const (
 )
 
 type FeedWorker struct {
-	DB     *gorm.DB
-	Logger *slog.Logger
+	FeedService *podcasts.FeedService
+	DB          *gorm.DB
 }
 
 func (w *FeedWorker) Start(ctx context.Context) error {
@@ -27,17 +27,17 @@ func (w *FeedWorker) Start(ctx context.Context) error {
 	for {
 		pods, err := podcasts.ListPodcasts(ctx, w.DB)
 		if err != nil {
-			w.Logger.ErrorContext(ctx, fmt.Sprintf("feedworker failed to list podcasts: %s", err.Error()))
+			framework.GetLogger(ctx).ErrorContext(ctx, fmt.Sprintf("feedworker failed to list podcasts: %s", err.Error()))
 		}
 
 		for _, pod := range pods {
 			if pod.LastCheckedAt != nil && pod.LastCheckedAt.Add(minCheckInterval).After(time.Now()) {
-				w.Logger.DebugContext(ctx, fmt.Sprintf("podcast '%s' checked too recently, skipping", pod.GUID))
+				framework.GetLogger(ctx).DebugContext(ctx, fmt.Sprintf("podcast '%s' checked too recently, skipping", pod.GUID))
 				continue
 			}
 			err := w.ProcessPodcast(ctx, pod)
 			if err != nil {
-				w.Logger.ErrorContext(ctx, fmt.Sprintf("feedworker failed to process podcast '%s': %s", pod.GUID, err.Error()))
+				framework.GetLogger(ctx).ErrorContext(ctx, fmt.Sprintf("feedworker failed to process podcast '%s': %s", pod.GUID, err.Error()))
 			}
 		}
 
@@ -50,14 +50,14 @@ func (w *FeedWorker) Start(ctx context.Context) error {
 }
 
 func (w *FeedWorker) ProcessPodcast(ctx context.Context, podcast podcasts.Podcast) error {
-	feed, err := podcasts.ParseFeed(ctx, podcast.FeedURL)
+	feed, err := w.FeedService.ParseFeed(ctx, podcast.FeedURL)
 	if err != nil {
 		return err
 	}
 	episodes, errs := podcasts.EpisodesFromFeed(feed)
 
 	if len(errs) > 0 {
-		w.Logger.WarnContext(ctx, fmt.Sprintf("some episodes of podcast '%s' had parsing errors: %v", podcast.GUID, errs))
+		framework.GetLogger(ctx).WarnContext(ctx, fmt.Sprintf("some episodes of podcast '%s' had parsing errors: %v", podcast.GUID, errs))
 	}
 
 	existingEpisodes, err := podcasts.ListEpisodes(ctx, w.DB, podcast.GUID)

@@ -2,12 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"log/slog"
-	"net/http"
-	"os"
+	"time"
 
-	"github.com/webbgeorge/castkeeper"
+	slogGorm "github.com/orandin/slog-gorm"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/feedworker"
@@ -19,30 +18,19 @@ import (
 	"golang.org/x/sync/errgroup"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
-)
-
-const (
-	applicationName = "castkeeper"
 )
 
 func main() {
-	cfg, err := config.LoadConfig()
+	cfg, logger, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("failed to read config: %v", err)
 	}
 
-	slogger := framework.NewLogger(
-		applicationName,
-		cfg.EnvName,
-		castkeeper.Version,
-		slog.LevelInfo, // TODO level from config
-	)
+	// TODO remove when cfg is being used
+	fmt.Println(cfg)
 
-	// TODO use slog logger
-	gormLog := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags),
-		logger.Config{LogLevel: logger.Warn, IgnoreRecordNotFoundError: true},
+	gormLogger := slogGorm.New(
+		slogGorm.WithHandler(logger.Handler()),
 	)
 
 	// TODO DB config from config file
@@ -50,7 +38,7 @@ func main() {
 		sqlite.Open("test.db"),
 		&gorm.Config{
 			TranslateError: true,
-			Logger:         gormLog,
+			Logger:         gormLogger,
 		},
 	)
 	if err != nil {
@@ -61,23 +49,27 @@ func main() {
 	db.AutoMigrate(&podcasts.Episode{})
 
 	objstore := &objectstorage.LocalObjectStorage{
-		BasePath: "/Users/georgewebb/workspace/castkeeper/testout",
+		HTTPClient: framework.NewHTTPClient(time.Second * 5),
+		BasePath:   "/Users/georgewebb/workspace/castkeeper/testout",
 	}
-
+	feedService := &podcasts.FeedService{
+		HTTPClient: framework.NewHTTPClient(time.Second * 5),
+	}
 	itunesAPI := &itunes.ItunesAPI{
-		HTTPClient: http.DefaultClient,
+		HTTPClient: framework.NewHTTPClient(time.Second * 5),
 	}
 
-	g, ctx := errgroup.WithContext(context.Background())
+	ctx := framework.ContextWithLogger(context.Background(), logger)
+	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		return webserver.Start(ctx, slogger, db, objstore, itunesAPI)
+		return webserver.Start(ctx, logger, feedService, db, objstore, itunesAPI)
 	})
 
 	g.Go(func() error {
 		fw := feedworker.FeedWorker{
-			DB:     db,
-			Logger: slogger,
+			FeedService: feedService,
+			DB:          db,
 		}
 		return fw.Start(ctx)
 	})
@@ -85,9 +77,8 @@ func main() {
 	g.Go(func() error {
 		dw := downloadworker.DownloadWorker{
 			// _ = downloadworker.DownloadWorker{
-			DB:     db,
-			OS:     objstore,
-			Logger: slogger,
+			DB: db,
+			OS: objstore,
 		}
 		return dw.Start(ctx)
 		// return nil

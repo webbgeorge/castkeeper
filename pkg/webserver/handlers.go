@@ -37,12 +37,12 @@ func NewSubscribeHandler() framework.Handler {
 	}
 }
 
-func NewSubmitSubscribeHandler(db *gorm.DB, os objectstorage.ObjectStorage) framework.Handler {
+func NewSubmitSubscribeHandler(feedService *podcasts.FeedService, db *gorm.DB, os objectstorage.ObjectStorage) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		feedURL := r.PostFormValue("feedUrl")
-		feed, err := podcasts.ParseFeed(ctx, feedURL)
+		feed, err := feedService.ParseFeed(ctx, feedURL)
 		if err != nil {
-			// TODO log err
+			framework.GetLogger(ctx).ErrorContext(ctx, "error parsing feed", "error", err)
 			return framework.Render(ctx, w, 200, partials.SubscribeSubmit("Invalid feed"))
 		}
 
@@ -55,9 +55,9 @@ func NewSubmitSubscribeHandler(db *gorm.DB, os objectstorage.ObjectStorage) fram
 			return err
 		}
 
-		err = os.DownloadImageFromSource(podcast)
+		err = os.DownloadImageFromSource(ctx, podcast)
 		if err != nil {
-			// TODO log warning and continue
+			framework.GetLogger(ctx).WarnContext(ctx, "failed to download image, continuing without", "error", err)
 		}
 
 		return framework.Render(ctx, w, 200, partials.SubscribeSubmit(""))
@@ -89,7 +89,7 @@ func NewDownloadPodcastHandler(db *gorm.DB, os objectstorage.ObjectStorage) fram
 			return err
 		}
 
-		f, err := os.LoadEpisode(ep)
+		f, err := os.LoadEpisode(ctx, ep)
 		if err != nil {
 			return err
 		}
@@ -111,7 +111,7 @@ func NewDownloadImageHandler(db *gorm.DB, os objectstorage.ObjectStorage) framew
 			return err
 		}
 
-		f, err := os.LoadImage(pod)
+		f, err := os.LoadImage(ctx, pod)
 		if err != nil {
 			return err
 		}
@@ -135,9 +135,9 @@ func NewSearchPostHandler(itunesAPI *itunes.ItunesAPI) framework.Handler {
 			return framework.Render(ctx, w, 200, partials.Search(nil, "Search query must be less than 250 characters"))
 		}
 
-		results, err := itunesAPI.Search(q)
+		results, err := itunesAPI.Search(ctx, q)
 		if err != nil {
-			// TODO log err
+			framework.GetLogger(ctx).ErrorContext(ctx, "itunes search failed", "error", err)
 			return framework.Render(ctx, w, 200, partials.Search(nil, "There was an unexpected error"))
 		}
 		return framework.Render(ctx, w, 200, partials.Search(results, ""))

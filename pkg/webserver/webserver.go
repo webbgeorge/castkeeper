@@ -9,6 +9,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/itunes"
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
+	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"github.com/webbgeorge/castkeeper/web"
 	"gorm.io/gorm"
 )
@@ -16,6 +17,7 @@ import (
 func Start(
 	ctx context.Context,
 	logger *slog.Logger,
+	feedService *podcasts.FeedService,
 	db *gorm.DB,
 	os objectstorage.ObjectStorage,
 	itunesAPI *itunes.ItunesAPI,
@@ -31,7 +33,7 @@ func Start(
 		AddFileServer("GET /static/", http.FileServer(http.FS(web.StaticAssets))).
 		AddRoute("GET /", NewHomeHandler(db)).
 		AddRoute("GET /podcasts/subscribe", NewSubscribeHandler()).
-		AddRoute("POST /partials/podcasts/subscribe", NewSubmitSubscribeHandler(db, os)).
+		AddRoute("POST /partials/podcasts/subscribe", NewSubmitSubscribeHandler(feedService, db, os)).
 		AddRoute("GET /podcasts/{guid}", NewViewPodcastHandler(db)).
 		AddRoute("GET /podcasts/{guid}/image", NewDownloadImageHandler(db, os)).
 		AddRoute("GET /episodes/{guid}/download", NewDownloadPodcastHandler(db, os)).

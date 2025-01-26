@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"time"
 
+	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"gorm.io/gorm"
@@ -18,9 +18,8 @@ const (
 )
 
 type DownloadWorker struct {
-	DB     *gorm.DB
-	OS     objectstorage.ObjectStorage
-	Logger *slog.Logger
+	DB *gorm.DB
+	OS objectstorage.ObjectStorage
 }
 
 func (w *DownloadWorker) Start(ctx context.Context) error {
@@ -40,14 +39,14 @@ func (w *DownloadWorker) Start(ctx context.Context) error {
 				continue
 			}
 
-			w.Logger.ErrorContext(ctx, fmt.Sprintf("downloadworker failed to process episode: %s", err.Error()))
+			framework.GetLogger(ctx).ErrorContext(ctx, fmt.Sprintf("downloadworker failed to process episode: %s", err.Error()))
 
 			// small sleep to avoid hammering DB on repeated errs
 			time.Sleep(time.Second)
 			continue
 		}
 
-		w.Logger.InfoContext(ctx, fmt.Sprintf("successfully downloaded episode '%s'", episode.GUID))
+		framework.GetLogger(ctx).InfoContext(ctx, fmt.Sprintf("successfully downloaded episode '%s'", episode.GUID))
 	}
 }
 
@@ -58,7 +57,7 @@ func (w *DownloadWorker) ProcessEpisode(ctx context.Context) (*podcasts.Episode,
 		return nil, fmt.Errorf("failed to get a pending episode: %w", err)
 	}
 
-	err = w.OS.DownloadEpisodeFromSource(episode)
+	err = w.OS.DownloadEpisodeFromSource(ctx, episode)
 	if err != nil {
 		if episode.FailureCount < maxFailures {
 			upErr := podcasts.UpdateEpisodeFailureCount(ctx, w.DB, &episode, episode.FailureCount+1)

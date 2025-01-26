@@ -1,6 +1,7 @@
 package itunes
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -38,7 +39,7 @@ type searchResponse struct {
 	Results []SearchResult `json:"results"`
 }
 
-func (i *ItunesAPI) Search(query string) ([]SearchResult, error) {
+func (i *ItunesAPI) Search(ctx context.Context, query string) ([]SearchResult, error) {
 	if query == "" || len(query) > 250 {
 		return nil, fmt.Errorf("expected query to be between 1 and 250 chars, got %d", len(query))
 	}
@@ -49,7 +50,13 @@ func (i *ItunesAPI) Search(query string) ([]SearchResult, error) {
 	q.Add("entity", "podcast")
 	u := fmt.Sprintf("https://itunes.apple.com/search?%s", q.Encode())
 
-	res, err := i.HTTPClient.Get(u)
+	req, err := http.NewRequest(http.MethodGet, u, nil)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+
+	res, err := i.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}

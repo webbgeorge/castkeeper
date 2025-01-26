@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -15,8 +16,14 @@ import (
 	"github.com/mmcdole/gofeed"
 )
 
-func ParseFeed(ctx context.Context, feedURL string) (*gofeed.Feed, error) {
+type FeedService struct {
+	HTTPClient *http.Client
+}
+
+func (s *FeedService) ParseFeed(ctx context.Context, feedURL string) (*gofeed.Feed, error) {
 	fp := gofeed.NewParser()
+	fp.Client = s.HTTPClient
+
 	feed, err := fp.ParseURLWithContext(feedURL, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse feed: %w", err)

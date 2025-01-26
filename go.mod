@@ -8,6 +8,7 @@ require (
 	github.com/a-h/templ v0.3.819
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/mmcdole/gofeed v1.3.0
+	github.com/orandin/slog-gorm v1.4.0
 	github.com/spf13/viper v1.19.0
 	golang.org/x/sync v0.10.0
 	gorm.io/driver/sqlite v1.5.7
