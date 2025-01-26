@@ -14,13 +14,13 @@ func cssURL() string {
 	return fmt.Sprintf("/static/bundle.css?cb=%s", castkeeper.Version)
 }
 
-templ Layout() {
+templ Layout(title string) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
 			<meta charset="utf-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1"/>
-			<title>CastKeeper</title>
+			<title>{ pageTitle(title) }</title>
 			<link rel="stylesheet" href={ cssURL() }/>
 		</head>
 		<body class="bg-base-200 text-base-content min-h-screen flex flex-col">
@@ -41,4 +41,14 @@ templ Layout() {
 			<script src={ jsURL() }></script>
 		</body>
 	</html>
+}
+
+func pageTitle(title string) string {
+	if title == "" {
+		return "CastKeeper"
+	}
+	if len(title) > 30 {
+		title = title[:30] + "..."
+	}
+	return fmt.Sprintf("%s | CastKeeper", title)
 }

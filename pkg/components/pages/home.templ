@@ -7,7 +7,7 @@ import (
 )
 
 templ Home(pods []podcasts.Podcast) {
-	@components.Layout() {
+	@components.Layout("") {
 		<div class="flex justify-between items-center my-6">
 			<h1 class="text-xl">Your Podcasts</h1>
 			<a href="/podcasts/search" class="btn btn-primary">Add a podcast</a>

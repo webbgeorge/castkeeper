@@ -10,7 +10,7 @@ import (
 )
 
 templ ViewPodcast(pod podcasts.Podcast, eps []podcasts.Episode) {
-	@components.Layout() {
+	@components.Layout(pod.Title) {
 		<div class="breadcrumbs text-sm my-4">
 			<ul>
 				<li><a href="/">Home</a></li>
