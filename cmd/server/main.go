@@ -2,10 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"log/slog"
+	"os"
 	"time"
 
+	awsConfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	slogGorm "github.com/orandin/slog-gorm"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
@@ -22,20 +26,28 @@ import (
 )
 
 func main() {
-	cfg, logger, err := config.LoadConfig()
+	configFile := "" // optional specific config file (otherwise uses default locations)
+	if len(os.Args) > 1 {
+		configFile = os.Args[1]
+	}
+
+	cfg, logger, err := config.LoadConfig(configFile)
 	if err != nil {
 		log.Fatalf("failed to read config: %v", err)
 	}
+
+	ctx := framework.ContextWithLogger(context.Background(), logger)
 
 	db, err := configureDatabase(cfg, logger)
 	if err != nil {
 		log.Fatalf("failed to connect to database", err)
 	}
 
-	objstore := &objectstorage.LocalObjectStorage{
-		HTTPClient: framework.NewHTTPClient(time.Second * 5),
-		BasePath:   cfg.ObjectStorage.LocalBasePath,
+	objstore, err := configureObjectStorage(ctx, cfg)
+	if err != nil {
+		log.Fatalf("failed to configure objectstorage", err)
 	}
+
 	feedService := &podcasts.FeedService{
 		HTTPClient: framework.NewHTTPClient(time.Second * 5),
 	}
@@ -43,7 +55,6 @@ func main() {
 		HTTPClient: framework.NewHTTPClient(time.Second * 5),
 	}
 
-	ctx := framework.ContextWithLogger(context.Background(), logger)
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
@@ -100,10 +111,45 @@ func configureDatabase(cfg config.Config, logger *slog.Logger) (*gorm.DB, error)
 func dbDialector(cfg config.Config) gorm.Dialector {
 	switch cfg.Database.Driver {
 	case config.DatabaseDriverPostgres:
-		return postgres.Open(cfg.Database.DSN)
+		return postgres.New(postgres.Config{
+			DSN:                  cfg.Database.DSN,
+			PreferSimpleProtocol: true,
+		})
 	case config.DatabaseDriverSqlite:
 		return sqlite.Open(cfg.Database.DSN)
 	default:
 		return nil
+	}
+}
+
+func configureObjectStorage(ctx context.Context, cfg config.Config) (objectstorage.ObjectStorage, error) {
+	httpClient := framework.NewHTTPClient(time.Minute * 15)
+
+	switch cfg.ObjectStorage.Driver {
+	case config.ObjectStorageDriverLocal:
+		return &objectstorage.LocalObjectStorage{
+			HTTPClient: httpClient,
+			BasePath:   cfg.ObjectStorage.LocalBasePath,
+		}, nil
+
+	case config.ObjectStorageDriverS3:
+		// uses aws environment variables to configure the SDK
+		awsCfg, err := awsConfig.LoadDefaultConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
+		s3Client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
+			o.UsePathStyle = cfg.ObjectStorage.S3ForcePathStyle
+		})
+
+		return &objectstorage.S3ObjectStorage{
+			HTTPClient: httpClient,
+			S3Client:   s3Client,
+			BucketName: cfg.ObjectStorage.S3Bucket,
+			Prefix:     cfg.ObjectStorage.S3Prefix,
+		}, nil
+
+	default:
+		return nil, errors.New("unknown objectstorage driver")
 	}
 }

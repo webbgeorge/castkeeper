@@ -108,8 +108,9 @@ func GetPendingEpisode(ctx context.Context, db *gorm.DB, hasNotFailedSince time.
 	var episode Episode
 	result := db.First(
 		&episode,
-		"status = ?", EpisodeStatusPending,
-		"last_failed_at < ?", hasNotFailedSince,
+		"status = ? AND (last_failed_at IS NULL OR last_failed_at < ?)",
+		EpisodeStatusPending,
+		hasNotFailedSince,
 	)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {

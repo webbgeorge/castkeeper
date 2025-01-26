@@ -1,0 +1,18 @@
+# config file for local development only
+# alternative to default local dev config - uses posgres and localstack s3 instead
+
+EnvName: local
+LogLevel: info
+
+WebServer:
+  Port: 8080
+
+Database:
+  Driver: postgres
+  DSN: host=localhost user=localdev password=localdev dbname=castkeeper port=5432 sslmode=disable
+
+ObjectStorage:
+  Driver: awss3
+  S3Bucket: castkeeper
+  S3Prefix: prefix/
+  S3ForcePathStyle: true

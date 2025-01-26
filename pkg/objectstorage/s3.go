@@ -61,6 +61,7 @@ func (s *S3ObjectStorage) ServeFile(ctx context.Context, r *http.Request, w http
 		return err
 	}
 
+	// TODO support range requests/chunked downloads
 	_, err = io.Copy(w, res.Body)
 	return err
 }

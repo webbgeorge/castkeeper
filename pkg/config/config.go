@@ -43,18 +43,25 @@ type DatabaseConfig struct {
 }
 
 type ObjectStorageConfig struct {
-	Driver        string `validate:"required,oneof=local awss3"`
-	LocalBasePath string `validate:"required_if=Driver local"`
+	Driver           string `validate:"required,oneof=local awss3"`
+	LocalBasePath    string `validate:"required_if=Driver local"`
+	S3Bucket         string `validate:"required_if=Driver awss3"`
+	S3Prefix         string `validate:"lte=250"`
+	S3ForcePathStyle bool   // used for localstack testing, unlikely to be ever used in prod
 }
 
-func LoadConfig() (Config, *slog.Logger, error) {
-	return loadConfig(viper.GetViper())
+func LoadConfig(configFilePath string) (Config, *slog.Logger, error) {
+	return loadConfig(viper.GetViper(), configFilePath)
 }
 
-func loadConfig(v *viper.Viper) (Config, *slog.Logger, error) {
-	v.SetConfigName("castkeeper")       // file called castkeeper.yml|yaml|json
-	v.AddConfigPath("/etc/castkeeper/") // in this dir, or...
-	v.AddConfigPath(".")                // in current working directory
+func loadConfig(v *viper.Viper, configFilePath string) (Config, *slog.Logger, error) {
+	if configFilePath != "" {
+		v.SetConfigFile(configFilePath) // if provided and not empty, uses specific file instead of from paths below
+	} else {
+		v.SetConfigName("castkeeper")       // file called castkeeper.yml|yaml|json
+		v.AddConfigPath("/etc/castkeeper/") // in this dir, or...
+		v.AddConfigPath(".")                // in current working directory
+	}
 
 	v.SetDefault("LogLevel", LogLevelInfo)
 	v.SetDefault("EnvName", "unknown")
