@@ -4,6 +4,8 @@ EnvName: local
 Database:
   Driver: sqlite
   DSN: data/test.db
+  # Driver: postgres
+  # DSN: host=localhost user=localdev password=localdev dbname=castkeeper port=5432 sslmode=disable
 
 ObjectStorage:
   Driver: local
