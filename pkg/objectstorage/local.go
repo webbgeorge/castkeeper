@@ -41,14 +41,14 @@ func (s *LocalObjectStorage) DownloadImageFromSource(ctx context.Context, podcas
 	}
 
 	// TODO detect extension
-	fileName := fmt.Sprintf("%s.%s", podcast.GUID, ".jpg")
+	fileName := fmt.Sprintf("%s.%s", podcast.GUID, "jpg")
 
 	return s.downloadFile(ctx, podcast.ImageURL, path.Join(dir, fileName))
 }
 
 func (s *LocalObjectStorage) LoadImage(ctx context.Context, podcast podcasts.Podcast) (io.ReadSeekCloser, error) {
 	// TODO detect extension
-	filePath := path.Join(s.BasePath, podcast.GUID, fmt.Sprintf("%s.%s", podcast.GUID, ".jpg"))
+	filePath := path.Join(s.BasePath, podcast.GUID, fmt.Sprintf("%s.%s", podcast.GUID, "jpg"))
 	return os.Open(filePath)
 }
 

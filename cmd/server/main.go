@@ -59,13 +59,11 @@ func main() {
 	})
 
 	g.Go(func() error {
-		// dw := downloadworker.DownloadWorker{
-		_ = downloadworker.DownloadWorker{
+		dw := downloadworker.DownloadWorker{
 			DB: db,
 			OS: objstore,
 		}
-		// return dw.Start(ctx)
-		return nil
+		return dw.Start(ctx)
 	})
 
 	if err := g.Wait(); err != nil {
