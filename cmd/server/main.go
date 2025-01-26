@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -15,9 +16,6 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"github.com/webbgeorge/castkeeper/pkg/webserver"
-	"go.opentelemetry.io/contrib/bridges/otelslog"
-	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"golang.org/x/sync/errgroup"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -34,23 +32,14 @@ func main() {
 		log.Fatalf("failed to read config: %v", err)
 	}
 
-	otelRes, err := resource.Merge(
-		resource.Default(),
-		resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(applicationName),
-			semconv.DeploymentEnvironmentKey.String(cfg.EnvName),
-			semconv.ServiceInstanceIDKey.String(framework.GetHostID()),
-			semconv.ServiceVersionKey.String(castkeeper.Version),
-		),
+	slogger := framework.NewLogger(
+		applicationName,
+		cfg.EnvName,
+		castkeeper.Version,
+		slog.LevelInfo, // TODO level from config
 	)
-	if err != nil {
-		log.Fatalf("failed to create otel configuration", err)
-	}
 
-	otelLogger := otelslog.NewLogger("context")
-
-	// TODO use otel slog logger
+	// TODO use slog logger
 	gormLog := logger.New(
 		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{LogLevel: logger.Warn, IgnoreRecordNotFoundError: true},
@@ -82,24 +71,26 @@ func main() {
 	g, ctx := errgroup.WithContext(context.Background())
 
 	g.Go(func() error {
-		return webserver.Start(ctx, otelRes, db, objstore, itunesAPI)
+		return webserver.Start(ctx, slogger, db, objstore, itunesAPI)
 	})
 
 	g.Go(func() error {
 		fw := feedworker.FeedWorker{
 			DB:     db,
-			Logger: otelLogger,
+			Logger: slogger,
 		}
 		return fw.Start(ctx)
 	})
 
 	g.Go(func() error {
 		dw := downloadworker.DownloadWorker{
+			// _ = downloadworker.DownloadWorker{
 			DB:     db,
 			OS:     objstore,
-			Logger: otelLogger,
+			Logger: slogger,
 		}
 		return dw.Start(ctx)
+		// return nil
 	})
 
 	if err := g.Wait(); err != nil {

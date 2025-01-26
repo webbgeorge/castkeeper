@@ -8,22 +8,17 @@ import (
 	"net/http"
 	"os"
 	"time"
-
-	"go.opentelemetry.io/contrib/bridges/otelslog"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type loggerContextKey struct{}
 
 func GetLogger(ctx context.Context) *slog.Logger {
 	if ctx == nil {
-		return newLogger()
+		return NewLogger("unknown", "unknown", "unknown", slog.LevelInfo)
 	}
 	logger, ok := ctx.Value(loggerContextKey{}).(*slog.Logger)
 	if !ok {
-		return newLogger()
+		return NewLogger("unknown", "unknown", "unknown", slog.LevelInfo)
 	}
 	return logger
 }
@@ -32,8 +27,15 @@ func ContextWithLogger(ctx context.Context, logger *slog.Logger) context.Context
 	return context.WithValue(ctx, loggerContextKey{}, logger)
 }
 
-func newLogger() *slog.Logger {
-	return otelslog.NewLogger("context")
+func NewLogger(appName, envName, version string, logLevel slog.Level) *slog.Logger {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
+	logger = logger.With(
+		"app", appName,
+		"env", envName,
+		"version", version,
+		"host", GetHostID(),
+	)
+	return logger
 }
 
 func GetHostID() string {
@@ -60,22 +62,10 @@ type meteredTransport struct {
 	transport http.RoundTripper
 }
 
-var (
-	_      http.RoundTripper = &meteredTransport{}
-	tracer                   = otel.Tracer("")
-)
+var _ http.RoundTripper = &meteredTransport{}
 
 func (t *meteredTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	ctx, span := tracer.Start(
-		r.Context(),
-		"outboundHttpRequest",
-		trace.WithSpanKind(trace.SpanKindClient),
-		trace.WithAttributes(
-			attribute.String("method", r.Method),
-			attribute.String("url", r.URL.String()),
-		),
-	)
-	defer span.End()
+	ctx := r.Context()
 
 	startTime := time.Now()
 	res, err := t.transport.RoundTrip(r.WithContext(ctx))
@@ -88,8 +78,6 @@ func (t *meteredTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		resBody := copyResBody(res)
 		errorContent = string([]rune(resBody)[0:100])
 	}
-
-	span.SetAttributes(attribute.Int("status", res.StatusCode))
 
 	GetLogger(ctx).InfoContext(
 		ctx, "outbound HTTP request",

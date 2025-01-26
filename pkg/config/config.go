@@ -20,7 +20,6 @@ type Config struct {
 	WebServer     WebServerConfig     `validate:"required"`
 	Database      DatabaseConfig      `validate:"required"`
 	ObjectStorage ObjectStorageConfig `validate:"required"`
-	OpenTelemetry OpenTelemetryConfig `validate:""`
 }
 
 type WebServerConfig struct {
@@ -33,10 +32,6 @@ type DatabaseConfig struct {
 
 type ObjectStorageConfig struct {
 	Driver string `validate:"required,oneof=local awss3"`
-}
-
-type OpenTelemetryConfig struct {
-	Enabled bool
 }
 
 func LoadConfig() (Config, error) {

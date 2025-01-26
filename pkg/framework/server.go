@@ -6,27 +6,20 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
-	"os"
-	"os/signal"
 	"slices"
 
 	"github.com/a-h/templ"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"go.opentelemetry.io/otel/sdk/resource"
 )
 
 type Server struct {
-	Logger       *slog.Logger
-	addr         string
-	mux          *http.ServeMux
-	mws          []Middleware
-	onShutdown   func()
-	otelResource *resource.Resource
+	Logger *slog.Logger
+	addr   string
+	mux    *http.ServeMux
+	mws    []Middleware
 }
 
-func NewServer(otelResource *resource.Resource, addr string) (*Server, error) {
+func NewServer(addr string, logger *slog.Logger) (*Server, error) {
 	sm := http.NewServeMux()
-	logger := newLogger()
 	return &Server{
 		Logger: logger,
 		addr:   addr,
@@ -51,7 +44,7 @@ func (s *Server) AddRoute(pattern string, handler Handler, middlewares ...Middle
 		h = mw(h)
 	}
 
-	otelWrappedHandler := otelhttp.WithRouteTag(pattern, http.HandlerFunc(
+	handlerFunc := http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			ctx := ContextWithLogger(r.Context(), s.Logger)
 			err := h(ctx, w, r)
@@ -60,8 +53,8 @@ func (s *Server) AddRoute(pattern string, handler Handler, middlewares ...Middle
 				s.Logger.ErrorContext(ctx, fmt.Sprintf("Unhandled error: %s\n", err))
 			}
 		},
-	))
-	s.mux.Handle(pattern, otelWrappedHandler)
+	)
+	s.mux.Handle(pattern, handlerFunc)
 
 	return s
 }
@@ -75,15 +68,9 @@ func (s *Server) AddFileServer(path string, fileServer http.Handler, middlewares
 }
 
 func (s *Server) Start(ctx context.Context) error {
-	ctx, err := s.initOtel(ctx, s.otelResource)
-	if err != nil {
-		return err
-	}
-	defer s.onShutdown()
-
 	httpServer := &http.Server{
 		Addr:        s.addr,
-		Handler:     otelhttp.NewHandler(s.mux, "web"),
+		Handler:     s.mux,
 		BaseContext: func(_ net.Listener) context.Context { return ctx },
 	}
 
@@ -108,32 +95,6 @@ func (s *Server) Start(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-func (s *Server) initOtel(ctx context.Context, otelResource *resource.Resource) (context.Context, error) {
-	ctx, stopSig := signal.NotifyContext(ctx, os.Interrupt)
-
-	otelShutdown, err := setupOTelSDK(ctx, otelResource)
-	if err != nil {
-		s.Logger.Error(
-			"Failed to setup OTel SDK",
-			"error", err.Error(),
-		)
-		return ctx, err
-	}
-
-	s.onShutdown = func() {
-		stopSig()
-		err := otelShutdown(context.Background())
-		if err != nil {
-			s.Logger.Error(
-				"Failed to shutdown OTel",
-				"error", err.Error(),
-			)
-		}
-	}
-
-	return ctx, nil
 }
 
 type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
