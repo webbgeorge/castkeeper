@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/mmcdole/gofeed"
+	"github.com/webbgeorge/castkeeper/pkg/util"
 )
 
 type FeedService struct {
@@ -21,6 +22,11 @@ type FeedService struct {
 }
 
 func (s *FeedService) ParseFeed(ctx context.Context, feedURL string) (*gofeed.Feed, error) {
+	err := util.ValidateExtURL(feedURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid feedURL '%s': %w", feedURL, err)
+	}
+
 	fp := gofeed.NewParser()
 	fp.Client = s.HTTPClient
 

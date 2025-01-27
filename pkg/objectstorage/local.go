@@ -8,6 +8,8 @@ import (
 	"os"
 	"path"
 	"time"
+
+	"github.com/webbgeorge/castkeeper/pkg/util"
 )
 
 type LocalObjectStorage struct {
@@ -16,8 +18,13 @@ type LocalObjectStorage struct {
 }
 
 func (s *LocalObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation, podcastGUID, fileName string) error {
+	err := util.ValidateExtURL(remoteLocation)
+	if err != nil {
+		return fmt.Errorf("invalid remoteLocation '%s': %w", remoteLocation, err)
+	}
+
 	dir := path.Join(s.BasePath, podcastGUID)
-	err := os.MkdirAll(dir, os.ModePerm)
+	err = os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		return err
 	}

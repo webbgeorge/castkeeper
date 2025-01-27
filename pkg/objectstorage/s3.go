@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/webbgeorge/castkeeper/pkg/util"
 )
 
 type S3ObjectStorage struct {
@@ -19,6 +20,11 @@ type S3ObjectStorage struct {
 }
 
 func (s *S3ObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation, podcastGUID, fileName string) error {
+	err := util.ValidateExtURL(remoteLocation)
+	if err != nil {
+		return fmt.Errorf("invalid remoteLocation '%s': %w", remoteLocation, err)
+	}
+
 	s3Key := fmt.Sprintf("%s/%s", podcastGUID, fileName)
 
 	req, err := http.NewRequest(http.MethodGet, remoteLocation, nil)
