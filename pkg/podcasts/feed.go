@@ -64,7 +64,7 @@ func PodcastFromFeed(feedURL string, feed *gofeed.Feed) Podcast {
 	}
 
 	podcast := Podcast{
-		GUID:          feedGUID(feed),
+		GUID:          util.SanitiseGUID(feedGUID(feed)),
 		Title:         truncate(feed.Title, 1000),
 		Author:        author,
 		Description:   truncate(feed.Description, 10000),
@@ -110,7 +110,7 @@ func EpisodesFromFeed(feed *gofeed.Feed) ([]Episode, []error) {
 		}
 
 		episode := Episode{
-			GUID:         episodeGUID(item),
+			GUID:         util.SanitiseGUID(episodeGUID(item)),
 			Title:        truncate(item.Title, 1000),
 			Description:  truncate(desc, 10000),
 			DownloadURL:  item.Enclosures[0].URL,

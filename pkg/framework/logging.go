@@ -76,7 +76,11 @@ func (t *meteredTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		errorContent = err.Error()
 	} else if res.StatusCode >= 400 {
 		resBody := copyResBody(res)
-		errorContent = string([]rune(resBody)[0:100])
+		if len(resBody) <= 100 {
+			errorContent = resBody
+		} else {
+			errorContent = resBody[0:100]
+		}
 	}
 
 	GetLogger(ctx).InfoContext(

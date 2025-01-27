@@ -13,6 +13,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/itunes"
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
+	"github.com/webbgeorge/castkeeper/pkg/util"
 	"gorm.io/gorm"
 )
 
@@ -56,8 +57,8 @@ func NewAddPodcastHandler(feedService *podcasts.FeedService, db *gorm.DB, os obj
 		}
 
 		// TODO detect filetype
-		fileName := fmt.Sprintf("%s.%s", podcast.GUID, "jpg")
-		err = os.SaveRemoteFile(ctx, podcast.ImageURL, podcast.GUID, fileName)
+		fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(podcast.GUID), "jpg")
+		err = os.SaveRemoteFile(ctx, podcast.ImageURL, util.SanitiseGUID(podcast.GUID), fileName)
 		if err != nil {
 			framework.GetLogger(ctx).WarnContext(ctx, "failed to download image, continuing without", "error", err)
 		}
@@ -94,8 +95,8 @@ func NewDownloadEpisodeHandler(db *gorm.DB, os objectstorage.ObjectStorage) fram
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.%s", ep.GUID, podcasts.MimeToExt[ep.MimeType]))
 		w.Header().Set("Content-Type", ep.MimeType)
 
-		fileName := fmt.Sprintf("%s.%s", ep.GUID, podcasts.MimeToExt[ep.MimeType])
-		return os.ServeFile(ctx, r, w, ep.PodcastGUID, fileName)
+		fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(ep.GUID), podcasts.MimeToExt[ep.MimeType])
+		return os.ServeFile(ctx, r, w, util.SanitiseGUID(ep.PodcastGUID), fileName)
 	}
 }
 
@@ -111,8 +112,8 @@ func NewDownloadImageHandler(db *gorm.DB, os objectstorage.ObjectStorage) framew
 		// w.Header().Set("Content-Type", ep.MimeType)
 
 		// TODO detect file type
-		fileName := fmt.Sprintf("%s.%s", pod.GUID, "jpg")
-		return os.ServeFile(ctx, r, w, pod.GUID, fileName)
+		fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(pod.GUID), "jpg")
+		return os.ServeFile(ctx, r, w, util.SanitiseGUID(pod.GUID), fileName)
 	}
 }
 

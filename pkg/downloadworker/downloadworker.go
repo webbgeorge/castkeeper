@@ -9,6 +9,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
+	"github.com/webbgeorge/castkeeper/pkg/util"
 	"gorm.io/gorm"
 )
 
@@ -57,8 +58,8 @@ func (w *DownloadWorker) ProcessEpisode(ctx context.Context) (*podcasts.Episode,
 		return nil, fmt.Errorf("failed to get a pending episode: %w", err)
 	}
 
-	fileName := fmt.Sprintf("%s.%s", episode.GUID, podcasts.MimeToExt[episode.MimeType])
-	err = w.OS.SaveRemoteFile(ctx, episode.DownloadURL, episode.PodcastGUID, fileName)
+	fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(episode.GUID), podcasts.MimeToExt[episode.MimeType])
+	err = w.OS.SaveRemoteFile(ctx, episode.DownloadURL, util.SanitiseGUID(episode.PodcastGUID), fileName)
 	if err != nil {
 		if episode.FailureCount < maxFailures {
 			upErr := podcasts.UpdateEpisodeFailureCount(ctx, w.DB, &episode, episode.FailureCount+1)

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net"
 	"net/url"
+	"regexp"
 	"strings"
 )
 
@@ -31,4 +32,9 @@ func ValidateExtURL(uStr string) error {
 	}
 
 	return nil
+}
+
+func SanitiseGUID(guid string) string {
+	reg, _ := regexp.Compile("[^a-zA-Z0-9=_- ]+")
+	return reg.ReplaceAllString(guid, "-")
 }
