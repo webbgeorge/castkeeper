@@ -35,6 +35,6 @@ func ValidateExtURL(uStr string) error {
 }
 
 func SanitiseGUID(guid string) string {
-	reg, _ := regexp.Compile("[^a-zA-Z0-9=_- ]+")
+	reg := regexp.MustCompile("[^a-zA-Z0-9=_-]+")
 	return reg.ReplaceAllString(guid, "-")
 }
