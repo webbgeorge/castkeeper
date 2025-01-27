@@ -5,6 +5,8 @@ LogLevel: info
 
 WebServer:
   Port: 8080
+  CSRFSecretKey: testValueDoNotUseInProd
+  CSRFSecureCookie: false
 
 Database:
   Driver: sqlite

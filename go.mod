@@ -11,6 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.54
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.74.1
 	github.com/go-playground/validator/v10 v10.23.0
+	github.com/gorilla/csrf v1.7.2
 	github.com/mmcdole/gofeed v1.3.0
 	github.com/orandin/slog-gorm v1.4.0
 	github.com/spf13/viper v1.19.0
@@ -42,6 +43,7 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect

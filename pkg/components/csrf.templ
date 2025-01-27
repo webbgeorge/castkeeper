@@ -1,0 +1,7 @@
+package components
+
+const CSRFTokenInputName = "gorilla.csrf.Token"
+
+templ CSRFInput(token string) {
+	<input type="hidden" name={ CSRFTokenInputName } value={ token }/>
+}

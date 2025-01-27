@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/itunes"
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
@@ -16,6 +17,7 @@ import (
 
 func Start(
 	ctx context.Context,
+	cfg config.Config,
 	logger *slog.Logger,
 	feedService *podcasts.FeedService,
 	db *gorm.DB,
@@ -28,6 +30,10 @@ func Start(
 	}
 
 	middleware := framework.DefaultMiddlewareStack()
+	middleware = append(middleware, framework.NewCSRFMiddleware(
+		cfg.WebServer.CSRFSecretKey,
+		cfg.WebServer.CSRFSecureCookie,
+	))
 
 	return server.SetServerMiddlewares(middleware...).
 		AddFileServer("GET /static/", http.FileServer(http.FS(web.StaticAssets))).

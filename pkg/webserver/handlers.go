@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/csrf"
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
 	"github.com/webbgeorge/castkeeper/pkg/components/partials"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
@@ -32,7 +33,7 @@ func NewHomeHandler(db *gorm.DB) framework.Handler {
 
 func NewSearchPodcastsHandler() framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return framework.Render(ctx, w, 200, pages.SearchPodcasts())
+		return framework.Render(ctx, w, 200, pages.SearchPodcasts(csrf.Token(r)))
 	}
 }
 
@@ -119,17 +120,17 @@ func NewSearchResultsHandler(itunesAPI *itunes.ItunesAPI) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		q := r.PostFormValue("query")
 		if len(q) == 0 {
-			return framework.Render(ctx, w, 200, partials.SearchResults(nil, "Search query cannot be empty"))
+			return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), nil, "Search query cannot be empty"))
 		}
 		if len(q) >= 250 {
-			return framework.Render(ctx, w, 200, partials.SearchResults(nil, "Search query must be less than 250 characters"))
+			return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), nil, "Search query must be less than 250 characters"))
 		}
 
 		results, err := itunesAPI.Search(ctx, q)
 		if err != nil {
 			framework.GetLogger(ctx).ErrorContext(ctx, "itunes search failed", "error", err)
-			return framework.Render(ctx, w, 200, partials.SearchResults(nil, "There was an unexpected error"))
+			return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), nil, "There was an unexpected error"))
 		}
-		return framework.Render(ctx, w, 200, partials.SearchResults(results, ""))
+		return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), results, ""))
 	}
 }

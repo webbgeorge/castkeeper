@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/csrf"
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
 )
 
@@ -121,6 +122,24 @@ func NewErrorHandlerMiddleware() Middleware {
 			}
 
 			return nil
+		}
+	}
+}
+
+// wraps the gorilla CSRF Middleware
+func NewCSRFMiddleware(csrfSecretKey string, csrfSecureCookie bool) Middleware {
+	return func(next Handler) Handler {
+		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			var err error
+			hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				err = next(r.Context(), w, r)
+			})
+			csrf.Protect(
+				[]byte(csrfSecretKey),
+				csrf.Secure(csrfSecureCookie),
+				csrf.Path("/"),
+			)(hf).ServeHTTP(w, r)
+			return err
 		}
 	}
 }
