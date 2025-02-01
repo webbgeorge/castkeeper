@@ -59,8 +59,13 @@ func PodcastFromFeed(feedURL string, feed *gofeed.Feed) Podcast {
 	}
 
 	imageURL := ""
-	if feed.Image != nil && feed.Image.URL != "" {
-		imageURL = feed.Image.URL
+	if feed.ITunesExt != nil && feed.ITunesExt.Image != "" {
+		imageURL = feed.ITunesExt.Image
+	}
+
+	isExplicit := false
+	if feed.ITunesExt != nil {
+		isExplicit, _ = strconv.ParseBool(feed.ITunesExt.Explicit)
 	}
 
 	podcast := Podcast{
@@ -68,6 +73,10 @@ func PodcastFromFeed(feedURL string, feed *gofeed.Feed) Podcast {
 		Title:         truncate(feed.Title, 1000),
 		Author:        author,
 		Description:   truncate(feed.Description, 10000),
+		Language:      feed.Language,
+		Link:          feed.Link,
+		Categories:    feedCategories(feed),
+		IsExplicit:    isExplicit,
 		ImageURL:      imageURL,
 		FeedURL:       feedURL,
 		LastCheckedAt: nil,
@@ -208,4 +217,20 @@ func parseDuration(item *gofeed.Item) int {
 	// use 0000 origin instead of the default time.Time{} 0001
 	dur := t.Sub(time.Date(0, 1, 1, 0, 0, 0, 0, time.UTC))
 	return int(math.Round(dur.Seconds()))
+}
+
+func feedCategories(feed *gofeed.Feed) []string {
+	cats := make([]string, 0)
+	if feed.ITunesExt == nil {
+		return cats
+	}
+	for _, c := range feed.ITunesExt.Categories {
+		if c.Text != "" {
+			cats = append(cats, c.Text)
+		}
+		if c.Subcategory != nil && c.Subcategory.Text != "" {
+			cats = append(cats, c.Subcategory.Text)
+		}
+	}
+	return cats
 }

@@ -3,6 +3,7 @@
 
 EnvName: local
 LogLevel: info
+BaseURL: http://localhost:8080
 
 WebServer:
   Port: 8080

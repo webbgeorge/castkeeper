@@ -19,28 +19,28 @@ type S3ObjectStorage struct {
 	Prefix     string
 }
 
-func (s *S3ObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation, podcastGUID, fileName string) error {
+func (s *S3ObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation, podcastGUID, fileName string) (int64, error) {
 	err := util.ValidateExtURL(remoteLocation)
 	if err != nil {
-		return fmt.Errorf("invalid remoteLocation '%s': %w", remoteLocation, err)
+		return -1, fmt.Errorf("invalid remoteLocation '%s': %w", remoteLocation, err)
 	}
 
 	s3Key := fmt.Sprintf("%s/%s", podcastGUID, fileName)
 
 	req, err := http.NewRequest(http.MethodGet, remoteLocation, nil)
 	if err != nil {
-		return err
+		return -1, err
 	}
 	req = req.WithContext(ctx)
 
 	resp, err := s.HTTPClient.Do(req)
 	if err != nil {
-		return err
+		return -1, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("failed to download file with status '%d'", resp.StatusCode)
+		return -1, fmt.Errorf("failed to download file with status '%d'", resp.StatusCode)
 	}
 
 	uploader := manager.NewUploader(s.S3Client)
@@ -50,10 +50,10 @@ func (s *S3ObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation, po
 		Body:   resp.Body,
 	})
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	return nil
+	return resp.ContentLength, nil
 }
 
 func (s *S3ObjectStorage) ServeFile(ctx context.Context, r *http.Request, w http.ResponseWriter, podcastGUID, fileName string) error {

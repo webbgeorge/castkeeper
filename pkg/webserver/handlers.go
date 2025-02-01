@@ -58,7 +58,7 @@ func NewAddPodcastHandler(feedService *podcasts.FeedService, db *gorm.DB, os obj
 
 		// TODO detect filetype
 		fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(podcast.GUID), "jpg")
-		err = os.SaveRemoteFile(ctx, podcast.ImageURL, util.SanitiseGUID(podcast.GUID), fileName)
+		_, err = os.SaveRemoteFile(ctx, podcast.ImageURL, util.SanitiseGUID(podcast.GUID), fileName)
 		if err != nil {
 			framework.GetLogger(ctx).WarnContext(ctx, "failed to download image, continuing without", "error", err)
 		}
@@ -133,5 +133,17 @@ func NewSearchResultsHandler(itunesAPI *itunes.ItunesAPI) framework.Handler {
 			return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), nil, "There was an unexpected error"))
 		}
 		return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), results, ""))
+	}
+}
+
+func NewFeedHandler(baseURL string, db *gorm.DB) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		feed, err := podcasts.GenerateFeed(ctx, baseURL, db, r.PathValue("guid"))
+		if err != nil {
+			return err
+		}
+
+		w.Header().Set("Content-Type", "application/xml")
+		return feed.WriteFeedXML(w)
 	}
 }

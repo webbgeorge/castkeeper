@@ -17,10 +17,14 @@ const (
 )
 
 type Podcast struct {
-	GUID          string `gorm:"primaryKey" validate:"required,gte=1,lte=1000"`
-	Title         string `validate:"required,gte=1,lte=1000"`
-	Author        string `validate:"required,gte=1,lte=1000"`
-	Description   string `validate:"lte=10000"`
+	GUID          string   `gorm:"primaryKey" validate:"required,gte=1,lte=1000"`
+	Title         string   `validate:"required,gte=1,lte=1000"`
+	Author        string   `validate:"required,gte=1,lte=1000"`
+	Description   string   `validate:"lte=10000"`
+	Language      string   `validate:"lte=10"`
+	Link          string   `validate:"lte=1000"`
+	Categories    []string `gorm:"serializer:json" validate:"lte=25,dive,lte=100"` // TODO consider keeping nested categories
+	IsExplicit    bool
 	ImageURL      string `validate:"lte=1000"`
 	FeedURL       string `validate:"required,http_url,lte=1000"`
 	LastCheckedAt *time.Time
@@ -37,8 +41,9 @@ type Episode struct {
 	Title        string  `validate:"required,gte=1,lte=1000"`
 	Description  string  `validate:"lte=10000"`
 	DownloadURL  string  `validate:"required,http_url,lte=1000"`
-	MimeType     string  `validate:"required,oneof=audio/mpeg audio/x-m4a video/mp4 video/quicktime"`
-	DurationSecs int     `validate:"gte=0"`
+	Bytes        int64
+	MimeType     string `validate:"required,oneof=audio/mpeg audio/x-m4a video/mp4 video/quicktime"`
+	DurationSecs int    `validate:"gte=0"`
 	PublishedAt  time.Time
 	Status       string `validate:"required,oneof=pending failed success"`
 	FailureCount int    `validate:"gte=0"`
@@ -139,11 +144,18 @@ func GetEpisode(ctx context.Context, db *gorm.DB, guid string) (Episode, error) 
 	return episode, nil
 }
 
-func UpdateEpisodeStatus(ctx context.Context, db *gorm.DB, episode *Episode, status string) error {
+func UpdateEpisodeStatus(ctx context.Context, db *gorm.DB, episode *Episode, status string, fileBytes *int64) error {
+	fields := []string{"Status"}
+	epUpdate := Episode{Status: status}
+	if fileBytes != nil {
+		fields = append(fields, "Bytes")
+		epUpdate.Bytes = *fileBytes
+	}
+
 	result := db.
 		Model(episode).
-		Select("Status").
-		Updates(Episode{Status: status})
+		Select(fields).
+		Updates(epUpdate)
 	if result.Error != nil {
 		return result.Error
 	}

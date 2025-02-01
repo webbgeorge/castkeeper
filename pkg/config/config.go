@@ -28,6 +28,7 @@ const (
 type Config struct {
 	LogLevel      string              `validate:"required,oneof=debug info warn error"`
 	EnvName       string              `validate:"required"`
+	BaseURL       string              `validate:"required"`
 	WebServer     WebServerConfig     `validate:"required"`
 	Database      DatabaseConfig      `validate:"required"`
 	ObjectStorage ObjectStorageConfig `validate:"required"`

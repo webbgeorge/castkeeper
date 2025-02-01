@@ -59,7 +59,7 @@ func (w *DownloadWorker) ProcessEpisode(ctx context.Context) (*podcasts.Episode,
 	}
 
 	fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(episode.GUID), podcasts.MimeToExt[episode.MimeType])
-	err = w.OS.SaveRemoteFile(ctx, episode.DownloadURL, util.SanitiseGUID(episode.PodcastGUID), fileName)
+	n, err := w.OS.SaveRemoteFile(ctx, episode.DownloadURL, util.SanitiseGUID(episode.PodcastGUID), fileName)
 	if err != nil {
 		if episode.FailureCount < maxFailures {
 			upErr := podcasts.UpdateEpisodeFailureCount(ctx, w.DB, &episode, episode.FailureCount+1)
@@ -67,7 +67,7 @@ func (w *DownloadWorker) ProcessEpisode(ctx context.Context) (*podcasts.Episode,
 				return nil, fmt.Errorf("failed to update episode '%d' failure count: %w", episode.GUID, upErr)
 			}
 		} else {
-			upErr := podcasts.UpdateEpisodeStatus(ctx, w.DB, &episode, podcasts.EpisodeStatusFailed)
+			upErr := podcasts.UpdateEpisodeStatus(ctx, w.DB, &episode, podcasts.EpisodeStatusFailed, nil)
 			if upErr != nil {
 				return nil, fmt.Errorf("failed to update episode '%d' status to failed: %w", episode.GUID, upErr)
 			}
@@ -75,7 +75,7 @@ func (w *DownloadWorker) ProcessEpisode(ctx context.Context) (*podcasts.Episode,
 		return nil, fmt.Errorf("failed to download episode '%d': %w", episode.GUID, err)
 	}
 
-	err = podcasts.UpdateEpisodeStatus(ctx, w.DB, &episode, podcasts.EpisodeStatusSuccess)
+	err = podcasts.UpdateEpisodeStatus(ctx, w.DB, &episode, podcasts.EpisodeStatusSuccess, &n)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update episode '%s' status to success: %w", episode.GUID, err)
 	}

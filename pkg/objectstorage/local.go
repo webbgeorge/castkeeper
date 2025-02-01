@@ -17,48 +17,48 @@ type LocalObjectStorage struct {
 	BasePath   string
 }
 
-func (s *LocalObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation, podcastGUID, fileName string) error {
+func (s *LocalObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation, podcastGUID, fileName string) (int64, error) {
 	err := util.ValidateExtURL(remoteLocation)
 	if err != nil {
-		return fmt.Errorf("invalid remoteLocation '%s': %w", remoteLocation, err)
+		return -1, fmt.Errorf("invalid remoteLocation '%s': %w", remoteLocation, err)
 	}
 
 	dir := path.Join(s.BasePath, podcastGUID)
 	err = os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	localPath := path.Join(dir, fileName)
 
 	f, err := os.Create(localPath)
 	if err != nil {
-		return err
+		return -1, err
 	}
 	defer f.Close()
 
 	req, err := http.NewRequest(http.MethodGet, remoteLocation, nil)
 	if err != nil {
-		return err
+		return -1, err
 	}
 	req = req.WithContext(ctx)
 
 	resp, err := s.HTTPClient.Do(req)
 	if err != nil {
-		return err
+		return -1, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return fmt.Errorf("failed to download file with status '%d'", resp.StatusCode)
+		return -1, fmt.Errorf("failed to download file with status '%d'", resp.StatusCode)
 	}
 
-	_, err = io.Copy(f, resp.Body)
+	n, err := io.Copy(f, resp.Body)
 	if err != nil {
-		return err
+		return -1, err
 	}
 
-	return nil
+	return n, nil
 }
 
 func (s *LocalObjectStorage) ServeFile(ctx context.Context, r *http.Request, w http.ResponseWriter, podcastGUID, fileName string) error {
