@@ -4,48 +4,40 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"math"
 	"net/http"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/mmcdole/gofeed"
 	"github.com/webbgeorge/castkeeper/pkg/util"
+	"github.com/webbgeorge/gopodcast"
 )
 
 type FeedService struct {
 	HTTPClient *http.Client
 }
 
-func (s *FeedService) ParseFeed(ctx context.Context, feedURL string) (*gofeed.Feed, error) {
+func (s *FeedService) ParseFeed(ctx context.Context, feedURL string) (*gopodcast.Podcast, error) {
 	err := util.ValidateExtURL(feedURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid feedURL '%s': %w", feedURL, err)
 	}
 
-	fp := gofeed.NewParser()
-	fp.Client = s.HTTPClient
+	fp := gopodcast.NewParser()
+	fp.HTTPClient = s.HTTPClient
 
-	feed, err := fp.ParseURLWithContext(feedURL, ctx)
+	feed, err := fp.ParseFeedFromURL(ctx, feedURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse feed: %w", err)
 	}
 
-	if feed.ITunesExt == nil {
-		return nil, errors.New("feed is not a podcast")
-	}
-
-	// oldest to newest
-	sort.Sort(feed)
-
 	return feed, nil
 }
 
-func PodcastFromFeed(feedURL string, feed *gofeed.Feed) Podcast {
+func PodcastFromFeed(feedURL string, feed *gopodcast.Podcast) Podcast {
 	var lastEpisodeAt *time.Time
 	episodes, _ := EpisodesFromFeed(feed)
 	if len(episodes) > 0 {
@@ -54,30 +46,20 @@ func PodcastFromFeed(feedURL string, feed *gofeed.Feed) Podcast {
 	}
 
 	author := "unknown"
-	if feed.Authors != nil && len(feed.Authors) > 0 && feed.Authors[0] != nil {
-		author = feed.Authors[0].Name
-	}
-
-	imageURL := ""
-	if feed.ITunesExt != nil && feed.ITunesExt.Image != "" {
-		imageURL = feed.ITunesExt.Image
-	}
-
-	isExplicit := false
-	if feed.ITunesExt != nil {
-		isExplicit, _ = strconv.ParseBool(feed.ITunesExt.Explicit)
+	if feed.ITunesAuthor != "" {
+		author = feed.ITunesAuthor
 	}
 
 	podcast := Podcast{
-		GUID:          util.SanitiseGUID(feedGUID(feed)),
+		GUID:          feedGUID(feed),
 		Title:         truncate(feed.Title, 1000),
 		Author:        author,
-		Description:   truncate(feed.Description, 10000),
+		Description:   truncate(feed.Description.Text, 10000),
 		Language:      feed.Language,
 		Link:          feed.Link,
 		Categories:    feedCategories(feed),
-		IsExplicit:    isExplicit,
-		ImageURL:      imageURL,
+		IsExplicit:    bool(feed.ITunesExplicit),
+		ImageURL:      feed.ITunesImage.Href,
 		FeedURL:       feedURL,
 		LastCheckedAt: nil,
 		LastEpisodeAt: lastEpisodeAt,
@@ -86,44 +68,40 @@ func PodcastFromFeed(feedURL string, feed *gofeed.Feed) Podcast {
 	return podcast
 }
 
-func EpisodesFromFeed(feed *gofeed.Feed) ([]Episode, []error) {
+func EpisodesFromFeed(feed *gopodcast.Podcast) ([]Episode, []error) {
 	episodes := make([]Episode, 0)
 	errs := make([]error, 0)
 	for _, item := range feed.Items {
-		pub, err := parseRSSTime(item.Published)
-		if err != nil {
-			errs = append(errs, fmt.Errorf("error parsing time, still processing episode: %w", err))
-			pub = time.Time{}
+		desc := ""
+		if item.Description != nil {
+			desc = item.Description.Text
 		}
 
-		desc := item.Description
-		if desc == "" && item.ITunesExt.Summary != "" {
-			desc = item.ITunesExt.Summary
+		pub := time.Time{}
+		if item.PubDate != nil {
+			pub = time.Time(*item.PubDate)
 		}
 
-		if item.Enclosures == nil ||
-			len(item.Enclosures) == 0 ||
-			item.Enclosures[0] == nil ||
-			item.Enclosures[0].URL == "" {
+		if item.Enclosure.URL == "" {
 			errs = append(errs, fmt.Errorf("could not read download URL, skipping episode '%s'", episodeGUID(item)))
 			continue
 		}
 
-		if _, ok := MimeToExt[item.Enclosures[0].Type]; !ok {
+		if _, ok := MimeToExt[item.Enclosure.Type]; !ok {
 			errs = append(errs, fmt.Errorf(
 				"unsupported file type '%s', skipping episode '%s'",
-				item.Enclosures[0].Type,
+				item.Enclosure.Type,
 				episodeGUID(item),
 			))
 			continue
 		}
 
 		episode := Episode{
-			GUID:         util.SanitiseGUID(episodeGUID(item)),
+			GUID:         episodeGUID(item),
 			Title:        truncate(item.Title, 1000),
 			Description:  truncate(desc, 10000),
-			DownloadURL:  item.Enclosures[0].URL,
-			MimeType:     item.Enclosures[0].Type,
+			DownloadURL:  item.Enclosure.URL,
+			MimeType:     item.Enclosure.Type,
 			DurationSecs: parseDuration(item),
 			PublishedAt:  pub,
 		}
@@ -131,40 +109,57 @@ func EpisodesFromFeed(feed *gofeed.Feed) ([]Episode, []error) {
 		episodes = append(episodes, episode)
 	}
 
+	slices.SortFunc(episodes, func(a, b Episode) int {
+		return a.PublishedAt.Compare(b.PublishedAt)
+	})
+
 	return episodes, errs
 }
 
-func feedGUID(feed *gofeed.Feed) string {
-	// use guid if defined
-	if feed.Extensions != nil &&
-		feed.Extensions["podcast"] != nil &&
-		feed.Extensions["podcast"]["guid"] != nil &&
-		len(feed.Extensions["podcast"]["guid"]) > 0 &&
-		feed.Extensions["podcast"]["guid"][0].Value != "" {
-		return feed.Extensions["podcast"]["guid"][0].Value
+// TODO I'm not confident this method of getting a unique ID is sufficient
+func feedGUID(feed *gopodcast.Podcast) string {
+	if feed.PodcastGUID != "" {
+		return util.SanitiseGUID(feed.PodcastGUID)
 	}
 
 	// fallback to hash of feed link or title otherwise
-	hashIn := feed.FeedLink
+	hashIn := feed.AtomLink.Href
+	if hashIn == "" {
+		hashIn = feed.Link
+	}
 	if hashIn == "" {
 		hashIn = feed.Title
 	}
 
 	h := sha256.New()
 	_, _ = h.Write([]byte(hashIn))
-	return base64.URLEncoding.EncodeToString(h.Sum(nil))
+	newGUID := base64.URLEncoding.EncodeToString(h.Sum(nil))
+
+	return util.SanitiseGUID(newGUID)
 }
 
-func episodeGUID(feedItem *gofeed.Item) string {
-	if feedItem.GUID != "" {
-		return feedItem.GUID
+// TODO I'm not confident this method of getting a unique ID is sufficient
+func episodeGUID(feedItem *gopodcast.Item) string {
+	if feedItem.GUID.Text != "" {
+		return util.SanitiseGUID(feedItem.GUID.Text)
 	}
 
-	// fallback to title + pub date if guid not present
-	hashIn := feedItem.Title + feedItem.Published
+	// fallback to title + pub date or Enclosure URL if guid not present
+
+	guidSuffix := ""
+	if feedItem.PubDate != nil {
+		guidSuffix = time.Time(*feedItem.PubDate).Format(time.RFC3339)
+	}
+	if guidSuffix == "" {
+		guidSuffix = feedItem.Enclosure.URL
+	}
+
+	hashIn := feedItem.Title + guidSuffix
 	h := sha256.New()
 	_, _ = h.Write([]byte(hashIn))
-	return base64.URLEncoding.EncodeToString(h.Sum(nil))
+	newGUID := base64.URLEncoding.EncodeToString(h.Sum(nil))
+
+	return util.SanitiseGUID(newGUID)
 }
 
 func truncate(s string, l int) string {
@@ -187,12 +182,12 @@ func parseRSSTime(s string) (time.Time, error) {
 	return time.Time{}, fmt.Errorf("failed to parse time '%s'", s)
 }
 
-func parseDuration(item *gofeed.Item) int {
-	if item.ITunesExt == nil || item.ITunesExt.Duration == "" {
+func parseDuration(item *gopodcast.Item) int {
+	if item.ITunesDuration == "" {
 		return 0
 	}
 
-	durStr := item.ITunesExt.Duration
+	durStr := item.ITunesDuration
 	colonCount := strings.Count(durStr, ":")
 
 	if colonCount == 0 {
@@ -219,17 +214,14 @@ func parseDuration(item *gofeed.Item) int {
 	return int(math.Round(dur.Seconds()))
 }
 
-func feedCategories(feed *gofeed.Feed) []string {
+func feedCategories(feed *gopodcast.Podcast) []string {
 	cats := make([]string, 0)
-	if feed.ITunesExt == nil {
-		return cats
-	}
-	for _, c := range feed.ITunesExt.Categories {
+	for _, c := range feed.ITunesCategory {
 		if c.Text != "" {
 			cats = append(cats, c.Text)
-		}
-		if c.Subcategory != nil && c.Subcategory.Text != "" {
-			cats = append(cats, c.Subcategory.Text)
+			if c.SubCategory != nil && c.SubCategory.Text != "" {
+				cats = append(cats, fmt.Sprintf("%s:%s", c.Text, c.SubCategory.Text))
+			}
 		}
 	}
 	return cats

@@ -1,6 +1,6 @@
 module github.com/webbgeorge/castkeeper
 
-go 1.23
+go 1.23.2
 
 toolchain go1.23.4
 
@@ -12,9 +12,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.74.1
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/gorilla/csrf v1.7.2
-	github.com/mmcdole/gofeed v1.3.0
 	github.com/orandin/slog-gorm v1.4.0
 	github.com/spf13/viper v1.19.0
+	github.com/webbgeorge/gopodcast v0.1.0
 	golang.org/x/sync v0.10.0
 	gorm.io/driver/postgres v1.5.11
 	gorm.io/driver/sqlite v1.5.7
@@ -22,8 +22,6 @@ require (
 )
 
 require (
-	github.com/PuerkitoBio/goquery v1.10.1 // indirect
-	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.8 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.55 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.25 // indirect
@@ -51,14 +49,10 @@ require (
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mattn/go-sqlite3 v1.14.22 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
-	github.com/mmcdole/goxpp v1.1.1-0.20240225020742-a0c311522b23 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
