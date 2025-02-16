@@ -127,3 +127,10 @@ func HttpBadRequest(msg string) HttpError {
 		Message:    msg,
 	}
 }
+
+func HttpUnauthorized() HttpError {
+	return HttpError{
+		StatusCode: 401,
+		Message:    "Unauthorized",
+	}
+}

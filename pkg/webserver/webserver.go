@@ -35,7 +35,9 @@ func Start(
 		cfg.WebServer.CSRFSecretKey,
 		cfg.WebServer.CSRFSecureCookie,
 	))
+
 	authMW := auth.NewAuthenticationMiddleware(db)
+	feedAuthMW := auth.NewFeedAuthenticationMiddleware(db)
 
 	return server.SetServerMiddlewares(middleware...).
 		AddFileServer("GET /static/", http.FileServer(http.FS(web.StaticAssets))).
@@ -48,6 +50,6 @@ func Start(
 		AddRoute("POST /partials/search-results", NewSearchResultsHandler(itunesAPI), authMW).
 		AddRoute("GET /podcasts/{guid}/image", NewDownloadImageHandler(db, os), authMW).
 		AddRoute("GET /episodes/{guid}/download", NewDownloadEpisodeHandler(db, os), authMW).
-		AddRoute("GET /feeds/{guid}", NewFeedHandler(cfg.BaseURL, db), authMW). // TODO diff auth for feeds
+		AddRoute("GET /feeds/{guid}", NewFeedHandler(cfg.BaseURL, db), feedAuthMW).
 		Start(ctx)
 }

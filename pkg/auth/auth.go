@@ -74,6 +74,30 @@ func redirectToLogin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, fmt.Sprintf("/auth/login?%s", queryString), http.StatusFound)
 }
 
+// handles auth for podcast feeds - using basic auth and no redirecting or sessions
+func NewFeedAuthenticationMiddleware(db *gorm.DB) framework.Middleware {
+	return func(next framework.Handler) framework.Handler {
+		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			username, password, ok := r.BasicAuth()
+			if !ok {
+				return framework.HttpUnauthorized()
+			}
+
+			user, err := checkUsernameAndPassword(ctx, db, username, password)
+			if err != nil {
+				return framework.HttpUnauthorized()
+			}
+
+			framework.GetLogger(ctx).InfoContext(
+				ctx, "successfully authenticated user to feed",
+				"userID", user.ID,
+			)
+
+			return next(ctx, w, r)
+		}
+	}
+}
+
 func NewGetLoginHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return renderLoginPage(ctx, w, r, false)
@@ -88,14 +112,8 @@ func NewPostLoginHandler(
 		username := r.PostFormValue("username")
 		password := r.PostFormValue("password")
 
-		user, err := GetUserByUsername(ctx, db, username)
+		user, err := checkUsernameAndPassword(ctx, db, username, password)
 		if err != nil {
-			framework.GetLogger(ctx).InfoContext(ctx, fmt.Sprintf("failed to find username: '%s'", username), "error", err)
-			return renderLoginPage(ctx, w, r, true)
-		}
-
-		if err := user.checkPassword(password); err != nil {
-			framework.GetLogger(ctx).InfoContext(ctx, fmt.Sprintf("incorrect password for username: '%s'", username), "error", err)
 			return renderLoginPage(ctx, w, r, true)
 		}
 
@@ -118,6 +136,21 @@ func NewPostLoginHandler(
 		http.Redirect(w, r, redirectURL, http.StatusFound)
 		return nil
 	}
+}
+
+func checkUsernameAndPassword(ctx context.Context, db *gorm.DB, username, password string) (User, error) {
+	user, err := GetUserByUsername(ctx, db, username)
+	if err != nil {
+		framework.GetLogger(ctx).InfoContext(ctx, fmt.Sprintf("failed to find username: '%s'", username), "error", err)
+		return User{}, err
+	}
+
+	if err := user.checkPassword(password); err != nil {
+		framework.GetLogger(ctx).InfoContext(ctx, fmt.Sprintf("incorrect password for username: '%s'", username), "error", err)
+		return User{}, err
+	}
+
+	return user, nil
 }
 
 func renderLoginPage(ctx context.Context, w http.ResponseWriter, r *http.Request, authErr bool) error {
