@@ -1,0 +1,46 @@
+package pages
+
+import "github.com/webbgeorge/castkeeper/pkg/components"
+
+templ Login(csrfToken string) {
+	@components.Layout("Login") {
+		<div class="w-full max-w-[600px] card md:card-normal bg-base-100 shadow-xl my-6 mx-auto">
+			<div class="card-body">
+				<h1 class="card-title">Login</h1>
+				<form
+					method="post"
+					action="/auth/login"
+				>
+					@components.CSRFInput(csrfToken)
+					<label for="usernameInput" class="form-control mb-4">
+						<div class="label">
+							<span class="label-text">Username</span>
+						</div>
+						<input
+							id="usernameInput"
+							name="username"
+							type="text"
+							placeholder="Username"
+							class="input input-bordered w-full"
+						/>
+					</label>
+					<label for="passwordInput" class="form-control mb-4">
+						<div class="label">
+							<span class="label-text">Password</span>
+						</div>
+						<input
+							id="passwordInput"
+							name="password"
+							type="password"
+							placeholder="Password"
+							class="input input-bordered w-full"
+						/>
+					</label>
+					<div class="flex justify-end mt-6">
+						<button type="submit" class="btn btn-primary">Login</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	}
+}

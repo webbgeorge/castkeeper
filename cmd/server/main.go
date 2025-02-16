@@ -11,6 +11,7 @@ import (
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	slogGorm "github.com/orandin/slog-gorm"
+	"github.com/webbgeorge/castkeeper/pkg/auth"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/feedworker"
@@ -102,6 +103,12 @@ func configureDatabase(cfg config.Config, logger *slog.Logger) (*gorm.DB, error)
 		return nil, err
 	}
 	if err := db.AutoMigrate(&podcasts.Episode{}); err != nil {
+		return nil, err
+	}
+	if err := db.AutoMigrate(&auth.User{}); err != nil {
+		return nil, err
+	}
+	if err := db.AutoMigrate(&auth.Session{}); err != nil {
 		return nil, err
 	}
 

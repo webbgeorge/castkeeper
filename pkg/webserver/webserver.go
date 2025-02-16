@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/webbgeorge/castkeeper/pkg/auth"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/itunes"
@@ -34,16 +35,19 @@ func Start(
 		cfg.WebServer.CSRFSecretKey,
 		cfg.WebServer.CSRFSecureCookie,
 	))
+	authMW := auth.NewAuthenticationMiddleware(db)
 
 	return server.SetServerMiddlewares(middleware...).
 		AddFileServer("GET /static/", http.FileServer(http.FS(web.StaticAssets))).
-		AddRoute("GET /", NewHomeHandler(db)).
-		AddRoute("GET /podcasts/{guid}", NewViewPodcastHandler(db)).
-		AddRoute("GET /podcasts/search", NewSearchPodcastsHandler()).
-		AddRoute("POST /partials/add-podcast", NewAddPodcastHandler(feedService, db, os)).
-		AddRoute("POST /partials/search-results", NewSearchResultsHandler(itunesAPI)).
-		AddRoute("GET /podcasts/{guid}/image", NewDownloadImageHandler(db, os)).
-		AddRoute("GET /episodes/{guid}/download", NewDownloadEpisodeHandler(db, os)).
-		AddRoute("GET /feeds/{guid}", NewFeedHandler(cfg.BaseURL, db)).
+		AddRoute("GET /", NewHomeHandler(db), authMW).
+		AddRoute("GET /auth/login", auth.NewGetLoginHandler(db)).
+		AddRoute("POST /auth/login", auth.NewPostLoginHandler(cfg.BaseURL, db)).
+		AddRoute("GET /podcasts/{guid}", NewViewPodcastHandler(db), authMW).
+		AddRoute("GET /podcasts/search", NewSearchPodcastsHandler(), authMW).
+		AddRoute("POST /partials/add-podcast", NewAddPodcastHandler(feedService, db, os), authMW).
+		AddRoute("POST /partials/search-results", NewSearchResultsHandler(itunesAPI), authMW).
+		AddRoute("GET /podcasts/{guid}/image", NewDownloadImageHandler(db, os), authMW).
+		AddRoute("GET /episodes/{guid}/download", NewDownloadEpisodeHandler(db, os), authMW).
+		AddRoute("GET /feeds/{guid}", NewFeedHandler(cfg.BaseURL, db), authMW). // TODO diff auth for feeds
 		Start(ctx)
 }
