@@ -41,12 +41,12 @@ func main() {
 
 	db, err := configureDatabase(cfg, logger)
 	if err != nil {
-		log.Fatalf("failed to connect to database", err)
+		log.Fatalf("failed to connect to database: %v", err)
 	}
 
 	objstore, err := configureObjectStorage(ctx, cfg)
 	if err != nil {
-		log.Fatalf("failed to configure objectstorage", err)
+		log.Fatalf("failed to configure objectstorage: %v", err)
 	}
 
 	feedService := &podcasts.FeedService{

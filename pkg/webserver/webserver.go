@@ -25,9 +25,10 @@ func Start(
 	os objectstorage.ObjectStorage,
 	itunesAPI *itunes.ItunesAPI,
 ) error {
-	server, err := framework.NewServer(":8080", logger)
+	port := fmt.Sprintf(":%d", cfg.WebServer.Port)
+	server, err := framework.NewServer(port, logger)
 	if err != nil {
-		return fmt.Errorf("failed to start server", err)
+		return fmt.Errorf("failed to start server: %w", err)
 	}
 
 	middleware := framework.DefaultMiddlewareStack()

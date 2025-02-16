@@ -22,7 +22,7 @@ watch:
 
 build:
 	$(MAKE) pre_build
-	go build -ldflags="$(FLAGS)" cmd/server/main.go
+	go build -o cmd/server/server -ldflags="$(FLAGS)" cmd/server/main.go
 
 test:
 	go vet ./...

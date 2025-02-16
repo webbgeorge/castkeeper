@@ -35,7 +35,7 @@ func (w *DownloadWorker) Start(ctx context.Context) error {
 		episode, err := w.ProcessEpisode(ctx)
 		if err != nil {
 			notFoundErr := podcasts.ErrEpisodeNotFound // copy first to avoid changing value
-			if errors.As(err, &notFoundErr) {
+			if errors.Is(err, notFoundErr) {
 				time.Sleep(5 * time.Second) // no jobs on queue, wait before next poll
 				continue
 			}
@@ -64,15 +64,15 @@ func (w *DownloadWorker) ProcessEpisode(ctx context.Context) (*podcasts.Episode,
 		if episode.FailureCount < maxFailures {
 			upErr := podcasts.UpdateEpisodeFailureCount(ctx, w.DB, &episode, episode.FailureCount+1)
 			if upErr != nil {
-				return nil, fmt.Errorf("failed to update episode '%d' failure count: %w", episode.GUID, upErr)
+				return nil, fmt.Errorf("failed to update episode '%s' failure count: %w", episode.GUID, upErr)
 			}
 		} else {
 			upErr := podcasts.UpdateEpisodeStatus(ctx, w.DB, &episode, podcasts.EpisodeStatusFailed, nil)
 			if upErr != nil {
-				return nil, fmt.Errorf("failed to update episode '%d' status to failed: %w", episode.GUID, upErr)
+				return nil, fmt.Errorf("failed to update episode '%s' status to failed: %w", episode.GUID, upErr)
 			}
 		}
-		return nil, fmt.Errorf("failed to download episode '%d': %w", episode.GUID, err)
+		return nil, fmt.Errorf("failed to download episode '%s': %w", episode.GUID, err)
 	}
 
 	err = podcasts.UpdateEpisodeStatus(ctx, w.DB, &episode, podcasts.EpisodeStatusSuccess, &n)

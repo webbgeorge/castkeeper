@@ -62,7 +62,7 @@ func (i *ItunesAPI) Search(ctx context.Context, query string) ([]SearchResult, e
 	}
 
 	if res.StatusCode != 200 {
-		return nil, fmt.Errorf("itunes returned status '%d'", res.Status)
+		return nil, fmt.Errorf("itunes returned status '%d'", res.StatusCode)
 	}
 
 	var bodyData searchResponse
