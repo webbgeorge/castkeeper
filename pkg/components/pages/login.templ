@@ -2,16 +2,22 @@ package pages
 
 import "github.com/webbgeorge/castkeeper/pkg/components"
 
-templ Login(csrfToken string) {
+templ Login(csrfToken, redirect, errText string) {
 	@components.Layout("Login") {
 		<div class="w-full max-w-[600px] card md:card-normal bg-base-100 shadow-xl my-6 mx-auto">
 			<div class="card-body">
 				<h1 class="card-title">Login</h1>
+				if errText != "" {
+					<div role="alert" class="alert alert-error">
+						{ errText }
+					</div>
+				}
 				<form
 					method="post"
 					action="/auth/login"
 				>
 					@components.CSRFInput(csrfToken)
+					<input type="hidden" name="redirect" value={ redirect }/>
 					<label for="usernameInput" class="form-control mb-4">
 						<div class="label">
 							<span class="label-text">Username</span>

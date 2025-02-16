@@ -76,7 +76,7 @@ func redirectToLogin(w http.ResponseWriter, r *http.Request) {
 
 func NewGetLoginHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return framework.Render(ctx, w, 200, pages.Login(csrf.Token(r)))
+		return renderLoginPage(ctx, w, r, false)
 	}
 }
 
@@ -91,21 +91,17 @@ func NewPostLoginHandler(
 		user, err := GetUserByUsername(ctx, db, username)
 		if err != nil {
 			framework.GetLogger(ctx).InfoContext(ctx, fmt.Sprintf("failed to find username: '%s'", username), "error", err)
-			// TODO log error message and show in UI
-			return framework.Render(ctx, w, 200, pages.Login(csrf.Token(r)))
+			return renderLoginPage(ctx, w, r, true)
 		}
 
 		if err := user.checkPassword(password); err != nil {
 			framework.GetLogger(ctx).InfoContext(ctx, fmt.Sprintf("incorrect password for username: '%s'", username), "error", err)
-			// TODO log error message and show in UI
-			return framework.Render(ctx, w, 200, pages.Login(csrf.Token(r)))
+			return renderLoginPage(ctx, w, r, true)
 		}
 
 		sID, err := CreateSession(ctx, db, user.ID)
 		if err != nil {
-			framework.GetLogger(ctx).ErrorContext(ctx, "failed to create session", "error", err)
-			// TODO log error message and show in UI
-			return framework.Render(ctx, w, 200, pages.Login(csrf.Token(r)))
+			return err
 		}
 
 		http.SetCookie(w, &http.Cookie{
@@ -124,11 +120,27 @@ func NewPostLoginHandler(
 	}
 }
 
+func renderLoginPage(ctx context.Context, w http.ResponseWriter, r *http.Request, authErr bool) error {
+	errText := ""
+	if authErr {
+		errText = "Unknown username or password"
+	}
+	return framework.Render(ctx, w, 200, pages.Login(
+		csrf.Token(r),
+		redirectPathFromReq(r), // pass from GET to be rendered into a hidden input
+		errText,
+	))
+}
+
 func redirectPathFromReq(r *http.Request) string {
-	if r.URL.Query().Get("redirect") == "" {
+	redirect := r.PostFormValue("redirect")
+	if redirect == "" {
+		redirect = r.URL.Query().Get("redirect")
+	}
+	if redirect == "" {
 		return "/"
 	}
-	u, err := url.Parse(r.URL.Query().Get("redirect"))
+	u, err := url.Parse(redirect)
 	if err != nil || u.Path == "" {
 		return "/"
 	}
@@ -136,7 +148,7 @@ func redirectPathFromReq(r *http.Request) string {
 }
 
 func sanitiseRedirectPath(redirectPath string) string {
-	if len(redirectPath) > 100 {
+	if len(redirectPath) > 500 {
 		return "/"
 	}
 	if !strings.HasPrefix(redirectPath, "/") {
