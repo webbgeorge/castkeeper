@@ -72,9 +72,11 @@ func (t *meteredTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 	timeTaken := time.Since(startTime)
 
 	errorContent := ""
+	statusCode := 0
 	if err != nil {
 		errorContent = err.Error()
 	} else if res.StatusCode >= 400 {
+		statusCode = res.StatusCode
 		resBody := copyResBody(res)
 		if len(resBody) <= 100 {
 			errorContent = resBody
@@ -87,7 +89,7 @@ func (t *meteredTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		ctx, "outbound HTTP request",
 		"method", r.Method,
 		"url", r.URL.String(),
-		"status", res.StatusCode,
+		"status", statusCode,
 		"timeTaken", timeTaken.Milliseconds(),
 		"errorContent", errorContent,
 	)
