@@ -1,10 +1,8 @@
 package podcasts_test
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"testing"
@@ -144,31 +142,16 @@ func TestGenerateFeed(t *testing.T) {
 	// TODO: add tests
 }
 
-var urlsToResponseBodyFile = map[string]string{
-	"http://testdata/valid.xml":               "testdata/valid.xml",
-	"http://testdata/invalid.xml":             "testdata/invalid.xml",
-	"http://testdata/no-eps.xml":              "testdata/no-eps.xml",
-	"http://testdata/no-pod-guid.xml":         "testdata/no-pod-guid.xml",
-	"http://testdata/ep-no-url.xml":           "testdata/ep-no-url.xml",
-	"http://testdata/invalid-mime.xml":        "testdata/invalid-mime.xml",
-	"http://testdata/no-ep-guid.xml":          "testdata/no-ep-guid.xml",
-	"http://testdata/very-long-pod-title.xml": "testdata/very-long-pod-title.xml",
-}
-
 type fakeTransport struct{}
 
 func (t *fakeTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	responseBodyFile, ok := urlsToResponseBodyFile[r.URL.String()]
-	if !ok {
-		buf := bytes.NewBufferString("Missing URL mapping to response body file in test")
-		body := io.NopCloser(buf)
-		return &http.Response{
-			StatusCode: http.StatusInternalServerError,
-			Body:       body,
-		}, nil
+	filePath := r.URL.Host + r.URL.Path
+
+	if filePath[:9] != "testdata/" {
+		panic("unexpected testdata file path")
 	}
 
-	f, err := os.Open(responseBodyFile)
+	f, err := os.Open(filePath)
 	if err != nil {
 		panic(err)
 	}
