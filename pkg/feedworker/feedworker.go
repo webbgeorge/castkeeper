@@ -2,6 +2,7 @@ package feedworker
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -50,14 +51,13 @@ func (w *FeedWorker) Start(ctx context.Context) error {
 }
 
 func (w *FeedWorker) ProcessPodcast(ctx context.Context, podcast podcasts.Podcast) error {
-	feed, err := w.FeedService.ParseFeed(ctx, podcast.FeedURL)
+	_, episodes, err := w.FeedService.ParseFeed(ctx, podcast.FeedURL)
 	if err != nil {
-		return err
-	}
-	episodes, errs := podcasts.EpisodesFromFeed(feed)
-
-	if len(errs) > 0 {
-		framework.GetLogger(ctx).WarnContext(ctx, fmt.Sprintf("some episodes of podcast '%s' had parsing errors: %v", podcast.GUID, errs))
+		if !errors.Is(err, podcasts.ParseErrors{}) {
+			return err
+		}
+		framework.GetLogger(ctx).WarnContext(ctx, fmt.Sprintf("some episodes of podcast '%s' had parsing errors: %s", podcast.GUID, err.Error()))
+		// continue even with some episode parse failures...
 	}
 
 	existingEpisodes, err := podcasts.ListEpisodes(ctx, w.DB, podcast.GUID)
@@ -78,7 +78,6 @@ func (w *FeedWorker) ProcessPodcast(ctx context.Context, podcast podcasts.Podcas
 			continue
 		}
 
-		ep.PodcastGUID = podcast.GUID
 		ep.Status = podcasts.EpisodeStatusPending
 
 		if err := w.DB.Create(&ep).Error; err != nil {

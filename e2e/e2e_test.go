@@ -7,6 +7,10 @@ import (
 const baseURL = "http://localhost:8081"
 
 func TestLogin(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	page := browser.MustIncognito().MustPage(baseURL)
 	defer page.MustClose()
 

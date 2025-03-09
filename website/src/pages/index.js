@@ -35,7 +35,7 @@ export default function Home() {
       description="Keep copies of the podcasts you listen to, safe from future deletion, cancellation and censorship.">
       <HomepageHeader />
       <main>
-        TODO "What is CastKeeper?"
+        <div style={{ textAlign: "center" }}><strong>TODO "What is CastKeeper?"</strong></div>
         <HomepageFeatures />
       </main>
     </Layout>

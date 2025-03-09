@@ -5,7 +5,6 @@ import (
 	"net"
 	"net/url"
 	"regexp"
-	"strings"
 )
 
 func ValidateExtURL(uStr string) error {
@@ -22,9 +21,8 @@ func ValidateExtURL(uStr string) error {
 		return errors.New("URL host must not be empty")
 	}
 
-	// no localhost, or IPv6 (e.g. "[::1]")
-	if u.Hostname() == "localhost" || strings.Contains(u.Hostname(), "[") {
-		return errors.New("URL host must not be localhost or IP address")
+	if u.Hostname() == "localhost" {
+		return errors.New("URL host must not be localhost")
 	}
 
 	if ip := net.ParseIP(u.Hostname()); ip != nil {

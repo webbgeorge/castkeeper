@@ -8,7 +8,7 @@ const FeatureList = [
     icon: '💾',
     description: (
       <>
-        Store your podcast backups wherever you prefer — locally, or in your
+        Store your podcast backups wherever you prefer: locally, or in your
         cloud storage provider of choice. Keep your collection safe, accessible,
         and always under your control.
       </>
@@ -19,9 +19,9 @@ const FeatureList = [
     icon: '📥',
     description: (
       <>
-        Subscribe to your favorite podcasts, and let CastKeeper automatically
-        download new episodes as they&apos;re released. Never miss an episode
-        — your backups stay current without any effort.
+        Subscribe to your favourite podcasts, and let CastKeeper automatically
+        download new episodes as they&apos;re released. Never miss an episode -
+        your backups stay current without any effort.
       </>
     ),
   },
@@ -30,7 +30,7 @@ const FeatureList = [
     icon: '🏠',
     description: (
       <>
-        Easily deploy with Docker — perfect for self-hosters who want full
+        Easily deploy with Docker - perfect for self-hosters who want full
         control. Clear setup instructions make getting started straightforward.
       </>
     ),

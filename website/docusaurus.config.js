@@ -75,15 +75,15 @@ const config = {
               },
               {
                 label: 'Installation',
-                to: '/docs/installation',
+                to: '/docs/getting-started/installation',
               },
               {
                 label: 'Configuration',
-                to: '/docs/configuration',
+                to: '/docs/getting-started/configuration',
               },
               {
                 label: 'Using CastKeeper',
-                to: '/docs/usage',
+                to: '/docs/category/using-castkeeper',
               },
             ],
           },
@@ -114,7 +114,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} George Webb. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} <a target="_blank" href="https://github.com/webbgeorge">George Webb</a>. Built with Docusaurus.`,
       },
       prism: {
         theme: prismThemes.github,

@@ -41,13 +41,11 @@ func NewSearchPodcastsHandler() framework.Handler {
 func NewAddPodcastHandler(feedService *podcasts.FeedService, db *gorm.DB, os objectstorage.ObjectStorage) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		feedURL := r.PostFormValue("feedUrl")
-		feed, err := feedService.ParseFeed(ctx, feedURL)
+		podcast, _, err := feedService.ParseFeed(ctx, feedURL)
 		if err != nil {
 			framework.GetLogger(ctx).ErrorContext(ctx, "error parsing feed", "error", err)
 			return framework.Render(ctx, w, 200, partials.AddPodcast("Invalid feed"))
 		}
-
-		podcast := podcasts.PodcastFromFeed(feedURL, feed)
 
 		if err = db.Create(&podcast).Error; err != nil {
 			if errors.Is(err, gorm.ErrDuplicatedKey) {
