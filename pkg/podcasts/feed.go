@@ -265,6 +265,10 @@ func GenerateFeed(ctx context.Context, baseURL string, db *gorm.DB, podcastGuid 
 		return nil, err
 	}
 
+	return feedFromPodcast(baseURL, pod, eps)
+}
+
+func feedFromPodcast(baseURL string, pod Podcast, eps []Episode) (*gopodcast.Podcast, error) {
 	categories := make([]gopodcast.ITunesCategory, 0)
 	for _, cat := range pod.Categories {
 		categories = append(categories, gopodcast.ITunesCategory{Text: cat})

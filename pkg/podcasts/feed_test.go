@@ -1,6 +1,7 @@
 package podcasts_test
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/webbgeorge/castkeeper/pkg/database"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 )
 
@@ -139,9 +141,23 @@ func TestParseFeedEpisodeGUIDFallback(t *testing.T) {
 }
 
 func TestGenerateFeed(t *testing.T) {
-	// TODO: add tests
+	db, resetDB := database.ConfigureDBForTestWithFixtures()
+	defer resetDB()
+
+	feed, err := podcasts.GenerateFeed(context.Background(), "http://example.com", db, "12345")
+
+	buf := &bytes.Buffer{}
+	feed.WriteFeedXML(buf)
+
+	exp, err := os.ReadFile("testdata/todo.xml")
+	if err != nil {
+		panic(err)
+	}
+
+	assert.Equal(t, string(exp), buf.String())
 }
 
+// TODO move to shared util
 type fakeTransport struct{}
 
 func (t *fakeTransport) RoundTrip(r *http.Request) (*http.Response, error) {
@@ -151,6 +167,7 @@ func (t *fakeTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		panic("unexpected testdata file path")
 	}
 
+	filePath = "../" + filePath
 	f, err := os.Open(filePath)
 	if err != nil {
 		panic(err)
