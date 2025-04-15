@@ -12,6 +12,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/database"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 func main() {
@@ -39,14 +40,16 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to read username: %v", err)
 	}
+	username = strings.TrimSpace(username)
 
 	fmt.Print("Enter password: ")
-	password, err := reader.ReadString('\n')
+	pwBytes, err := terminal.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		log.Fatalf("failed to read password: %v", err)
 	}
+	password := string(pwBytes)
 
-	err = auth.CreateUser(ctx, db, strings.TrimSpace(username), strings.TrimSpace(password))
+	err = auth.CreateUser(ctx, db, username, password)
 	if err != nil {
 		log.Fatalf("failed to create user: %v", err)
 	}
