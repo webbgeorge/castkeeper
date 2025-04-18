@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log"
 	"log/slog"
 	"reflect"
 	"slices"
@@ -79,7 +80,7 @@ func loadConfig(v *viper.Viper, configFilePath string) (Config, *slog.Logger, er
 
 	err := v.ReadInConfig()
 	if err != nil {
-		return Config{}, nil, err
+		log.Printf("no config file was found: %v", err)
 	}
 
 	config := Config{}

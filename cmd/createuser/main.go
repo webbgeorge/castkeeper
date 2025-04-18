@@ -12,7 +12,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/database"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 )
 
 func main() {
@@ -43,7 +43,7 @@ func main() {
 	username = strings.TrimSpace(username)
 
 	fmt.Print("Enter password: ")
-	pwBytes, err := terminal.ReadPassword(int(os.Stdin.Fd()))
+	pwBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		log.Fatalf("failed to read password: %v", err)
 	}
