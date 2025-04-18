@@ -6,6 +6,7 @@ install:
 	go mod download
 	go install github.com/a-h/templ/cmd/templ@latest
 	go install github.com/air-verse/air@latest
+	go install github.com/securego/gosec/v2/cmd/gosec@latest
 	$(MAKE) pre_build
 
 pre_build:
@@ -26,7 +27,11 @@ build:
 
 test:
 	go vet ./...
-	go test -race ./...
+	gosec ./...
+	go test -race -short ./...
+
+test-e2e:
+	go test -race ./e2e/...
 
 # run locally to test with alternative drivers: postgres instead of sqlite and s3 instead of local fs
 run_postgres_s3:

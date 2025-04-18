@@ -25,6 +25,7 @@ Priority
 - Tests
 - Docs
 - Disclaimer in readme
+- Use new os.Root functionality in local file provider
 
 -- OPEN SOURCE, then...
 

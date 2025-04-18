@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"net/http"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/webbgeorge/castkeeper/pkg/database"
+	"github.com/webbgeorge/castkeeper/pkg/fixures"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 )
 
@@ -28,15 +28,15 @@ func TestParseFeed(t *testing.T) {
 			expectedErr:      "invalid feedURL 'http://localhost/feed.xml': URL host must not be localhost",
 		},
 		"invalid feed": {
-			url:              "http://testdata/invalid.xml",
+			url:              "http://testdata/feeds/invalid.xml",
 			expectedPodcast:  podcasts.Podcast{},
 			expectedEpisodes: nil,
 			expectedErr:      "failed to parse feed: EOF",
 		},
 		"valid feed": {
-			url: "http://testdata/valid.xml",
+			url: "http://testdata/feeds/valid.xml",
 			expectedPodcast: fakePodcast(
-				"http://testdata/valid.xml",
+				"http://testdata/feeds/valid.xml",
 				"abc-123",
 				timePtrStr("2024-12-27T11:12:13"),
 			),
@@ -47,9 +47,9 @@ func TestParseFeed(t *testing.T) {
 			expectedErr: "",
 		},
 		"no eps": {
-			url: "http://testdata/no-eps.xml",
+			url: "http://testdata/feeds/no-eps.xml",
 			expectedPodcast: fakePodcast(
-				"http://testdata/no-eps.xml",
+				"http://testdata/feeds/no-eps.xml",
 				"abc-123",
 				nil,
 			),
@@ -57,9 +57,9 @@ func TestParseFeed(t *testing.T) {
 			expectedErr:      "",
 		},
 		"podcast guid fallback": {
-			url: "http://testdata/no-pod-guid.xml",
+			url: "http://testdata/feeds/no-pod-guid.xml",
 			expectedPodcast: fakePodcast(
-				"http://testdata/no-pod-guid.xml",
+				"http://testdata/feeds/no-pod-guid.xml",
 				"I4FQot2Mq_1bAUKXB4vRUdIbiLUTSYgAWBWFenQj9hk=", // generated fallback GUID
 				nil,
 			),
@@ -67,9 +67,9 @@ func TestParseFeed(t *testing.T) {
 			expectedErr:      "",
 		},
 		"episode with no url gives error": {
-			url: "http://testdata/ep-no-url.xml",
+			url: "http://testdata/feeds/ep-no-url.xml",
 			expectedPodcast: fakePodcast(
-				"http://testdata/ep-no-url.xml",
+				"http://testdata/feeds/ep-no-url.xml",
 				"abc-123",
 				nil,
 			),
@@ -77,9 +77,9 @@ func TestParseFeed(t *testing.T) {
 			expectedErr:      "1 errors whilst parsing episodes: could not read download URL, skipping episode 'ep-1'",
 		},
 		"episode with invalid file type gives error": {
-			url: "http://testdata/invalid-mime.xml",
+			url: "http://testdata/feeds/invalid-mime.xml",
 			expectedPodcast: fakePodcast(
-				"http://testdata/invalid-mime.xml",
+				"http://testdata/feeds/invalid-mime.xml",
 				"abc-123",
 				nil,
 			),
@@ -90,7 +90,7 @@ func TestParseFeed(t *testing.T) {
 
 	// intercepts HTTP requests and returns test data based on the URL
 	feedService := podcasts.FeedService{
-		HTTPClient: &http.Client{Transport: &fakeTransport{}},
+		HTTPClient: fixures.TestDataHTTPClient,
 	}
 
 	for name, tc := range testCases {
@@ -110,12 +110,12 @@ func TestParseFeed(t *testing.T) {
 func TestParseFeedTruncation(t *testing.T) {
 	// intercepts HTTP requests and returns test data based on the URL
 	feedService := podcasts.FeedService{
-		HTTPClient: &http.Client{Transport: &fakeTransport{}},
+		HTTPClient: fixures.TestDataHTTPClient,
 	}
 
 	podcast, episodes, err := feedService.ParseFeed(
 		context.Background(),
-		"http://testdata/very-long-pod-title.xml",
+		"http://testdata/feeds/very-long-pod-title.xml",
 	)
 
 	assert.Nil(t, err)
@@ -127,12 +127,12 @@ func TestParseFeedTruncation(t *testing.T) {
 func TestParseFeedEpisodeGUIDFallback(t *testing.T) {
 	// intercepts HTTP requests and returns test data based on the URL
 	feedService := podcasts.FeedService{
-		HTTPClient: &http.Client{Transport: &fakeTransport{}},
+		HTTPClient: fixures.TestDataHTTPClient,
 	}
 
 	_, episodes, err := feedService.ParseFeed(
 		context.Background(),
-		"http://testdata/no-ep-guid.xml",
+		"http://testdata/feeds/no-ep-guid.xml",
 	)
 
 	assert.Nil(t, err)
@@ -141,42 +141,27 @@ func TestParseFeedEpisodeGUIDFallback(t *testing.T) {
 }
 
 func TestGenerateFeed(t *testing.T) {
-	db, resetDB := database.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
-	feed, err := podcasts.GenerateFeed(context.Background(), "http://example.com", db, "12345")
+	feed, err := podcasts.GenerateFeed(context.Background(), "http://example.com", db, "abc-123")
+	if err != nil {
+		panic(err)
+	}
 
 	buf := &bytes.Buffer{}
 	feed.WriteFeedXML(buf)
 
-	exp, err := os.ReadFile("testdata/todo.xml")
+	exp, err := os.ReadFile("testdata/expected-generated-feed.xml")
 	if err != nil {
 		panic(err)
 	}
 
-	assert.Equal(t, string(exp), buf.String())
-}
-
-// TODO move to shared util
-type fakeTransport struct{}
-
-func (t *fakeTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	filePath := r.URL.Host + r.URL.Path
-
-	if filePath[:9] != "testdata/" {
-		panic("unexpected testdata file path")
-	}
-
-	filePath = "../" + filePath
-	f, err := os.Open(filePath)
-	if err != nil {
-		panic(err)
-	}
-
-	return &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       f,
-	}, nil
+	assert.Equal(
+		t,
+		strings.TrimSpace(string(exp)),
+		strings.TrimSpace(buf.String()),
+	)
 }
 
 func timeFromStr(tStr string) time.Time {
@@ -187,14 +172,6 @@ func timeFromStr(tStr string) time.Time {
 func timePtrStr(tStr string) *time.Time {
 	t := timeFromStr(tStr)
 	return &t
-}
-
-func nNumberOf1(n int) string {
-	ones := ""
-	for i := 0; i < n; i++ {
-		ones = ones + "1"
-	}
-	return ones
 }
 
 func fakePodcast(feedURL, guid string, latestEpPubAt *time.Time) podcasts.Podcast {

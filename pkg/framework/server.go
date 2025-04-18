@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/a-h/templ"
 )
@@ -69,9 +70,11 @@ func (s *Server) AddFileServer(path string, fileServer http.Handler, middlewares
 
 func (s *Server) Start(ctx context.Context) error {
 	httpServer := &http.Server{
-		Addr:        s.addr,
-		Handler:     s.mux,
-		BaseContext: func(_ net.Listener) context.Context { return ctx },
+		Addr:         s.addr,
+		Handler:      s.mux,
+		ReadTimeout:  time.Second * 5,
+		WriteTimeout: time.Minute * 2,
+		BaseContext:  func(_ net.Listener) context.Context { return ctx },
 	}
 
 	srvErr := make(chan error, 1)

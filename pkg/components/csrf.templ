@@ -1,6 +1,6 @@
 package components
 
-const CSRFTokenInputName = "gorilla.csrf.Token"
+const CSRFTokenInputName = "gorilla.csrf.Token" // #nosec G101 -- false positive, this is not a hardcoded credential
 
 templ CSRFInput(token string) {
 	<input type="hidden" name={ CSRFTokenInputName } value={ token }/>

@@ -24,7 +24,7 @@ func (s *LocalObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation,
 	}
 
 	dir := path.Join(s.BasePath, podcastGUID)
-	err = os.MkdirAll(dir, os.ModePerm)
+	err = os.MkdirAll(dir, 0750)
 	if err != nil {
 		return -1, err
 	}
