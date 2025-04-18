@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"strings"
 )
 
 var TestDataHTTPClient *http.Client = &http.Client{
@@ -14,19 +15,16 @@ var TestDataHTTPClient *http.Client = &http.Client{
 type testDataTransport struct{}
 
 func (t *testDataTransport) RoundTrip(r *http.Request) (*http.Response, error) {
-	filePath := r.URL.Host + r.URL.Path
-
-	if filePath[:9] != "testdata/" {
+	if r.URL.Host != "testdata" {
 		panic("unexpected testdata file path")
 	}
-
-	filePath = path.Join(fixtureDir(), filePath)
 
 	testDataRoot, err := os.OpenRoot(path.Join(fixtureDir(), "testdata"))
 	if err != nil {
 		panic(err)
 	}
 
+	filePath := strings.TrimLeft(r.URL.Path, "/")
 	f, err := testDataRoot.Open(filePath)
 	if err != nil {
 		panic(err)

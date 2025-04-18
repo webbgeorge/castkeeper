@@ -2,8 +2,10 @@ package objectstorage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path"
@@ -23,15 +25,18 @@ func (s *LocalObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation,
 		return -1, fmt.Errorf("invalid remoteLocation '%s': %w", remoteLocation, err)
 	}
 
-	dir := path.Join(s.BasePath, podcastGUID)
-	err = os.MkdirAll(dir, 0750)
+	root, err := s.localRoot()
 	if err != nil {
 		return -1, err
 	}
 
-	localPath := path.Join(dir, fileName)
+	err = mkdirIfNotExists(root, podcastGUID)
+	if err != nil {
+		return -1, err
+	}
 
-	f, err := os.Create(localPath)
+	localPath := path.Join(podcastGUID, fileName)
+	f, err := root.Create(localPath)
 	if err != nil {
 		return -1, err
 	}
@@ -62,13 +67,37 @@ func (s *LocalObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation,
 }
 
 func (s *LocalObjectStorage) ServeFile(ctx context.Context, r *http.Request, w http.ResponseWriter, podcastGUID, fileName string) error {
-	filePath := path.Join(s.BasePath, podcastGUID, fileName)
-	f, err := os.Open(filePath)
+	root, err := s.localRoot()
+	if err != nil {
+		return err
+	}
+
+	filePath := path.Join(podcastGUID, fileName)
+	f, err := root.Open(filePath)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
 
 	http.ServeContent(w, r, "", time.Time{}, f)
+	return nil
+}
+
+func (s *LocalObjectStorage) localRoot() (*os.Root, error) {
+	err := os.MkdirAll(s.BasePath, 0750)
+	if err != nil {
+		return nil, err
+	}
+	return os.OpenRoot(s.BasePath)
+}
+
+func mkdirIfNotExists(root *os.Root, dir string) error {
+	err := root.Mkdir(dir, 0750)
+	if err != nil {
+		if errors.Is(err, fs.ErrExist) {
+			return nil
+		}
+		return err
+	}
 	return nil
 }
