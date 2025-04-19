@@ -15,8 +15,8 @@ var userValidate = validator.New(validator.WithRequiredStructEnabled())
 
 type User struct {
 	gorm.Model
-	Username string `gorm:"uniqueIndex"`
-	Password string
+	Username string `gorm:"uniqueIndex" validate:"required,gte=1,lte=50"`
+	Password string `validate:"required,gte=1"`
 }
 
 func (u *User) BeforeSave(tx *gorm.DB) error {
@@ -27,7 +27,7 @@ func (u *User) BeforeSave(tx *gorm.DB) error {
 	return nil
 }
 
-func (u *User) checkPassword(password string) error {
+func (u *User) CheckPassword(password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 }
 

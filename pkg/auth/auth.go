@@ -145,7 +145,7 @@ func checkUsernameAndPassword(ctx context.Context, db *gorm.DB, username, passwo
 		return User{}, err
 	}
 
-	if err := user.checkPassword(password); err != nil {
+	if err := user.CheckPassword(password); err != nil {
 		framework.GetLogger(ctx).InfoContext(ctx, fmt.Sprintf("incorrect password for username: '%s'", username), "error", err)
 		return User{}, err
 	}
