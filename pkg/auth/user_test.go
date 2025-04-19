@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/webbgeorge/castkeeper/pkg/auth"
-	"github.com/webbgeorge/castkeeper/pkg/fixures"
+	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 )
 
 func TestUserBeforeSave(t *testing.T) {
@@ -29,7 +29,7 @@ func TestUserBeforeSave(t *testing.T) {
 		},
 		"usernameTooLong": {
 			user: auth.User{
-				Username: fixures.StrOfLen(100),
+				Username: fixtures.StrOfLen(100),
 				Password: "aaaaaa",
 			},
 			expectedErr: "user not valid: Key: 'User.Username' Error:Field validation for 'Username' failed on the 'lte' tag",
@@ -55,7 +55,7 @@ func TestUserBeforeSave(t *testing.T) {
 }
 
 func TestGetByUsername_Exists(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	// from fixture
@@ -69,7 +69,7 @@ func TestGetByUsername_Exists(t *testing.T) {
 }
 
 func TestGetByUsername_NotFound(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	user, err := auth.GetUserByUsername(context.Background(), db, "notauser")
@@ -79,7 +79,7 @@ func TestGetByUsername_NotFound(t *testing.T) {
 }
 
 func TestUserCheckPassword(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	user, err := auth.GetUserByUsername(context.Background(), db, "unittest")
@@ -102,7 +102,7 @@ func TestUserCheckPassword(t *testing.T) {
 }
 
 func TestCreateUser_Valid(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	err := auth.CreateUser(context.Background(), db, "user1", "pass1")
@@ -115,7 +115,7 @@ func TestCreateUser_Valid(t *testing.T) {
 }
 
 func TestCreateUser_InvalidUsername(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	err := auth.CreateUser(context.Background(), db, "", "pass1")

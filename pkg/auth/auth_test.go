@@ -13,12 +13,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/webbgeorge/castkeeper/pkg/auth"
-	"github.com/webbgeorge/castkeeper/pkg/fixures"
+	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 )
 
 func TestAuthenticationMiddleware_ValidSessionIsPassedThrough(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -46,7 +46,7 @@ func TestAuthenticationMiddleware_ValidSessionIsPassedThrough(t *testing.T) {
 }
 
 func TestAuthenticationMiddleware_RedirectsWhenNoCookie(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -66,7 +66,7 @@ func TestAuthenticationMiddleware_RedirectsWhenNoCookie(t *testing.T) {
 }
 
 func TestAuthenticationMiddleware_RedirectsWhenInvalidCookie(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -89,7 +89,7 @@ func TestAuthenticationMiddleware_RedirectsWhenInvalidCookie(t *testing.T) {
 }
 
 func TestAuthenticationMiddleware_ValidSessionUpdatesLastSeen(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	sessionID := "validSession30MinsOld" // is a fixture
@@ -120,7 +120,7 @@ func TestAuthenticationMiddleware_ValidSessionUpdatesLastSeen(t *testing.T) {
 }
 
 func TestFeedAuthenticationMiddleware_ValidCredentials(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -141,7 +141,7 @@ func TestFeedAuthenticationMiddleware_ValidCredentials(t *testing.T) {
 }
 
 func TestFeedAuthenticationMiddleware_NoCredentials(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -162,7 +162,7 @@ func TestFeedAuthenticationMiddleware_NoCredentials(t *testing.T) {
 }
 
 func TestFeedAuthenticationMiddleware_InvalidUsername(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -183,7 +183,7 @@ func TestFeedAuthenticationMiddleware_InvalidUsername(t *testing.T) {
 }
 
 func TestFeedAuthenticationMiddleware_InvalidPassword(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -223,7 +223,7 @@ func TestGetLoginHandler(t *testing.T) {
 }
 
 func TestPostLoginHandler_ValidCredentials(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	h := func(w http.ResponseWriter, r *http.Request) {
@@ -250,7 +250,7 @@ func TestPostLoginHandler_ValidCredentials(t *testing.T) {
 }
 
 func TestPostLoginHandler_RedirectsToPath(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	h := func(w http.ResponseWriter, r *http.Request) {
@@ -276,7 +276,7 @@ func TestPostLoginHandler_RedirectsToPath(t *testing.T) {
 }
 
 func TestPostLoginHandler_InvalidUsername(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	h := func(w http.ResponseWriter, r *http.Request) {
@@ -304,7 +304,7 @@ func TestPostLoginHandler_InvalidUsername(t *testing.T) {
 }
 
 func TestPostLoginHandler_InvalidPassword(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	h := func(w http.ResponseWriter, r *http.Request) {

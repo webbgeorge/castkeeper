@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/webbgeorge/castkeeper/pkg/fixures"
+	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 )
 
@@ -90,7 +90,7 @@ func TestParseFeed(t *testing.T) {
 
 	// intercepts HTTP requests and returns test data based on the URL
 	feedService := podcasts.FeedService{
-		HTTPClient: fixures.TestDataHTTPClient,
+		HTTPClient: fixtures.TestDataHTTPClient,
 	}
 
 	for name, tc := range testCases {
@@ -110,7 +110,7 @@ func TestParseFeed(t *testing.T) {
 func TestParseFeedTruncation(t *testing.T) {
 	// intercepts HTTP requests and returns test data based on the URL
 	feedService := podcasts.FeedService{
-		HTTPClient: fixures.TestDataHTTPClient,
+		HTTPClient: fixtures.TestDataHTTPClient,
 	}
 
 	podcast, episodes, err := feedService.ParseFeed(
@@ -127,7 +127,7 @@ func TestParseFeedTruncation(t *testing.T) {
 func TestParseFeedEpisodeGUIDFallback(t *testing.T) {
 	// intercepts HTTP requests and returns test data based on the URL
 	feedService := podcasts.FeedService{
-		HTTPClient: fixures.TestDataHTTPClient,
+		HTTPClient: fixtures.TestDataHTTPClient,
 	}
 
 	_, episodes, err := feedService.ParseFeed(
@@ -141,7 +141,7 @@ func TestParseFeedEpisodeGUIDFallback(t *testing.T) {
 }
 
 func TestGenerateFeed(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	feed, err := podcasts.GenerateFeed(context.Background(), "http://example.com", db, "abc-123")

@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/webbgeorge/castkeeper/pkg/fixures"
+	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 	"github.com/webbgeorge/castkeeper/pkg/itunes"
 )
 
 func TestItunesAPISearch_SuccessWithResults(t *testing.T) {
 	it := itunes.ItunesAPI{
-		HTTPClient: fixures.TestItunesHTTPClient,
+		HTTPClient: fixtures.TestItunesHTTPClient,
 	}
 
 	results, err := it.Search(context.Background(), "testPods")
@@ -21,7 +21,7 @@ func TestItunesAPISearch_SuccessWithResults(t *testing.T) {
 
 func TestItunesAPISearch_SuccessNoResults(t *testing.T) {
 	it := itunes.ItunesAPI{
-		HTTPClient: fixures.TestItunesHTTPClient,
+		HTTPClient: fixtures.TestItunesHTTPClient,
 	}
 
 	results, err := it.Search(context.Background(), "noTestPods")
@@ -31,7 +31,7 @@ func TestItunesAPISearch_SuccessNoResults(t *testing.T) {
 
 func TestItunesAPISearch_NoQuery(t *testing.T) {
 	it := itunes.ItunesAPI{
-		HTTPClient: fixures.TestItunesHTTPClient,
+		HTTPClient: fixtures.TestItunesHTTPClient,
 	}
 
 	results, err := it.Search(context.Background(), "")
@@ -41,17 +41,17 @@ func TestItunesAPISearch_NoQuery(t *testing.T) {
 
 func TestItunesAPISearch_QueryTooLong(t *testing.T) {
 	it := itunes.ItunesAPI{
-		HTTPClient: fixures.TestItunesHTTPClient,
+		HTTPClient: fixtures.TestItunesHTTPClient,
 	}
 
-	results, err := it.Search(context.Background(), fixures.StrOfLen(251))
+	results, err := it.Search(context.Background(), fixtures.StrOfLen(251))
 	assert.Equal(t, "expected query to be between 1 and 250 chars, got 251", err.Error())
 	assert.Nil(t, results)
 }
 
 func TestItunesAPISearch_ReqError(t *testing.T) {
 	it := itunes.ItunesAPI{
-		HTTPClient: fixures.TestItunesHTTPClient,
+		HTTPClient: fixtures.TestItunesHTTPClient,
 	}
 
 	results, err := it.Search(context.Background(), "error")
@@ -61,7 +61,7 @@ func TestItunesAPISearch_ReqError(t *testing.T) {
 
 func TestItunesAPISearch_Non200(t *testing.T) {
 	it := itunes.ItunesAPI{
-		HTTPClient: fixures.TestItunesHTTPClient,
+		HTTPClient: fixtures.TestItunesHTTPClient,
 	}
 
 	results, err := it.Search(context.Background(), "500")
@@ -71,7 +71,7 @@ func TestItunesAPISearch_Non200(t *testing.T) {
 
 func TestItunesAPISearch_InvalidResBody(t *testing.T) {
 	it := itunes.ItunesAPI{
-		HTTPClient: fixures.TestItunesHTTPClient,
+		HTTPClient: fixtures.TestItunesHTTPClient,
 	}
 
 	results, err := it.Search(context.Background(), "invalidBody")

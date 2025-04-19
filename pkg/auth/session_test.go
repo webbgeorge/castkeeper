@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/webbgeorge/castkeeper/pkg/auth"
-	"github.com/webbgeorge/castkeeper/pkg/fixures"
+	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 )
 
 func TestSessionBeforeSave(t *testing.T) {
@@ -39,7 +39,7 @@ func TestSessionBeforeSave(t *testing.T) {
 		},
 		"idTooLong": {
 			session: auth.Session{
-				ID:     fixures.StrOfLen(1001),
+				ID:     fixtures.StrOfLen(1001),
 				UserID: 111,
 			},
 			expectedErr: "session not valid: Key: 'Session.ID' Error:Field validation for 'ID' failed on the 'lte' tag",
@@ -65,7 +65,7 @@ func TestSessionBeforeSave(t *testing.T) {
 }
 
 func TestGetSession_IsValid(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	// use session from fixture
@@ -79,7 +79,7 @@ func TestGetSession_IsValid(t *testing.T) {
 }
 
 func TestGetSession_DoesNotExist(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	s, err := auth.GetSession(context.Background(), db, "notASession")
@@ -89,7 +89,7 @@ func TestGetSession_DoesNotExist(t *testing.T) {
 }
 
 func TestGetSession_IsExpired(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	// use session from fixture
@@ -100,7 +100,7 @@ func TestGetSession_IsExpired(t *testing.T) {
 }
 
 func TestCreateSession(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	sessionID, err := auth.CreateSession(context.Background(), db, 456)
@@ -115,7 +115,7 @@ func TestCreateSession(t *testing.T) {
 }
 
 func TestUpdateLastSeen(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	s, err := auth.GetSession(context.Background(), db, "validSession30MinsOld")
@@ -131,7 +131,7 @@ func TestUpdateLastSeen(t *testing.T) {
 }
 
 func TestDelectExpiredSessions(t *testing.T) {
-	db, resetDB := fixures.ConfigureDBForTestWithFixtures()
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
 	_, err := auth.GetSession(context.Background(), db, "expiredSession1")

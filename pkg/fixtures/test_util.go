@@ -1,4 +1,4 @@
-package fixures
+package fixtures
 
 import "strings"
 
