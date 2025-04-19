@@ -1,0 +1,85 @@
+{
+  "resultCount": 60,
+  "results": [
+    {
+      "wrapperType": "track",
+      "kind": "podcast",
+      "artistId": 121676617,
+      "collectionId": 1465290044,
+      "trackId": 1465290044,
+      "artistName": "BBC Radio 5 Live",
+      "collectionName": "Elis James and John Robins",
+      "trackName": "Elis James and John Robins",
+      "collectionCensoredName": "Elis James and John Robins",
+      "trackCensoredName": "Elis James and John Robins",
+      "artistViewUrl": "https://podcasts.apple.com/us/artist/bbc/121676617?uo=4",
+      "collectionViewUrl": "https://podcasts.apple.com/us/podcast/elis-james-and-john-robins/id1465290044?uo=4",
+      "feedUrl": "https://podcasts.files.bbci.co.uk/m0005fdz.rss",
+      "trackViewUrl": "https://podcasts.apple.com/us/podcast/elis-james-and-john-robins/id1465290044?uo=4",
+      "artworkUrl30": "https://is1-ssl.mzstatic.com/image/thumb/Podcasts126/v4/07/5b/76/075b7677-bbde-21b5-fc5a-581665c5313d/mza_9054020660229825528.jpg/30x30bb.jpg",
+      "artworkUrl60": "https://is1-ssl.mzstatic.com/image/thumb/Podcasts126/v4/07/5b/76/075b7677-bbde-21b5-fc5a-581665c5313d/mza_9054020660229825528.jpg/60x60bb.jpg",
+      "artworkUrl100": "https://is1-ssl.mzstatic.com/image/thumb/Podcasts126/v4/07/5b/76/075b7677-bbde-21b5-fc5a-581665c5313d/mza_9054020660229825528.jpg/100x100bb.jpg",
+      "collectionPrice": 0,
+      "trackPrice": 0,
+      "collectionHdPrice": 0,
+      "releaseDate": "2025-04-15T15:00:00Z",
+      "collectionExplicitness": "notExplicit",
+      "trackExplicitness": "cleaned",
+      "trackCount": 436,
+      "trackTimeMillis": 4402,
+      "country": "USA",
+      "currency": "USD",
+      "primaryGenreName": "Comedy",
+      "contentAdvisoryRating": "Clean",
+      "artworkUrl600": "https://is1-ssl.mzstatic.com/image/thumb/Podcasts126/v4/07/5b/76/075b7677-bbde-21b5-fc5a-581665c5313d/mza_9054020660229825528.jpg/600x600bb.jpg",
+      "genreIds": [
+        "1303",
+        "26"
+      ],
+      "genres": [
+        "Comedy",
+        "Podcasts"
+      ]
+    },
+    {
+      "wrapperType": "track",
+      "kind": "podcast",
+      "artistId": 1242379718,
+      "collectionId": 821623813,
+      "trackId": 821623813,
+      "artistName": "Radio X",
+      "collectionName": "Elis James and John Robins on Radio X Podcast",
+      "trackName": "Elis James and John Robins on Radio X Podcast",
+      "collectionCensoredName": "Elis James and John Robins on Radio X Podcast",
+      "trackCensoredName": "Elis James and John Robins on Radio X Podcast",
+      "artistViewUrl": "https://podcasts.apple.com/us/artist/global-media-entertainment/1242379718?uo=4",
+      "collectionViewUrl": "https://podcasts.apple.com/us/podcast/elis-james-and-john-robins-on-radio-x-podcast/id821623813?uo=4",
+      "feedUrl": "https://feeds.captivate.fm/elis-james-and-john-robins/",
+      "trackViewUrl": "https://podcasts.apple.com/us/podcast/elis-james-and-john-robins-on-radio-x-podcast/id821623813?uo=4",
+      "artworkUrl30": "https://is1-ssl.mzstatic.com/image/thumb/Podcasts113/v4/d1/3c/f5/d13cf564-3495-f885-b586-609c0e646f01/mza_3786382976500771552.jpg/30x30bb.jpg",
+      "artworkUrl60": "https://is1-ssl.mzstatic.com/image/thumb/Podcasts113/v4/d1/3c/f5/d13cf564-3495-f885-b586-609c0e646f01/mza_3786382976500771552.jpg/60x60bb.jpg",
+      "artworkUrl100": "https://is1-ssl.mzstatic.com/image/thumb/Podcasts113/v4/d1/3c/f5/d13cf564-3495-f885-b586-609c0e646f01/mza_3786382976500771552.jpg/100x100bb.jpg",
+      "collectionPrice": 0,
+      "trackPrice": 0,
+      "collectionHdPrice": 0,
+      "releaseDate": "2022-06-29T14:31:00Z",
+      "collectionExplicitness": "notExplicit",
+      "trackExplicitness": "cleaned",
+      "trackCount": 326,
+      "trackTimeMillis": 73,
+      "country": "USA",
+      "currency": "USD",
+      "primaryGenreName": "Comedy",
+      "contentAdvisoryRating": "Clean",
+      "artworkUrl600": "https://is1-ssl.mzstatic.com/image/thumb/Podcasts113/v4/d1/3c/f5/d13cf564-3495-f885-b586-609c0e646f01/mza_3786382976500771552.jpg/600x600bb.jpg",
+      "genreIds": [
+        "1303",
+        "26"
+      ],
+      "genres": [
+        "Comedy",
+        "Podcasts"
+      ]
+    }
+  ]
+}

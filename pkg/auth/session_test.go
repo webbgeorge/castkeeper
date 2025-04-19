@@ -2,7 +2,6 @@ package auth_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 	"time"
 
@@ -40,7 +39,7 @@ func TestSessionBeforeSave(t *testing.T) {
 		},
 		"idTooLong": {
 			session: auth.Session{
-				ID:     strOfLen(1001),
+				ID:     fixures.StrOfLen(1001),
 				UserID: 111,
 			},
 			expectedErr: "session not valid: Key: 'Session.ID' Error:Field validation for 'ID' failed on the 'lte' tag",
@@ -144,12 +143,4 @@ func TestDelectExpiredSessions(t *testing.T) {
 
 	_, err = auth.GetSession(context.Background(), db, "expiredSession1")
 	assert.Equal(t, "record not found", err.Error())
-}
-
-func strOfLen(n int) string {
-	s := make([]string, 0)
-	for range n {
-		s = append(s, "a")
-	}
-	return strings.Join(s, "")
 }

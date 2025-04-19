@@ -52,7 +52,7 @@ func NewLogMiddleware() Middleware {
 
 			err := next(ctxWithLogger, loggingResW, r)
 
-			timeTaken := time.Now().Sub(startTime)
+			timeTaken := time.Since(startTime)
 			logger.InfoContext(
 				ctxWithLogger,
 				"HTTP request",

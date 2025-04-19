@@ -29,7 +29,7 @@ func TestUserBeforeSave(t *testing.T) {
 		},
 		"usernameTooLong": {
 			user: auth.User{
-				Username: strOfLen(100),
+				Username: fixures.StrOfLen(100),
 				Password: "aaaaaa",
 			},
 			expectedErr: "user not valid: Key: 'User.Username' Error:Field validation for 'Username' failed on the 'lte' tag",
