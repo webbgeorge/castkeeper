@@ -2,7 +2,7 @@
 
 - in-browser player
 - Pagination for search
-- Pagingation for list podcasts
+- Pagination for list podcasts
 - Support parsing of authenticated feeds
 - Disclaimer in readme
 - Internationalisation

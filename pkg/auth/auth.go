@@ -44,7 +44,7 @@ func NewAuthenticationMiddleware(db *gorm.DB) framework.Middleware {
 			}
 
 			s, err := GetSession(ctx, db, c.Value)
-			if err != nil || c.Value == "" {
+			if err != nil {
 				redirectToLogin(w, r)
 				return nil
 			}
@@ -54,7 +54,7 @@ func NewAuthenticationMiddleware(db *gorm.DB) framework.Middleware {
 				framework.GetLogger(ctx).WarnContext(ctx, "failed to update session last_seen_time")
 			}
 
-			sessionCtx := context.WithValue(ctx, sessionCtxKey{}, s)
+			sessionCtx := context.WithValue(ctx, sessionCtxKey{}, &s)
 			framework.GetLogger(ctx).InfoContext(
 				ctx, "successfully authenticated user",
 				"userID", s.UserID,
@@ -98,7 +98,7 @@ func NewFeedAuthenticationMiddleware(db *gorm.DB) framework.Middleware {
 	}
 }
 
-func NewGetLoginHandler(db *gorm.DB) framework.Handler {
+func NewGetLoginHandler() framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return renderLoginPage(ctx, w, r, false)
 	}

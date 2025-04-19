@@ -43,7 +43,7 @@ func Start(
 	return server.SetServerMiddlewares(middleware...).
 		AddFileServer("GET /static/", http.FileServer(http.FS(web.StaticAssets))).
 		AddRoute("GET /", NewHomeHandler(db), authMW).
-		AddRoute("GET /auth/login", auth.NewGetLoginHandler(db)).
+		AddRoute("GET /auth/login", auth.NewGetLoginHandler()).
 		AddRoute("POST /auth/login", auth.NewPostLoginHandler(cfg.BaseURL, db)).
 		AddRoute("GET /podcasts/{guid}", NewViewPodcastHandler(db), authMW).
 		AddRoute("GET /podcasts/search", NewSearchPodcastsHandler(), authMW).

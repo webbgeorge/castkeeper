@@ -14,6 +14,8 @@ require (
 	github.com/gorilla/csrf v1.7.2
 	github.com/orandin/slog-gorm v1.4.0
 	github.com/spf13/viper v1.20.1
+	github.com/steinfletcher/apitest v1.6.0
+	github.com/steinfletcher/apitest-css-selector v0.2.0
 	github.com/stretchr/testify v1.10.0
 	github.com/webbgeorge/gopodcast v0.1.0
 	golang.org/x/crypto v0.37.0
@@ -25,6 +27,8 @@ require (
 )
 
 require (
+	github.com/PuerkitoBio/goquery v1.10.1 // indirect
+	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.6.8 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.55 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.25 // indirect
