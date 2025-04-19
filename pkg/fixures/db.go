@@ -63,6 +63,16 @@ func applyFixtures(db *gorm.DB) {
 		thirtyMinsAgo,
 		thirtyMinsAgo,
 	))
+	aTimeInThePast, err := time.Parse(time.RFC3339, "2024-12-25T12:00:00Z")
+	if err != nil {
+		panic(err)
+	}
+	create(db, sessionFixture(
+		"expiredSession1",
+		123,
+		aTimeInThePast,
+		aTimeInThePast,
+	))
 }
 
 func create(db *gorm.DB, value any) {
