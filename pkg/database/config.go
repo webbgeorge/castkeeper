@@ -6,6 +6,7 @@ import (
 	slogGorm "github.com/orandin/slog-gorm"
 	"github.com/webbgeorge/castkeeper/pkg/auth"
 	"github.com/webbgeorge/castkeeper/pkg/config"
+	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
@@ -38,6 +39,9 @@ func ConfigureDatabase(cfg config.Config, logger *slog.Logger) (*gorm.DB, error)
 		return nil, err
 	}
 	if err := db.AutoMigrate(&auth.Session{}); err != nil {
+		return nil, err
+	}
+	if err := db.AutoMigrate(&framework.QueueTask{}); err != nil {
 		return nil, err
 	}
 
