@@ -2,6 +2,7 @@ package framework
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -110,8 +111,9 @@ func (w *QueueWorker) Start(ctx context.Context) error {
 
 		qt, err := popQueueTask(ctx, w.DB, w.QueueName)
 		if err != nil {
-			// TODO log if other error
-			// GetLogger(ctx).ErrorContext(ctx, fmt.Sprintf("failed to return task '%d' to queue '%s' with err '%s'", qt.ID, w.QueueName, err.Error()))
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				GetLogger(ctx).ErrorContext(ctx, fmt.Sprintf("failed to pop task from queue '%s' with err '%s'", w.QueueName, err.Error()))
+			}
 			time.Sleep(10 * time.Second) // no jobs on queue, or other error, wait before next poll
 			continue
 		}

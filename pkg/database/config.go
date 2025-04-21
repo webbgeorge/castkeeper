@@ -44,6 +44,9 @@ func ConfigureDatabase(cfg config.Config, logger *slog.Logger) (*gorm.DB, error)
 	if err := db.AutoMigrate(&framework.QueueTask{}); err != nil {
 		return nil, err
 	}
+	if err := db.AutoMigrate(&framework.ScheduledTaskState{}); err != nil {
+		return nil, err
+	}
 
 	return db, nil
 }

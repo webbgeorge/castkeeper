@@ -50,11 +50,23 @@ func main() {
 	itunesAPI := &itunes.ItunesAPI{
 		HTTPClient: framework.NewHTTPClient(time.Second * 5),
 	}
+	scheduler := framework.TaskScheduler{
+		DB: db,
+		Tasks: []framework.ScheduledTaskDefinition{
+			{TaskName: "feedWorker", Interval: time.Minute},
+			{TaskName: "authHouseKeeping", Interval: time.Hour},
+		},
+	}
 
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
 		return webserver.Start(ctx, cfg, logger, feedService, db, objstore, itunesAPI)
+	})
+
+	g.Go(func() error {
+
+		return .Start()
 	})
 
 	g.Go(func() error {
