@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -13,6 +14,8 @@ import (
 const (
 	visibilityTimeout = time.Minute * 30
 	maxReceives       = 5
+	backoffInterval   = time.Second * 10
+	backoffExponent   = 2
 )
 
 var validate = validator.New(validator.WithRequiredStructEnabled())
@@ -86,9 +89,10 @@ func completeQueueTask(ctx context.Context, db *gorm.DB, queueTask QueueTask) er
 	return nil
 }
 
-// TODO add exponential backoff
 func returnQueueTask(ctx context.Context, db *gorm.DB, queueTask QueueTask) error {
-	queueTask.VisibleAfter = time.Now()
+	backoffFactor := math.Pow(backoffExponent, float64(queueTask.ReceiveCount))
+	timeUntilNextTry := backoffInterval * time.Duration(backoffFactor)
+	queueTask.VisibleAfter = time.Now().Add(timeUntilNextTry)
 	if err := db.Save(&queueTask).Error; err != nil {
 		return err
 	}
