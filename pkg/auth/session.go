@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"gorm.io/gorm"
 )
 
@@ -90,26 +91,23 @@ func DeleteExpiredSessions(ctx context.Context, db *gorm.DB) (int64, error) {
 	return result.RowsAffected, nil
 }
 
-// TODO reenable
-// func NewHouseKeepingTask(
-// 	db *gorm.DB,
-// ) framework.Task {
-// 	return framework.NewIntervalTask(
-// 		"AuthHouseKeeping",
-// 		func(ctx context.Context) error {
-// 			framework.GetLogger(ctx).InfoContext(ctx, "starting auth housekeeping")
-//
-// 			sessionsDeleted, err := DeleteExpiredSessions(ctx, db)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			framework.GetLogger(ctx).InfoContext(ctx, fmt.Sprintf("deleted '%d' sessions", sessionsDeleted))
-//
-// 			return nil
-// 		},
-// 		time.Hour,
-// 	)
-// }
+const HouseKeepingQueueName = "authHouseKeeping"
+
+func NewHouseKeepingQueueWorker(
+	db *gorm.DB,
+) func(cxt context.Context, _ any) error {
+	return func(ctx context.Context, _ any) error {
+		framework.GetLogger(ctx).InfoContext(ctx, "starting auth housekeeping")
+
+		sessionsDeleted, err := DeleteExpiredSessions(ctx, db)
+		if err != nil {
+			return err
+		}
+		framework.GetLogger(ctx).InfoContext(ctx, fmt.Sprintf("deleted '%d' sessions", sessionsDeleted))
+
+		return nil
+	}
+}
 
 func strSHA256(str string) string {
 	h := sha256.New()

@@ -13,7 +13,6 @@ import (
 
 const DownloadWorkerQueueName = "downloadWorker"
 
-// TODO figure out where to update episode status to failed
 func NewDownloadWorkerQueueHandler(db *gorm.DB, os objectstorage.ObjectStorage) func(context.Context, any) error {
 	return func(ctx context.Context, episodeGUIDAny any) error {
 		episodeGUID, ok := episodeGUIDAny.(string)

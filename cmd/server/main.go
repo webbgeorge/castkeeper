@@ -9,6 +9,7 @@ import (
 
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/webbgeorge/castkeeper/pkg/auth"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/database"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
@@ -62,6 +63,7 @@ func main() {
 			DB: db,
 			Tasks: []framework.ScheduledTaskDefinition{
 				{TaskName: feedworker.FeedWorkerQueueName, Interval: time.Minute},
+				{TaskName: auth.HouseKeepingQueueName, Interval: time.Hour},
 			},
 		}
 		return scheduler.Start(ctx)
@@ -81,6 +83,15 @@ func main() {
 			DB:        db,
 			QueueName: downloadworker.DownloadWorkerQueueName,
 			HandlerFn: downloadworker.NewDownloadWorkerQueueHandler(db, objstore),
+		}
+		return qw.Start(ctx)
+	})
+
+	g.Go(func() error {
+		qw := framework.QueueWorker{
+			DB:        db,
+			QueueName: auth.HouseKeepingQueueName,
+			HandlerFn: auth.NewHouseKeepingQueueWorker(db),
 		}
 		return qw.Start(ctx)
 	})
