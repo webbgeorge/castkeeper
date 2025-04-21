@@ -4,81 +4,43 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
-	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"github.com/webbgeorge/castkeeper/pkg/util"
 	"gorm.io/gorm"
 )
 
-const (
-	maxFailures       = 5
-	failureRetryAfter = time.Minute * 5
-)
+const DownloadWorkerQueueName = "downloadWorker"
 
-type DownloadWorker struct {
-	DB *gorm.DB
-	OS objectstorage.ObjectStorage
-}
-
-func (w *DownloadWorker) Start(ctx context.Context) error {
-	for {
-		// handle cancellation at top to ensure it runs on every iteration
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
+// TODO figure out where to update episode status to failed
+func NewDownloadWorkerQueueHandler(db *gorm.DB, os objectstorage.ObjectStorage) func(context.Context, any) error {
+	return func(ctx context.Context, episodeGUIDAny any) error {
+		episodeGUID, ok := episodeGUIDAny.(string)
+		if !ok {
+			return errors.New("failed to get episodeGUID from queue data")
 		}
 
-		episode, err := w.ProcessEpisode(ctx)
+		episode, err := podcasts.GetEpisode(ctx, db, episodeGUID)
 		if err != nil {
-			notFoundErr := podcasts.ErrEpisodeNotFound // copy first to avoid changing value
-			if errors.Is(err, notFoundErr) {
-				time.Sleep(5 * time.Second) // no jobs on queue, wait before next poll
-				continue
-			}
-
-			framework.GetLogger(ctx).ErrorContext(ctx, fmt.Sprintf("downloadworker failed to process episode: %s", err.Error()))
-
-			// small sleep to avoid hammering DB on repeated errs
-			time.Sleep(time.Second)
-			continue
+			return fmt.Errorf("failed to get a pending episode: %w", err)
 		}
 
-		framework.GetLogger(ctx).InfoContext(ctx, fmt.Sprintf("successfully downloaded episode '%s'", episode.GUID))
-	}
-}
-
-func (w *DownloadWorker) ProcessEpisode(ctx context.Context) (*podcasts.Episode, error) {
-	hasNotFailedSince := time.Now().Add(-failureRetryAfter)
-	episode, err := podcasts.GetPendingEpisode(ctx, w.DB, hasNotFailedSince)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get a pending episode: %w", err)
-	}
-
-	fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(episode.GUID), podcasts.MimeToExt[episode.MimeType])
-	n, err := w.OS.SaveRemoteFile(ctx, episode.DownloadURL, util.SanitiseGUID(episode.PodcastGUID), fileName)
-	if err != nil {
-		if episode.FailureCount < maxFailures {
-			upErr := podcasts.UpdateEpisodeFailureCount(ctx, w.DB, &episode, episode.FailureCount+1)
+		fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(episode.GUID), podcasts.MimeToExt[episode.MimeType])
+		n, err := os.SaveRemoteFile(ctx, episode.DownloadURL, util.SanitiseGUID(episode.PodcastGUID), fileName)
+		if err != nil {
+			upErr := podcasts.UpdateEpisodeStatus(ctx, db, &episode, podcasts.EpisodeStatusFailed, nil)
 			if upErr != nil {
-				return nil, fmt.Errorf("failed to update episode '%s' failure count: %w", episode.GUID, upErr)
+				return fmt.Errorf("failed to update episode '%s' status to failed: %w", episode.GUID, upErr)
 			}
-		} else {
-			upErr := podcasts.UpdateEpisodeStatus(ctx, w.DB, &episode, podcasts.EpisodeStatusFailed, nil)
-			if upErr != nil {
-				return nil, fmt.Errorf("failed to update episode '%s' status to failed: %w", episode.GUID, upErr)
-			}
+			return fmt.Errorf("failed to download episode '%s': %w", episode.GUID, err)
 		}
-		return nil, fmt.Errorf("failed to download episode '%s': %w", episode.GUID, err)
-	}
 
-	err = podcasts.UpdateEpisodeStatus(ctx, w.DB, &episode, podcasts.EpisodeStatusSuccess, &n)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update episode '%s' status to success: %w", episode.GUID, err)
-	}
+		err = podcasts.UpdateEpisodeStatus(ctx, db, &episode, podcasts.EpisodeStatusSuccess, &n)
+		if err != nil {
+			return fmt.Errorf("failed to update episode '%s' status to success: %w", episode.GUID, err)
+		}
 
-	return &episode, nil
+		return nil
+	}
 }

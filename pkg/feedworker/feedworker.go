@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"gorm.io/gorm"
@@ -76,7 +77,17 @@ func processPodcast(ctx context.Context, db *gorm.DB, feedService *podcasts.Feed
 
 		ep.Status = podcasts.EpisodeStatusPending
 
-		if err := db.Create(&ep).Error; err != nil {
+		err = db.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Create(&ep).Error; err != nil {
+				return err
+			}
+			err := framework.PushQueueTask(ctx, tx, downloadworker.DownloadWorkerQueueName, ep.GUID)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
 			return err
 		}
 	}

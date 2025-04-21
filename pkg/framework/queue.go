@@ -86,6 +86,7 @@ func completeQueueTask(ctx context.Context, db *gorm.DB, queueTask QueueTask) er
 	return nil
 }
 
+// TODO add exponential backoff
 func returnQueueTask(ctx context.Context, db *gorm.DB, queueTask QueueTask) error {
 	queueTask.VisibleAfter = time.Now()
 	if err := db.Save(&queueTask).Error; err != nil {

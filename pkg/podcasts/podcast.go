@@ -2,7 +2,6 @@ package podcasts
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -46,8 +45,6 @@ type Episode struct {
 	DurationSecs int    `validate:"gte=0"`
 	PublishedAt  time.Time
 	Status       string `validate:"required,oneof=pending failed success"`
-	FailureCount int    `validate:"gte=0"`
-	LastFailedAt *time.Time
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
@@ -89,7 +86,9 @@ func ListPodcasts(ctx context.Context, db *gorm.DB) ([]Podcast, error) {
 
 func ListEpisodes(ctx context.Context, db *gorm.DB, podcastGUID string) ([]Episode, error) {
 	var episodes []Episode
-	result := db.Find(&episodes, "podcast_guid = ?", podcastGUID)
+	result := db.
+		Order("published_at desc").
+		Find(&episodes, "podcast_guid = ?", podcastGUID)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -105,25 +104,6 @@ func UpdatePodcastTimes(ctx context.Context, db *gorm.DB, podcast *Podcast, last
 		return result.Error
 	}
 	return nil
-}
-
-var ErrEpisodeNotFound = errors.New("episode not found")
-
-func GetPendingEpisode(ctx context.Context, db *gorm.DB, hasNotFailedSince time.Time) (Episode, error) {
-	var episode Episode
-	result := db.First(
-		&episode,
-		"status = ? AND (last_failed_at IS NULL OR last_failed_at < ?)",
-		EpisodeStatusPending,
-		hasNotFailedSince,
-	)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return episode, ErrEpisodeNotFound
-		}
-		return episode, result.Error
-	}
-	return episode, nil
 }
 
 func GetPodcast(ctx context.Context, db *gorm.DB, guid string) (Podcast, error) {
@@ -156,18 +136,6 @@ func UpdateEpisodeStatus(ctx context.Context, db *gorm.DB, episode *Episode, sta
 		Model(episode).
 		Select(fields).
 		Updates(epUpdate)
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
-}
-
-func UpdateEpisodeFailureCount(ctx context.Context, db *gorm.DB, episode *Episode, failureCount int) error {
-	now := time.Now()
-	result := db.
-		Model(episode).
-		Select("FailureCount", "LastFailedAt").
-		Updates(Episode{FailureCount: failureCount, LastFailedAt: &now})
 	if result.Error != nil {
 		return result.Error
 	}

@@ -77,11 +77,12 @@ func main() {
 	})
 
 	g.Go(func() error {
-		dw := downloadworker.DownloadWorker{
-			DB: db,
-			OS: objstore,
+		qw := framework.QueueWorker{
+			DB:        db,
+			QueueName: downloadworker.DownloadWorkerQueueName,
+			HandlerFn: downloadworker.NewDownloadWorkerQueueHandler(db, objstore),
 		}
-		return dw.Start(ctx)
+		return qw.Start(ctx)
 	})
 
 	if err := g.Wait(); err != nil {
