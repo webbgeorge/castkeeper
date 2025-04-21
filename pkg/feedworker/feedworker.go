@@ -12,46 +12,42 @@ import (
 )
 
 const (
-	feedPollFrequency = time.Second * 10
-	minCheckInterval  = time.Minute * 5
+	FeedWorkerQueueName = "feedWorker"
+	minCheckInterval    = time.Minute * 10
 )
 
-type FeedWorker struct {
-	FeedService *podcasts.FeedService
-	DB          *gorm.DB
-}
-
-func (w *FeedWorker) Start(ctx context.Context) error {
-	ticker := time.NewTicker(feedPollFrequency)
-	defer ticker.Stop()
-
-	for {
-		pods, err := podcasts.ListPodcasts(ctx, w.DB)
+func NewFeedWorkerQueueHandler(db *gorm.DB, feedService *podcasts.FeedService) func(context.Context, any) error {
+	return func(ctx context.Context, _ any) error {
+		pods, err := podcasts.ListPodcasts(ctx, db)
 		if err != nil {
 			framework.GetLogger(ctx).ErrorContext(ctx, fmt.Sprintf("feedworker failed to list podcasts: %s", err.Error()))
+			return err
 		}
 
+		errs := make([]error, 0)
 		for _, pod := range pods {
+			// TODO better logic for if should check
 			if pod.LastCheckedAt != nil && pod.LastCheckedAt.Add(minCheckInterval).After(time.Now()) {
 				framework.GetLogger(ctx).DebugContext(ctx, fmt.Sprintf("podcast '%s' checked too recently, skipping", pod.GUID))
 				continue
 			}
-			err := w.ProcessPodcast(ctx, pod)
+			err := processPodcast(ctx, db, feedService, pod)
 			if err != nil {
 				framework.GetLogger(ctx).ErrorContext(ctx, fmt.Sprintf("feedworker failed to process podcast '%s': %s", pod.GUID, err.Error()))
+				errs = append(errs, err)
 			}
 		}
 
-		select {
-		case <-ticker.C:
-		case <-ctx.Done():
-			return ctx.Err()
+		if len(errs) > 0 {
+			return errors.Join(errs...)
 		}
+
+		return nil
 	}
 }
 
-func (w *FeedWorker) ProcessPodcast(ctx context.Context, podcast podcasts.Podcast) error {
-	_, episodes, err := w.FeedService.ParseFeed(ctx, podcast.FeedURL)
+func processPodcast(ctx context.Context, db *gorm.DB, feedService *podcasts.FeedService, podcast podcasts.Podcast) error {
+	_, episodes, err := feedService.ParseFeed(ctx, podcast.FeedURL)
 	if err != nil {
 		if !errors.Is(err, podcasts.ParseErrors{}) {
 			return err
@@ -60,7 +56,7 @@ func (w *FeedWorker) ProcessPodcast(ctx context.Context, podcast podcasts.Podcas
 		// continue even with some episode parse failures...
 	}
 
-	existingEpisodes, err := podcasts.ListEpisodes(ctx, w.DB, podcast.GUID)
+	existingEpisodes, err := podcasts.ListEpisodes(ctx, db, podcast.GUID)
 	if err != nil {
 		return err
 	}
@@ -80,7 +76,7 @@ func (w *FeedWorker) ProcessPodcast(ctx context.Context, podcast podcasts.Podcas
 
 		ep.Status = podcasts.EpisodeStatusPending
 
-		if err := w.DB.Create(&ep).Error; err != nil {
+		if err := db.Create(&ep).Error; err != nil {
 			return err
 		}
 	}
@@ -92,7 +88,7 @@ func (w *FeedWorker) ProcessPodcast(ctx context.Context, podcast podcasts.Podcas
 		lastEpisodeAt = &episodes[len(episodes)-1].PublishedAt
 	}
 
-	err = podcasts.UpdatePodcastTimes(ctx, w.DB, &podcast, &now, lastEpisodeAt)
+	err = podcasts.UpdatePodcastTimes(ctx, db, &podcast, &now, lastEpisodeAt)
 	if err != nil {
 		return err
 	}

@@ -22,7 +22,7 @@ type QueueTask struct {
 	QueueName    string `validate:"required,gte=1"`
 	VisibleAfter time.Time
 	ReceiveCount uint
-	Data         any
+	Data         any `gorm:"serializer:json"`
 }
 
 func (t *QueueTask) BeforeSave(tx *gorm.DB) error {
@@ -97,7 +97,7 @@ func returnQueueTask(ctx context.Context, db *gorm.DB, queueTask QueueTask) erro
 type QueueWorker struct {
 	DB        *gorm.DB
 	QueueName string
-	HandlerFn func(data any) error
+	HandlerFn func(ctx context.Context, data any) error
 }
 
 func (w *QueueWorker) Start(ctx context.Context) error {
@@ -118,7 +118,7 @@ func (w *QueueWorker) Start(ctx context.Context) error {
 			continue
 		}
 
-		err = w.HandlerFn(qt.Data)
+		err = w.HandlerFn(ctx, qt.Data)
 		if err != nil {
 			GetLogger(ctx).ErrorContext(ctx, fmt.Sprintf("failed to process task '%d' of queue '%s' with err '%s'", qt.ID, w.QueueName, err.Error()))
 			err = returnQueueTask(ctx, w.DB, qt)

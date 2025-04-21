@@ -50,13 +50,6 @@ func main() {
 	itunesAPI := &itunes.ItunesAPI{
 		HTTPClient: framework.NewHTTPClient(time.Second * 5),
 	}
-	scheduler := framework.TaskScheduler{
-		DB: db,
-		Tasks: []framework.ScheduledTaskDefinition{
-			{TaskName: "feedWorker", Interval: time.Minute},
-			{TaskName: "authHouseKeeping", Interval: time.Hour},
-		},
-	}
 
 	g, ctx := errgroup.WithContext(ctx)
 
@@ -65,16 +58,22 @@ func main() {
 	})
 
 	g.Go(func() error {
-
-		return .Start()
+		scheduler := framework.TaskScheduler{
+			DB: db,
+			Tasks: []framework.ScheduledTaskDefinition{
+				{TaskName: feedworker.FeedWorkerQueueName, Interval: time.Minute},
+			},
+		}
+		return scheduler.Start(ctx)
 	})
 
 	g.Go(func() error {
-		fw := feedworker.FeedWorker{
-			FeedService: feedService,
-			DB:          db,
+		qw := framework.QueueWorker{
+			DB:        db,
+			QueueName: feedworker.FeedWorkerQueueName,
+			HandlerFn: feedworker.NewFeedWorkerQueueHandler(db, feedService),
 		}
-		return fw.Start(ctx)
+		return qw.Start(ctx)
 	})
 
 	g.Go(func() error {

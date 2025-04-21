@@ -2,6 +2,7 @@ package framework
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -50,6 +51,11 @@ func (r *TaskScheduler) Start(ctx context.Context) error {
 	ticker := time.NewTicker(pollFrequency)
 	defer ticker.Stop()
 
+	err := r.setupState()
+	if err != nil {
+		return err
+	}
+
 	for {
 		for _, td := range r.Tasks {
 			r.processTask(ctx, td)
@@ -63,8 +69,38 @@ func (r *TaskScheduler) Start(ctx context.Context) error {
 	}
 }
 
+func (r *TaskScheduler) setupState() error {
+	for _, td := range r.Tasks {
+		err := r.DB.Transaction(func(tx *gorm.DB) error {
+			sts := ScheduledTaskState{}
+			result := tx.Where("task_name = ?", td.TaskName).First(&sts)
+			if result.Error == nil {
+				// no err == it already exists, continue
+				return nil
+			}
+			if !errors.Is(result.Error, gorm.ErrRecordNotFound) {
+				// error other than not found
+				return result.Error
+			}
+
+			s := ScheduledTaskState{
+				TaskName:    td.TaskName,
+				LastRunTime: time.Time{}, // 0001-01-01T00:00:00 - i.e. has never run
+			}
+			if err := tx.Create(&s).Error; err != nil {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (r *TaskScheduler) processTask(ctx context.Context, taskDef ScheduledTaskDefinition) {
-	r.DB.Transaction(func(tx *gorm.DB) error {
+	_ = r.DB.Transaction(func(tx *gorm.DB) error {
 		task, err := getScheduledTask(tx, taskDef.TaskName)
 		if err != nil {
 			GetLogger(ctx).ErrorContext(ctx, fmt.Sprintf("failed to get scheduled task '%s': %s", taskDef.TaskName, err.Error()))
