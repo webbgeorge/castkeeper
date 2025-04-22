@@ -1,5 +1,6 @@
 # TODO
 
+- Favicon
 - in-browser player
 - Pagination for search
 - Pagination for list podcasts

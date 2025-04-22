@@ -1,4 +1,16 @@
-ObjectStorage:
-  TODO: TODO
+EnvName: prod
+LogLevel: warn
+BaseURL: https://castkeeper.example.com
+
+WebServer:
+  Port: 8080
+  CSRFSecretKey: testValueDoNotUseInProd
+
 Database:
-  TODO: TODO
+  Driver: sqlite
+  DSN: /app/data/castkeeper.db
+
+ObjectStorage:
+  Driver: awss3
+  S3Bucket: my-castkeeper-bucket
+  S3Prefix: podcasts/
