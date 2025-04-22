@@ -51,6 +51,7 @@ func Start(
 		AddRoute("POST /partials/search-results", NewSearchResultsHandler(itunesAPI), authMW).
 		AddRoute("GET /podcasts/{guid}/image", NewDownloadImageHandler(db, os), authMW).
 		AddRoute("GET /episodes/{guid}/download", NewDownloadEpisodeHandler(db, os), authMW).
+		AddRoute("POST /episodes/{guid}/requeue-download", NewRequeueDownloadHandler(db), authMW).
 		AddRoute("GET /feeds/{guid}", NewFeedHandler(cfg.BaseURL, db), feedAuthMW).
 		Start(ctx)
 }

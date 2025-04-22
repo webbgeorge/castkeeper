@@ -4,12 +4,12 @@ package pages
 import (
 	"fmt"
 	"github.com/webbgeorge/castkeeper/pkg/components"
+	"github.com/webbgeorge/castkeeper/pkg/components/partials"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"strconv"
-	"time"
 )
 
-templ ViewPodcast(pod podcasts.Podcast, eps []podcasts.Episode) {
+templ ViewPodcast(csrfToken string, pod podcasts.Podcast, eps []podcasts.Episode) {
 	@components.Layout(pod.Title) {
 		<div class="breadcrumbs text-sm my-4">
 			<ul>
@@ -51,25 +51,7 @@ templ ViewPodcast(pod podcasts.Podcast, eps []podcasts.Episode) {
 						</thead>
 						<tbody>
 							for _, ep := range eps {
-								<tr class="hover">
-									<td>{ ep.Title }</td>
-									<td>
-										@badge(ep.Status)
-									</td>
-									<td>{ fmt.Sprintf("%s", time.Duration(ep.DurationSecs) * time.Second) }</td>
-									<td>
-										if ep.Status == podcasts.EpisodeStatusSuccess {
-											<a
-												class="link"
-												href={ templ.URL(fmt.Sprintf("/episodes/%s/download", ep.GUID)) }
-											>
-												Download
-											</a>
-										} else {
-											-
-										}
-									</td>
-								</tr>
+								@partials.EpisodeListItem(csrfToken, ep)
 							}
 						</tbody>
 					</table>
@@ -79,15 +61,3 @@ templ ViewPodcast(pod podcasts.Podcast, eps []podcasts.Episode) {
 	}
 }
 
-templ badge(status string) {
-	switch status {
-		case podcasts.EpisodeStatusPending:
-			<div class="badge badge-warning">{ status }</div>
-		case podcasts.EpisodeStatusSuccess:
-			<div class="badge badge-success">{ status }</div>
-		case podcasts.EpisodeStatusFailed:
-			<div class="badge badge-error">{ status }</div>
-		default:
-			<div class="badge badge-neutral">{ status }</div>
-	}
-}

@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/csrf"
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
 	"github.com/webbgeorge/castkeeper/pkg/components/partials"
+	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/itunes"
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
@@ -78,7 +79,7 @@ func NewViewPodcastHandler(db *gorm.DB) framework.Handler {
 			return err
 		}
 
-		return framework.Render(ctx, w, 200, pages.ViewPodcast(pod, eps))
+		return framework.Render(ctx, w, 200, pages.ViewPodcast(csrf.Token(r), pod, eps))
 	}
 }
 
@@ -95,6 +96,33 @@ func NewDownloadEpisodeHandler(db *gorm.DB, os objectstorage.ObjectStorage) fram
 
 		fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(ep.GUID), podcasts.MimeToExt[ep.MimeType])
 		return os.ServeFile(ctx, r, w, util.SanitiseGUID(ep.PodcastGUID), fileName)
+	}
+}
+
+func NewRequeueDownloadHandler(db *gorm.DB) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		ep, err := podcasts.GetEpisode(ctx, db, r.PathValue("guid"))
+		if err != nil {
+			// TODO handle not found error
+			return err
+		}
+
+		err = db.Transaction(func(tx *gorm.DB) error {
+			err := podcasts.UpdateEpisodeStatus(ctx, tx, &ep, podcasts.EpisodeStatusPending, nil)
+			if err != nil {
+				return err
+			}
+			err = framework.PushQueueTask(ctx, tx, downloadworker.DownloadWorkerQueueName, ep.GUID)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		return framework.Render(ctx, w, 200, partials.EpisodeListItem(csrf.Token(r), ep))
 	}
 }
 
