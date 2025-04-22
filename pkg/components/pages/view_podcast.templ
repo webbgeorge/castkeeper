@@ -3,11 +3,14 @@ package pages
 
 import (
 	"fmt"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/webbgeorge/castkeeper/pkg/components"
 	"github.com/webbgeorge/castkeeper/pkg/components/partials"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"strconv"
 )
+
+var userHTMLPolicy = bluemonday.StrictPolicy()
 
 templ ViewPodcast(csrfToken string, pod podcasts.Podcast, eps []podcasts.Episode) {
 	@components.Layout(pod.Title) {
@@ -34,7 +37,9 @@ templ ViewPodcast(csrfToken string, pod podcasts.Podcast, eps []podcasts.Episode
 							<br/>
 							{ strconv.Itoa(len(eps)) } episodes
 						</p>
-						<p>{ pod.Description }</p>
+						<p>
+							@templ.Raw(userHTMLPolicy.Sanitize(pod.Description))
+						</p>
 					</div>
 				</div>
 			</div>
