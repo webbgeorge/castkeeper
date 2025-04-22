@@ -240,14 +240,19 @@ func parseDuration(item *gopodcast.Item) int {
 	return int(math.Round(dur.Seconds()))
 }
 
-func feedCategories(feed *gopodcast.Podcast) []string {
-	cats := make([]string, 0)
+func feedCategories(feed *gopodcast.Podcast) []Category {
+	cats := make([]Category, 0)
 	for _, c := range feed.ITunesCategory {
 		if c.Text != "" {
-			cats = append(cats, c.Text)
-			if c.SubCategory != nil && c.SubCategory.Text != "" {
-				cats = append(cats, fmt.Sprintf("%s:%s", c.Text, c.SubCategory.Text))
+			cat := Category{
+				Name: c.Text,
 			}
+			if c.SubCategory != nil && c.SubCategory.Text != "" {
+				cat.SubCategory = &Category{
+					Name: c.SubCategory.Text,
+				}
+			}
+			cats = append(cats, cat)
 		}
 	}
 	return cats
@@ -270,7 +275,18 @@ func GenerateFeed(ctx context.Context, baseURL string, db *gorm.DB, podcastGuid 
 func feedFromPodcast(baseURL string, pod Podcast, eps []Episode) (*gopodcast.Podcast, error) {
 	categories := make([]gopodcast.ITunesCategory, 0)
 	for _, cat := range pod.Categories {
-		categories = append(categories, gopodcast.ITunesCategory{Text: cat})
+		if cat.Name == "" {
+			continue
+		}
+		iCat := gopodcast.ITunesCategory{
+			Text: cat.Name,
+		}
+		if cat.SubCategory != nil && cat.SubCategory.Name != "" {
+			iCat.SubCategory = &gopodcast.ITunesCategory{
+				Text: cat.SubCategory.Name,
+			}
+		}
+		categories = append(categories, iCat)
 	}
 
 	feed := &gopodcast.Podcast{

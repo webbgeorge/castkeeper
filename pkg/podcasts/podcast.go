@@ -16,13 +16,13 @@ const (
 )
 
 type Podcast struct {
-	GUID          string   `gorm:"primaryKey" validate:"required,gte=1,lte=1000"`
-	Title         string   `validate:"required,gte=1,lte=1000"`
-	Author        string   `validate:"required,gte=1,lte=1000"`
-	Description   string   `validate:"lte=10000"`
-	Language      string   `validate:"lte=10"`
-	Link          string   `validate:"lte=1000"`
-	Categories    []string `gorm:"serializer:json" validate:"lte=25,dive,lte=100"` // TODO consider keeping nested categories
+	GUID          string     `gorm:"primaryKey" validate:"required,gte=1,lte=1000"`
+	Title         string     `validate:"required,gte=1,lte=1000"`
+	Author        string     `validate:"required,gte=1,lte=1000"`
+	Description   string     `validate:"lte=10000"`
+	Language      string     `validate:"lte=10"`
+	Link          string     `validate:"lte=1000"`
+	Categories    []Category `gorm:"serializer:json" validate:"lte=25"`
 	IsExplicit    bool
 	ImageURL      string `validate:"lte=1000"`
 	FeedURL       string `validate:"required,http_url,lte=1000"`
@@ -31,6 +31,11 @@ type Podcast struct {
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	DeletedAt     gorm.DeletedAt `gorm:"index"`
+}
+
+type Category struct {
+	Name        string `validate:"required,gte=1,lte=100"`
+	SubCategory *Category
 }
 
 type Episode struct {

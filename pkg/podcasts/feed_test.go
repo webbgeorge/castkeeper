@@ -176,13 +176,16 @@ func timePtrStr(tStr string) *time.Time {
 
 func fakePodcast(feedURL, guid string, latestEpPubAt *time.Time) podcasts.Podcast {
 	return podcasts.Podcast{
-		GUID:          guid,
-		Title:         fmt.Sprintf("Test podcast %s", guid),
-		Author:        "Dr Tester",
-		Description:   "Test podcast description goes here",
-		Language:      "en",
-		Link:          "http://www.example.com/podcast-site",
-		Categories:    []string{"Comedy", "Drama", "Drama:Thriller"},
+		GUID:        guid,
+		Title:       fmt.Sprintf("Test podcast %s", guid),
+		Author:      "Dr Tester",
+		Description: "Test podcast description goes here",
+		Language:    "en",
+		Link:        "http://www.example.com/podcast-site",
+		Categories: []podcasts.Category{
+			{Name: "Comedy"},
+			{Name: "Drama", SubCategory: &podcasts.Category{Name: "Thriller"}},
+		},
 		IsExplicit:    true,
 		ImageURL:      "http://www.example.com/image.jpg",
 		FeedURL:       feedURL,
