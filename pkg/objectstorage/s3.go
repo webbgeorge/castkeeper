@@ -44,7 +44,7 @@ func (s *S3ObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation, po
 	}
 
 	uploader := manager.NewUploader(s.S3Client)
-	_, err = uploader.Upload(context.TODO(), &s3.PutObjectInput{
+	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(s.BucketName),
 		Key:    aws.String(s.Prefix + s3Key),
 		Body:   resp.Body,

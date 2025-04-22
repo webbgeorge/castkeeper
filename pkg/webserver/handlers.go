@@ -70,7 +70,9 @@ func NewViewPodcastHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		pod, err := podcasts.GetPodcast(ctx, db, r.PathValue("guid"))
 		if err != nil {
-			// TODO handle not found error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return framework.HttpNotFound()
+			}
 			return err
 		}
 
@@ -87,7 +89,9 @@ func NewDownloadEpisodeHandler(db *gorm.DB, os objectstorage.ObjectStorage) fram
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		ep, err := podcasts.GetEpisode(ctx, db, r.PathValue("guid"))
 		if err != nil {
-			// TODO handle not found error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return framework.HttpNotFound()
+			}
 			return err
 		}
 
@@ -103,7 +107,9 @@ func NewRequeueDownloadHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		ep, err := podcasts.GetEpisode(ctx, db, r.PathValue("guid"))
 		if err != nil {
-			// TODO handle not found error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return framework.HttpNotFound()
+			}
 			return err
 		}
 
@@ -130,7 +136,9 @@ func NewDownloadImageHandler(db *gorm.DB, os objectstorage.ObjectStorage) framew
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		pod, err := podcasts.GetPodcast(ctx, db, r.PathValue("guid"))
 		if err != nil {
-			// TODO handle not found error
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return framework.HttpNotFound()
+			}
 			return err
 		}
 
@@ -166,6 +174,9 @@ func NewFeedHandler(baseURL string, db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		feed, err := podcasts.GenerateFeed(ctx, baseURL, db, r.PathValue("guid"))
 		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return framework.HttpNotFound()
+			}
 			return err
 		}
 

@@ -256,7 +256,6 @@ func feedCategories(feed *gopodcast.Podcast) []string {
 func GenerateFeed(ctx context.Context, baseURL string, db *gorm.DB, podcastGuid string) (*gopodcast.Podcast, error) {
 	pod, err := GetPodcast(ctx, db, podcastGuid)
 	if err != nil {
-		// TODO handle not found error
 		return nil, err
 	}
 

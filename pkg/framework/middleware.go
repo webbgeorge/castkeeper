@@ -118,6 +118,9 @@ func NewErrorHandlerMiddleware() Middleware {
 					}
 				}
 
+				if httpError.StatusCode == 404 {
+					return Render(ctx, w, httpError.StatusCode, pages.NotFound())
+				}
 				return Render(ctx, w, httpError.StatusCode, pages.Error(httpError.Message))
 			}
 

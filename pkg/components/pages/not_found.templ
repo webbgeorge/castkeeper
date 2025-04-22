@@ -1,0 +1,11 @@
+package pages
+
+import "github.com/webbgeorge/castkeeper/pkg/components"
+
+templ NotFound() {
+	@components.Layout("404 Not Found") {
+		<h1 class="text-xl my-6">404 Not Found</h1>
+		<p>This page could not be found.</p>
+		<p><a href="/" class="link">Click here to go home.</a></p>
+	}
+}
