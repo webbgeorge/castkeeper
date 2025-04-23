@@ -2,8 +2,6 @@ package podcasts
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/base64"
 	"fmt"
 	"math"
 	"net/http"
@@ -12,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/webbgeorge/castkeeper/pkg/util"
 	"github.com/webbgeorge/gopodcast"
 	"gorm.io/gorm"
@@ -142,10 +141,9 @@ func episodesFromFeed(feed *gopodcast.Podcast, podcastGUID string) ([]Episode, e
 	return episodes, err
 }
 
-// TODO I'm not confident this method of getting a unique ID is sufficient
 func feedGUID(feed *gopodcast.Podcast) string {
 	if feed.PodcastGUID != "" {
-		return util.SanitiseGUID(feed.PodcastGUID)
+		return uuid.NewV5(uuid.NamespaceOID, feed.PodcastGUID).String()
 	}
 
 	// fallback to hash of feed link or title otherwise
@@ -157,21 +155,15 @@ func feedGUID(feed *gopodcast.Podcast) string {
 		hashIn = feed.Title
 	}
 
-	h := sha256.New()
-	_, _ = h.Write([]byte(hashIn))
-	newGUID := base64.URLEncoding.EncodeToString(h.Sum(nil))
-
-	return util.SanitiseGUID(newGUID)
+	return uuid.NewV5(uuid.NamespaceOID, hashIn).String()
 }
 
-// TODO I'm not confident this method of getting a unique ID is sufficient
 func episodeGUID(feedItem *gopodcast.Item) string {
 	if feedItem.GUID.Text != "" {
-		return util.SanitiseGUID(feedItem.GUID.Text)
+		return uuid.NewV5(uuid.NamespaceOID, feedItem.GUID.Text).String()
 	}
 
 	// fallback to title + pub date or Enclosure URL if guid not present
-
 	guidSuffix := ""
 	if feedItem.PubDate != nil {
 		guidSuffix = time.Time(*feedItem.PubDate).Format(time.RFC3339)
@@ -180,12 +172,7 @@ func episodeGUID(feedItem *gopodcast.Item) string {
 		guidSuffix = feedItem.Enclosure.URL
 	}
 
-	hashIn := feedItem.Title + guidSuffix
-	h := sha256.New()
-	_, _ = h.Write([]byte(hashIn))
-	newGUID := base64.URLEncoding.EncodeToString(h.Sum(nil))
-
-	return util.SanitiseGUID(newGUID)
+	return uuid.NewV5(uuid.NamespaceOID, feedItem.Title+guidSuffix).String()
 }
 
 func truncate(s string, l int) string {

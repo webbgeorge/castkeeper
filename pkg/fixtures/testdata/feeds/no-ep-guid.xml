@@ -21,7 +21,7 @@
     <itunes:type>Serialised</itunes:type>
     <itunes:complete>yes</itunes:complete>
     <item>
-      <title>Test episode R90NI3_ZksD0ZqFXScJPjGdcMZ6bI284x0vUD4l7eY8=</title>
+      <title>Test episode with no guid</title>
       <enclosure url="http://www.example.com/episode-ep-1.mp3" length="1001" type="audio/mpeg"/>
       <link>http://www.example.com/ep-link</link>
       <pubDate>Thu, 26 Dec 2024 11:12:13 UTC</pubDate>

@@ -2,7 +2,7 @@
 <rss xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:podcast="https://podcastindex.org/namespace/1.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
   <channel>
     <atom:link href="http://www.example.com/feed" rel="self" type="application/rss+xml"/>
-    <title>Test podcast abc-123</title>
+    <title>Test podcast 916ed63b-7e5e-5541-af78-e214a0c14d95</title>
     <link>http://www.example.com/podcast-site</link>
     <language>en</language>
     <description>Test podcast description goes here</description>
@@ -21,8 +21,8 @@
     <itunes:type>Serialised</itunes:type>
     <itunes:complete>yes</itunes:complete>
     <item>
-      <title>Test episode ep-1</title>
-      <enclosure url="http://www.example.com/episode-ep-1.mp3" length="1001" type="audio/mpeg"/>
+      <title>Test episode c8998fa5-8083-56a6-8d3c-7b98d031b3d8</title>
+      <enclosure url="http://www.example.com/episode-c8998fa5-8083-56a6-8d3c-7b98d031b3d8.mp3" length="1001" type="audio/mpeg"/>
       <guid>ep-1</guid>
       <link>http://www.example.com/ep-link</link>
       <pubDate>Thu, 26 Dec 2024 11:12:13 UTC</pubDate>
@@ -37,8 +37,8 @@
       <itunes:block>no</itunes:block>
     </item>
     <item>
-      <title>Test episode ep-2</title>
-      <enclosure url="http://www.example.com/episode-ep-2.mp3" length="1001" type="audio/mpeg"/>
+      <title>Test episode 3864ebe7-7a8f-5532-841f-0bacd0a0cc6c</title>
+      <enclosure url="http://www.example.com/episode-3864ebe7-7a8f-5532-841f-0bacd0a0cc6c.mp3" length="1001" type="audio/mpeg"/>
       <guid>ep-2</guid>
       <link>http://www.example.com/ep-link</link>
       <pubDate>Thu, 27 Dec 2024 11:12:13 UTC</pubDate>
