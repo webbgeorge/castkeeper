@@ -130,7 +130,7 @@ func TestUpdateLastSeen(t *testing.T) {
 	assert.Less(t, time.Since(s2.LastSeenTime), 15*time.Minute)
 }
 
-func TestDelectExpiredSessions(t *testing.T) {
+func TestDeleteExpiredSessions(t *testing.T) {
 	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
@@ -140,6 +140,20 @@ func TestDelectExpiredSessions(t *testing.T) {
 	n, err := auth.DeleteExpiredSessions(context.Background(), db)
 	assert.Nil(t, err)
 	assert.Equal(t, int64(1), n)
+
+	_, err = auth.GetSession(context.Background(), db, "expiredSession1")
+	assert.Equal(t, "record not found", err.Error())
+}
+
+func TestHouseKeepingQueueWorker(t *testing.T) {
+	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
+	defer resetDB()
+
+	_, err := auth.GetSession(context.Background(), db, "expiredSession1")
+	assert.Equal(t, "session expired", err.Error())
+
+	err = auth.NewHouseKeepingQueueWorker(db)(context.Background(), "")
+	assert.Nil(t, err)
 
 	_, err = auth.GetSession(context.Background(), db, "expiredSession1")
 	assert.Equal(t, "record not found", err.Error())

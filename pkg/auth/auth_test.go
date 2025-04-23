@@ -29,10 +29,12 @@ func TestAuthenticationMiddleware_ValidSessionIsPassedThrough(t *testing.T) {
 	resRec := &httptest.ResponseRecorder{}
 
 	var userID uint
+	var username string
 	nextFn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		s := auth.GetSessionFromCtx(ctx)
 		if s != nil {
 			userID = s.UserID
+			username = s.User.Username
 		}
 		return nil
 	}
@@ -43,6 +45,7 @@ func TestAuthenticationMiddleware_ValidSessionIsPassedThrough(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Empty(t, resRec.Header().Get("Location"))
 	assert.Equal(t, 123, int(userID))
+	assert.Equal(t, "unittest", username)
 }
 
 func TestAuthenticationMiddleware_RedirectsWhenNoCookie(t *testing.T) {

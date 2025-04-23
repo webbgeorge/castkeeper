@@ -60,8 +60,6 @@ func NewAuthenticationMiddleware(db *gorm.DB) framework.Middleware {
 				"userID", s.UserID,
 			)
 
-			// TODO add user to context - should user be in session?
-
 			return next(sessionCtx, w, r)
 		}
 	}

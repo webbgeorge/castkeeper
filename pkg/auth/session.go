@@ -35,7 +35,9 @@ func (s *Session) BeforeSave(tx *gorm.DB) error {
 
 func GetSession(ctx context.Context, db *gorm.DB, sessionID string) (Session, error) {
 	var session Session
-	result := db.First(&session, "id = ?", strSHA256(sessionID))
+	result := db.
+		Preload("User").
+		First(&session, "id = ?", strSHA256(sessionID))
 	if result.Error != nil {
 		return session, result.Error
 	}
