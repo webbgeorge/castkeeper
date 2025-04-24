@@ -55,7 +55,9 @@ func main() {
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
-		return webserver.Start(ctx, cfg, logger, feedService, db, objstore, itunesAPI)
+		return webserver.
+			NewWebserver(cfg, logger, feedService, db, objstore, itunesAPI).
+			Start(ctx)
 	})
 
 	g.Go(func() error {

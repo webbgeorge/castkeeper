@@ -1,7 +1,6 @@
 package webserver
 
 import (
-	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -16,20 +15,16 @@ import (
 	"gorm.io/gorm"
 )
 
-func Start(
-	ctx context.Context,
+func NewWebserver(
 	cfg config.Config,
 	logger *slog.Logger,
 	feedService *podcasts.FeedService,
 	db *gorm.DB,
 	os objectstorage.ObjectStorage,
 	itunesAPI *itunes.ItunesAPI,
-) error {
+) *framework.Server {
 	port := fmt.Sprintf(":%d", cfg.WebServer.Port)
-	server, err := framework.NewServer(port, logger)
-	if err != nil {
-		return fmt.Errorf("failed to start server: %w", err)
-	}
+	server := framework.NewServer(port, logger)
 
 	middleware := framework.DefaultMiddlewareStack()
 	middleware = append(middleware, framework.NewCSRFMiddleware(
@@ -52,6 +47,5 @@ func Start(
 		AddRoute("GET /podcasts/{guid}/image", NewDownloadImageHandler(db, os), authMW).
 		AddRoute("GET /episodes/{guid}/download", NewDownloadEpisodeHandler(db, os), authMW).
 		AddRoute("POST /episodes/{guid}/requeue-download", NewRequeueDownloadHandler(db), authMW).
-		AddRoute("GET /feeds/{guid}", NewFeedHandler(cfg.BaseURL, db), feedAuthMW).
-		Start(ctx)
+		AddRoute("GET /feeds/{guid}", NewFeedHandler(cfg.BaseURL, db), feedAuthMW)
 }

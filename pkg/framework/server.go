@@ -15,17 +15,17 @@ import (
 type Server struct {
 	Logger *slog.Logger
 	addr   string
-	mux    *http.ServeMux
+	Mux    *http.ServeMux
 	mws    []Middleware
 }
 
-func NewServer(addr string, logger *slog.Logger) (*Server, error) {
+func NewServer(addr string, logger *slog.Logger) *Server {
 	sm := http.NewServeMux()
 	return &Server{
 		Logger: logger,
 		addr:   addr,
-		mux:    sm,
-	}, nil
+		Mux:    sm,
+	}
 }
 
 func (s *Server) SetServerMiddlewares(middlewares ...Middleware) *Server {
@@ -55,7 +55,7 @@ func (s *Server) AddRoute(pattern string, handler Handler, middlewares ...Middle
 			}
 		},
 	)
-	s.mux.Handle(pattern, handlerFunc)
+	s.Mux.Handle(pattern, handlerFunc)
 
 	return s
 }
@@ -71,7 +71,7 @@ func (s *Server) AddFileServer(path string, fileServer http.Handler, middlewares
 func (s *Server) Start(ctx context.Context) error {
 	httpServer := &http.Server{
 		Addr:         s.addr,
-		Handler:      s.mux,
+		Handler:      s.Mux,
 		ReadTimeout:  time.Second * 5,
 		WriteTimeout: time.Minute * 2,
 		BaseContext:  func(_ net.Listener) context.Context { return ctx },

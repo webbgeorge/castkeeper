@@ -7,20 +7,14 @@
 - Support parsing of authenticated feeds
 - Disclaimer in readme
 - Internationalisation
-- Font
-- Message queue for downloading / other jobs
 - Remove podcast
 - Metrics (prometheus?)
-- backoff on download failures
 - Permission for feed access vs app access
-- Auth housekeeping task
-- Auth rate limiting
-- Refactor background jobs to use scheduler
 - Logout button / show active username in UI
 - User management UI
 - Collapse cmds into single script
 - Min password length / policy
-- Rate limiting or other login protections
+- Auth rate-limiting or other login protections
 
 Priority
 
