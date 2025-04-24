@@ -137,3 +137,10 @@ func HttpUnauthorized() HttpError {
 		Message:    "Unauthorized",
 	}
 }
+
+func HttpForbidden() HttpError {
+	return HttpError{
+		StatusCode: 403,
+		Message:    "Forbidden",
+	}
+}

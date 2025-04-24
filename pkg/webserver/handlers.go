@@ -39,6 +39,25 @@ func NewSearchPodcastsHandler() framework.Handler {
 	}
 }
 
+func NewSearchResultsHandler(itunesAPI *itunes.ItunesAPI) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		q := r.PostFormValue("query")
+		if len(q) == 0 {
+			return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), nil, "Search query cannot be empty"))
+		}
+		if len(q) >= 250 {
+			return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), nil, "Search query must be less than 250 characters"))
+		}
+
+		results, err := itunesAPI.Search(ctx, q)
+		if err != nil {
+			framework.GetLogger(ctx).ErrorContext(ctx, "itunes search failed", "error", err)
+			return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), nil, "There was an unexpected error"))
+		}
+		return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), results, ""))
+	}
+}
+
 func NewAddPodcastHandler(feedService *podcasts.FeedService, db *gorm.DB, os objectstorage.ObjectStorage) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		feedURL := r.PostFormValue("feedUrl")
@@ -148,25 +167,6 @@ func NewDownloadImageHandler(db *gorm.DB, os objectstorage.ObjectStorage) framew
 		// TODO detect file type
 		fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(pod.GUID), "jpg")
 		return os.ServeFile(ctx, r, w, util.SanitiseGUID(pod.GUID), fileName)
-	}
-}
-
-func NewSearchResultsHandler(itunesAPI *itunes.ItunesAPI) framework.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		q := r.PostFormValue("query")
-		if len(q) == 0 {
-			return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), nil, "Search query cannot be empty"))
-		}
-		if len(q) >= 250 {
-			return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), nil, "Search query must be less than 250 characters"))
-		}
-
-		results, err := itunesAPI.Search(ctx, q)
-		if err != nil {
-			framework.GetLogger(ctx).ErrorContext(ctx, "itunes search failed", "error", err)
-			return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), nil, "There was an unexpected error"))
-		}
-		return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), results, ""))
 	}
 }
 
