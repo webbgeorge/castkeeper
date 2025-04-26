@@ -2,10 +2,12 @@ package webserver_test
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"testing"
 
+	"github.com/gofrs/uuid/v5"
 	"github.com/steinfletcher/apitest"
 	selector "github.com/steinfletcher/apitest-css-selector"
 	"github.com/webbgeorge/castkeeper/pkg/config"
@@ -254,7 +256,41 @@ func TestAddPodcast_AlreadyAdded(t *testing.T) {
 		End()
 }
 
-// TODO view podcasts
+func TestViewPodcast(t *testing.T) {
+	server, ctx, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get(fmt.Sprintf("/podcasts/%s", genGUID("abc-123"))). // from fixtures
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Test podcast 916ed63b-7e5e-5541-af78-e214a0c14d95")).
+		Assert(selector.TextExists("Dr Tester")).
+		Assert(selector.TextExists("2 episodes")).
+		Assert(selector.TextExists("Test podcast description goes here")).
+		Assert(selector.TextExists("Test episode c8998fa5-8083-56a6-8d3c-7b98d031b3d8")).
+		Assert(selector.TextExists("Test episode 3864ebe7-7a8f-5532-841f-0bacd0a0cc6c")).
+		End()
+}
+
+func TestViewPodcast_NotFound(t *testing.T) {
+	server, ctx, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get("/podcasts/not-a-pod").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusNotFound).
+		Assert(selector.TextExists("404 Not Found")).
+		End()
+}
+
 // TODO download podcast
 // TODO requeue podcast
 // TODO download image
@@ -283,4 +319,8 @@ func setupServerForTest() (*framework.Server, context.Context, func()) {
 	ctx := context.WithValue(context.Background(), "gorilla.csrf.Skip", true)
 
 	return server, ctx, resetDB
+}
+
+func genGUID(s string) string {
+	return uuid.NewV5(uuid.NamespaceOID, s).String()
 }
