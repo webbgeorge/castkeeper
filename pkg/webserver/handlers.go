@@ -147,6 +147,7 @@ func NewRequeueDownloadHandler(db *gorm.DB) framework.Handler {
 			return err
 		}
 
+		ep.Status = podcasts.EpisodeStatusPending
 		return framework.Render(ctx, w, 200, partials.EpisodeListItem(csrf.Token(r), ep))
 	}
 }

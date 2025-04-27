@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/gofrs/uuid/v5"
@@ -17,10 +19,11 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"github.com/webbgeorge/castkeeper/pkg/webserver"
+	"gorm.io/gorm"
 )
 
 func TestHomePage(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -37,7 +40,7 @@ func TestHomePage(t *testing.T) {
 }
 
 func TestNoSessionRedirectsToLogin(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -52,7 +55,7 @@ func TestNoSessionRedirectsToLogin(t *testing.T) {
 }
 
 func TestExpiredSessionRedirectsToLogin(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -68,7 +71,7 @@ func TestExpiredSessionRedirectsToLogin(t *testing.T) {
 }
 
 func TestInvalidSessionRedirectsToLogin(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -84,7 +87,7 @@ func TestInvalidSessionRedirectsToLogin(t *testing.T) {
 }
 
 func TestNotFound(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -99,7 +102,7 @@ func TestNotFound(t *testing.T) {
 }
 
 func TestCSRFFailure(t *testing.T) {
-	server, _, reset := setupServerForTest()
+	server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	ctx := context.Background() // ctx without the csrf skip value
@@ -117,7 +120,7 @@ func TestCSRFFailure(t *testing.T) {
 }
 
 func TestSearchPodcastsPage(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -135,7 +138,7 @@ func TestSearchPodcastsPage(t *testing.T) {
 }
 
 func TestSearchResults_Success(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -153,7 +156,7 @@ func TestSearchResults_Success(t *testing.T) {
 }
 
 func TestSearchResults_EmptyResults(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -170,7 +173,7 @@ func TestSearchResults_EmptyResults(t *testing.T) {
 }
 
 func TestSearchResults_InvalidQuery(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -187,7 +190,7 @@ func TestSearchResults_InvalidQuery(t *testing.T) {
 }
 
 func TestSearchResults_FailedToCallItunes(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -204,7 +207,7 @@ func TestSearchResults_FailedToCallItunes(t *testing.T) {
 }
 
 func TestAddPodcast_Success(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -223,7 +226,7 @@ func TestAddPodcast_Success(t *testing.T) {
 }
 
 func TestAddPodcast_InvalidFeed(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -240,7 +243,7 @@ func TestAddPodcast_InvalidFeed(t *testing.T) {
 }
 
 func TestAddPodcast_AlreadyAdded(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -257,7 +260,7 @@ func TestAddPodcast_AlreadyAdded(t *testing.T) {
 }
 
 func TestViewPodcast(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -277,7 +280,7 @@ func TestViewPodcast(t *testing.T) {
 }
 
 func TestViewPodcast_NotFound(t *testing.T) {
-	server, ctx, reset := setupServerForTest()
+	server, _, ctx, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -292,11 +295,77 @@ func TestViewPodcast_NotFound(t *testing.T) {
 }
 
 // TODO download podcast
-// TODO requeue podcast
 // TODO download image
-// TODO feed
 
-func setupServerForTest() (*framework.Server, context.Context, func()) {
+func TestRequeuePodcast(t *testing.T) {
+	server, _, ctx, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post(fmt.Sprintf("/episodes/%s/requeue-download", genGUID("ep-1"))). // from fixtures
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Test episode c8998fa5-8083-56a6-8d3c-7b98d031b3d8")).
+		Assert(selector.TextExists("pending")).
+		End()
+
+	// TODO verify was added to queue
+	// TODO verify that status was updated to pending
+}
+
+func TestRequeuePodcast_NotFound(t *testing.T) {
+	server, _, ctx, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/episodes/not-an-ep/requeue-download").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusNotFound).
+		End()
+}
+
+func TestGetFeed(t *testing.T) {
+	server, _, ctx, reset := setupServerForTest()
+	defer reset()
+
+	expectedBody, err := os.ReadFile("./testdata/expected-generated-feed.xml")
+	if err != nil {
+		panic(err)
+	}
+	expectedBodyStr := strings.TrimSpace(string(expectedBody))
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get(fmt.Sprintf("/feeds/%s", genGUID("abc-123"))). // from fixtures
+		WithContext(ctx).
+		BasicAuth("unittest", "unittestpw"). // from fixtures
+		Expect(t).
+		Status(http.StatusOK).
+		Body(expectedBodyStr).
+		End()
+}
+
+func TestGetFeed_NotFound(t *testing.T) {
+	server, _, ctx, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get("/feeds/not-a-pod").
+		WithContext(ctx).
+		BasicAuth("unittest", "unittestpw"). // from fixtures
+		Expect(t).
+		Status(http.StatusNotFound).
+		End()
+}
+
+func setupServerForTest() (*framework.Server, *gorm.DB, context.Context, func()) {
 	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	cfg := config.Config{
 		BaseURL: "http://example.com",
@@ -318,7 +387,7 @@ func setupServerForTest() (*framework.Server, context.Context, func()) {
 	server := webserver.NewWebserver(cfg, logger, feedService, db, os, itunesAPI)
 	ctx := context.WithValue(context.Background(), "gorilla.csrf.Skip", true)
 
-	return server, ctx, resetDB
+	return server, db, ctx, resetDB
 }
 
 func genGUID(s string) string {
