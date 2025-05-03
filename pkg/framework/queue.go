@@ -49,7 +49,7 @@ func PushQueueTask(ctx context.Context, db *gorm.DB, queueName string, data any)
 	return nil
 }
 
-func popQueueTask(ctx context.Context, db *gorm.DB, queueName string) (QueueTask, error) {
+func PopQueueTask(ctx context.Context, db *gorm.DB, queueName string) (QueueTask, error) {
 	var queueTask QueueTask
 	err := db.Transaction(func(tx *gorm.DB) error {
 		result := tx.
@@ -114,7 +114,7 @@ func (w *QueueWorker) Start(ctx context.Context) error {
 		default:
 		}
 
-		qt, err := popQueueTask(ctx, w.DB, w.QueueName)
+		qt, err := PopQueueTask(ctx, w.DB, w.QueueName)
 		if err != nil {
 			if !errors.Is(err, gorm.ErrRecordNotFound) {
 				GetLogger(ctx).ErrorContext(ctx, fmt.Sprintf("failed to pop task from queue '%s' with err '%s'", w.QueueName, err.Error()))

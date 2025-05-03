@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:podcast="https://podcastindex.org/namespace/1.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
+  <channel>
+    <atom:link href="http://testdata/feeds/valid-not-added.xml" rel="self" type="application/rss+xml"/>
+    <title>Test podcast 2</title>
+    <link>http://www.example.com/podcast-site-2</link>
+    <language>en</language>
+    <description>Test podcast 2 description goes here</description>
+    <itunes:image href="http://testdata/images/pod-image.jpg"/>
+    <itunes:category text="Comedy"/>
+    <item>
+      <title>Test episode</title>
+      <enclosure url="http://testdata/audio/pod.mp3" length="1001" type="audio/mpeg"/>
+      <guid>pod-2-ep-1</guid>
+      <link>http://www.example.com/ep-link</link>
+      <pubDate>Thu, 26 Dec 2024 11:12:13 UTC</pubDate>
+      <description>Episode test description</description>
+      <itunes:duration>1234</itunes:duration>
+    </item>
+  </channel>
+</rss>

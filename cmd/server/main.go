@@ -110,7 +110,9 @@ func configureObjectStorage(ctx context.Context, cfg config.Config) (objectstora
 	case config.ObjectStorageDriverLocal:
 		return &objectstorage.LocalObjectStorage{
 			HTTPClient: httpClient,
-			BasePath:   cfg.ObjectStorage.LocalBasePath,
+			FS: objectstorage.MustOpenLocalFSRoot(
+				cfg.ObjectStorage.LocalBasePath,
+			),
 		}, nil
 
 	case config.ObjectStorageDriverS3:

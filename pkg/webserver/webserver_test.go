@@ -3,6 +3,7 @@ package webserver_test
 import (
 	"context"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -12,7 +13,9 @@ import (
 	"github.com/gofrs/uuid/v5"
 	"github.com/steinfletcher/apitest"
 	selector "github.com/steinfletcher/apitest-css-selector"
+	"github.com/stretchr/testify/assert"
 	"github.com/webbgeorge/castkeeper/pkg/config"
+	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/itunes"
@@ -23,7 +26,7 @@ import (
 )
 
 func TestHomePage(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -40,7 +43,7 @@ func TestHomePage(t *testing.T) {
 }
 
 func TestNoSessionRedirectsToLogin(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -55,7 +58,7 @@ func TestNoSessionRedirectsToLogin(t *testing.T) {
 }
 
 func TestExpiredSessionRedirectsToLogin(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -71,7 +74,7 @@ func TestExpiredSessionRedirectsToLogin(t *testing.T) {
 }
 
 func TestInvalidSessionRedirectsToLogin(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -87,7 +90,7 @@ func TestInvalidSessionRedirectsToLogin(t *testing.T) {
 }
 
 func TestNotFound(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -102,7 +105,7 @@ func TestNotFound(t *testing.T) {
 }
 
 func TestCSRFFailure(t *testing.T) {
-	server, _, _, reset := setupServerForTest()
+	_, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	ctx := context.Background() // ctx without the csrf skip value
@@ -120,7 +123,7 @@ func TestCSRFFailure(t *testing.T) {
 }
 
 func TestSearchPodcastsPage(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -138,7 +141,7 @@ func TestSearchPodcastsPage(t *testing.T) {
 }
 
 func TestSearchResults_Success(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -156,7 +159,7 @@ func TestSearchResults_Success(t *testing.T) {
 }
 
 func TestSearchResults_EmptyResults(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -173,7 +176,7 @@ func TestSearchResults_EmptyResults(t *testing.T) {
 }
 
 func TestSearchResults_InvalidQuery(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -190,7 +193,7 @@ func TestSearchResults_InvalidQuery(t *testing.T) {
 }
 
 func TestSearchResults_FailedToCallItunes(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -207,26 +210,47 @@ func TestSearchResults_FailedToCallItunes(t *testing.T) {
 }
 
 func TestAddPodcast_Success(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, db, root, reset := setupServerForTest()
 	defer reset()
+
+	// from fixtures, not in DB yet
+	feedURL := "http://testdata/feeds/valid-not-added.xml"
 
 	apitest.New().
 		HandlerFunc(server.Mux.ServeHTTP).
 		Post("/partials/add-podcast").
 		WithContext(ctx).
 		Header("Content-Type", "application/x-www-form-urlencoded").
-		Body("feedUrl=http://testdata/feeds/very-long-pod-title.xml"). // from fixtures, not in DB yet
-		Cookie("Session-Id", "validSession1").                         // from fixtures
+		Body(fmt.Sprintf("feedUrl=%s", feedURL)).
+		Cookie("Session-Id", "validSession1"). // from fixtures
 		Expect(t).
 		Status(http.StatusOK).
 		Assert(selector.TextExists("Podcast added")).
 		End()
 
-	// TODO assert that image was saved
+	// assert pod was added
+	var podcast podcasts.Podcast
+	result := db.First(&podcast, "feed_url = ?", feedURL)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	assert.Equal(t, "Test podcast 2 description goes here", podcast.Description)
+
+	// assert image was created
+	f, err := root.Open(fmt.Sprintf("%s/%s.jpg", podcast.GUID, podcast.GUID))
+	if err != nil {
+		panic(err)
+	}
+	data, err := io.ReadAll(f)
+	if err != nil {
+		panic(err)
+	}
+	// compare against fixture content
+	assert.Equal(t, "Not a real JPG", strings.TrimSpace(string(data)))
 }
 
 func TestAddPodcast_InvalidFeed(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -243,7 +267,7 @@ func TestAddPodcast_InvalidFeed(t *testing.T) {
 }
 
 func TestAddPodcast_AlreadyAdded(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -260,7 +284,7 @@ func TestAddPodcast_AlreadyAdded(t *testing.T) {
 }
 
 func TestViewPodcast(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -280,7 +304,7 @@ func TestViewPodcast(t *testing.T) {
 }
 
 func TestViewPodcast_NotFound(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -298,7 +322,7 @@ func TestViewPodcast_NotFound(t *testing.T) {
 // TODO download image
 
 func TestRequeuePodcast(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, db, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -312,12 +336,23 @@ func TestRequeuePodcast(t *testing.T) {
 		Assert(selector.TextExists("pending")).
 		End()
 
-	// TODO verify was added to queue
-	// TODO verify that status was updated to pending
+	// verify was added to queue
+	qt, err := framework.PopQueueTask(ctx, db, downloadworker.DownloadWorkerQueueName)
+	if err != nil {
+		panic(err)
+	}
+	assert.Equal(t, "c8998fa5-8083-56a6-8d3c-7b98d031b3d8", qt.Data.(string))
+
+	// verify that ep status was updated to pending
+	ep, err := podcasts.GetEpisode(ctx, db, "c8998fa5-8083-56a6-8d3c-7b98d031b3d8")
+	if err != nil {
+		panic(err)
+	}
+	assert.Equal(t, "pending", ep.Status)
 }
 
 func TestRequeuePodcast_NotFound(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -331,7 +366,7 @@ func TestRequeuePodcast_NotFound(t *testing.T) {
 }
 
 func TestGetFeed(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	expectedBody, err := os.ReadFile("./testdata/expected-generated-feed.xml")
@@ -352,7 +387,7 @@ func TestGetFeed(t *testing.T) {
 }
 
 func TestGetFeed_NotFound(t *testing.T) {
-	server, _, ctx, reset := setupServerForTest()
+	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
@@ -365,7 +400,7 @@ func TestGetFeed_NotFound(t *testing.T) {
 		End()
 }
 
-func setupServerForTest() (*framework.Server, *gorm.DB, context.Context, func()) {
+func setupServerForTest() (context.Context, *framework.Server, *gorm.DB, *os.Root, func()) {
 	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	cfg := config.Config{
 		BaseURL: "http://example.com",
@@ -379,7 +414,11 @@ func setupServerForTest() (*framework.Server, *gorm.DB, context.Context, func())
 	feedService := &podcasts.FeedService{
 		HTTPClient: fixtures.TestDataHTTPClient,
 	}
-	os := &objectstorage.LocalObjectStorage{} // TODO
+	root, resetFS := fixtures.ConfigureFSForTestWithFixtures()
+	os := &objectstorage.LocalObjectStorage{
+		Root:       root,
+		HTTPClient: fixtures.TestDataHTTPClient,
+	}
 	itunesAPI := &itunes.ItunesAPI{
 		HTTPClient: fixtures.TestItunesHTTPClient,
 	}
@@ -387,7 +426,10 @@ func setupServerForTest() (*framework.Server, *gorm.DB, context.Context, func())
 	server := webserver.NewWebserver(cfg, logger, feedService, db, os, itunesAPI)
 	ctx := context.WithValue(context.Background(), "gorilla.csrf.Skip", true)
 
-	return server, db, ctx, resetDB
+	return ctx, server, db, root, func() {
+		resetDB()
+		resetFS()
+	}
 }
 
 func genGUID(s string) string {

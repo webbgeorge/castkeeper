@@ -16,7 +16,7 @@ import (
 
 type LocalObjectStorage struct {
 	HTTPClient *http.Client
-	BasePath   string
+	Root       *os.Root
 }
 
 func (s *LocalObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation, podcastGUID, fileName string) (int64, error) {
@@ -25,18 +25,13 @@ func (s *LocalObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation,
 		return -1, fmt.Errorf("invalid remoteLocation '%s': %w", remoteLocation, err)
 	}
 
-	root, err := s.localRoot()
-	if err != nil {
-		return -1, err
-	}
-
-	err = mkdirIfNotExists(root, podcastGUID)
+	err = mkdirIfNotExists(s.Root, podcastGUID)
 	if err != nil {
 		return -1, err
 	}
 
 	localPath := path.Join(podcastGUID, fileName)
-	f, err := root.Create(localPath)
+	f, err := s.Root.Create(localPath)
 	if err != nil {
 		return -1, err
 	}
@@ -67,13 +62,8 @@ func (s *LocalObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation,
 }
 
 func (s *LocalObjectStorage) ServeFile(ctx context.Context, r *http.Request, w http.ResponseWriter, podcastGUID, fileName string) error {
-	root, err := s.localRoot()
-	if err != nil {
-		return err
-	}
-
 	filePath := path.Join(podcastGUID, fileName)
-	f, err := root.Open(filePath)
+	f, err := s.Root.Open(filePath)
 	if err != nil {
 		return err
 	}
@@ -83,12 +73,16 @@ func (s *LocalObjectStorage) ServeFile(ctx context.Context, r *http.Request, w h
 	return nil
 }
 
-func (s *LocalObjectStorage) localRoot() (*os.Root, error) {
-	err := os.MkdirAll(s.BasePath, 0750)
+func MustOpenLocalFSRoot(basePath string) *os.Root {
+	err := os.MkdirAll(basePath, 0750)
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	return os.OpenRoot(s.BasePath)
+	root, err := os.OpenRoot(basePath)
+	if err != nil {
+		panic(err)
+	}
+	return root
 }
 
 func mkdirIfNotExists(root *os.Root, dir string) error {
