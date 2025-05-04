@@ -17,7 +17,7 @@ templ SearchPodcasts(csrfToken string) {
 		<div class="w-full card card-compact md:card-normal bg-base-100 shadow-xl">
 			<div class="card-body">
 				<form
-					hx-post="/partials/search-results"
+					hx-post="/podcasts/search"
 					hx-target="#search-partial"
 					hx-swap="innerHTML"
 					class="join w-full"

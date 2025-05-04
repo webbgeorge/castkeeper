@@ -112,7 +112,7 @@ func TestCSRFFailure(t *testing.T) {
 
 	apitest.New().
 		HandlerFunc(server.Mux.ServeHTTP).
-		Post("/partials/search-results").
+		Post("/podcasts/search").
 		WithContext(ctx).
 		Header("Content-Type", "application/x-www-form-urlencoded").
 		Body("query=testPods").                // from fixtures
@@ -146,7 +146,7 @@ func TestSearchResults_Success(t *testing.T) {
 
 	apitest.New().
 		HandlerFunc(server.Mux.ServeHTTP).
-		Post("/partials/search-results").
+		Post("/podcasts/search").
 		WithContext(ctx).
 		Header("Content-Type", "application/x-www-form-urlencoded").
 		Body("query=testPods").                // from fixtures
@@ -164,7 +164,7 @@ func TestSearchResults_EmptyResults(t *testing.T) {
 
 	apitest.New().
 		HandlerFunc(server.Mux.ServeHTTP).
-		Post("/partials/search-results").
+		Post("/podcasts/search").
 		WithContext(ctx).
 		Header("Content-Type", "application/x-www-form-urlencoded").
 		Body("query=noTestPods").              // from fixtures
@@ -181,7 +181,7 @@ func TestSearchResults_InvalidQuery(t *testing.T) {
 
 	apitest.New().
 		HandlerFunc(server.Mux.ServeHTTP).
-		Post("/partials/search-results").
+		Post("/podcasts/search").
 		WithContext(ctx).
 		Header("Content-Type", "application/x-www-form-urlencoded").
 		Body("query=").
@@ -198,7 +198,7 @@ func TestSearchResults_FailedToCallItunes(t *testing.T) {
 
 	apitest.New().
 		HandlerFunc(server.Mux.ServeHTTP).
-		Post("/partials/search-results").
+		Post("/podcasts/search").
 		WithContext(ctx).
 		Header("Content-Type", "application/x-www-form-urlencoded").
 		Body("query=500").                     // from fixtures
@@ -218,7 +218,7 @@ func TestAddPodcast_Success(t *testing.T) {
 
 	apitest.New().
 		HandlerFunc(server.Mux.ServeHTTP).
-		Post("/partials/add-podcast").
+		Post("/podcasts/add").
 		WithContext(ctx).
 		Header("Content-Type", "application/x-www-form-urlencoded").
 		Body(fmt.Sprintf("feedUrl=%s", feedURL)).
@@ -255,7 +255,7 @@ func TestAddPodcast_InvalidFeed(t *testing.T) {
 
 	apitest.New().
 		HandlerFunc(server.Mux.ServeHTTP).
-		Post("/partials/add-podcast").
+		Post("/podcasts/add").
 		WithContext(ctx).
 		Header("Content-Type", "application/x-www-form-urlencoded").
 		Body("feedUrl=http://testdata/feeds/invalid.xml"). // from fixtures
@@ -272,7 +272,7 @@ func TestAddPodcast_AlreadyAdded(t *testing.T) {
 
 	apitest.New().
 		HandlerFunc(server.Mux.ServeHTTP).
-		Post("/partials/add-podcast").
+		Post("/podcasts/add").
 		WithContext(ctx).
 		Header("Content-Type", "application/x-www-form-urlencoded").
 		Body("feedUrl=http://testdata/feeds/valid.xml"). // from fixtures, already in db

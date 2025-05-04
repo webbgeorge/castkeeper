@@ -15,7 +15,7 @@ templ AddFeedUrlModal(csrfToken string) {
 				<form
 					method="POST"
 					class="w-full"
-					hx-post="/partials/add-podcast"
+					hx-post="/podcasts/add"
 					hx-target="previous .addPodcastResult"
 					hx-swap="innerHTML"
 					hx-disabled-elt="find button"

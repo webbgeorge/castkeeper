@@ -22,8 +22,8 @@ func ConfigureFSForTestWithFixtures() (fs *os.Root, resetFn func()) {
 	)
 
 	return root, func() {
-		root.Close()
-		os.RemoveAll(rootPath)
+		_ = root.Close()
+		_ = os.RemoveAll(rootPath)
 	}
 }
 

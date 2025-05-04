@@ -46,7 +46,7 @@ templ SearchResults(csrfToken string, results []itunes.SearchResult, errText str
 							<div class="card-actions justify-end">
 								<button
 									class="btn btn-primary"
-									hx-post="/partials/add-podcast"
+									hx-post="/podcasts/add"
 									hx-vals={ fmt.Sprintf("{\"feedUrl\": \"%s\", \"%s\": \"%s\"}", res.FeedURL, components.CSRFTokenInputName, csrfToken) }
 									hx-target="previous .addPodcastResult"
 									hx-swap="innerHTML"

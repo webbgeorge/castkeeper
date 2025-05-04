@@ -42,9 +42,8 @@ func NewWebserver(
 		AddRoute("POST /auth/login", auth.NewPostLoginHandler(cfg.BaseURL, db)).
 		AddRoute("GET /podcasts/{guid}", NewViewPodcastHandler(db), authMW).
 		AddRoute("GET /podcasts/search", NewSearchPodcastsHandler(), authMW).
-		// TODO rename route paths
-		AddRoute("POST /partials/add-podcast", NewAddPodcastHandler(feedService, db, os), authMW).
-		AddRoute("POST /partials/search-results", NewSearchResultsHandler(itunesAPI), authMW).
+		AddRoute("POST /podcasts/search", NewSearchResultsHandler(itunesAPI), authMW).
+		AddRoute("POST /podcasts/add", NewAddPodcastHandler(feedService, db, os), authMW).
 		AddRoute("GET /podcasts/{guid}/image", NewDownloadImageHandler(db, os), authMW).
 		AddRoute("GET /episodes/{guid}/download", NewDownloadEpisodeHandler(db, os), authMW).
 		AddRoute("POST /episodes/{guid}/requeue-download", NewRequeueDownloadHandler(db), authMW).
