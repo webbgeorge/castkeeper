@@ -42,10 +42,19 @@ func ConfigureDBForTestWithFixtures() (db *gorm.DB, resetFn func()) {
 }
 
 func applyFixtures(db *gorm.DB) {
-	pod, eps := podFixture()
+	// pod with eps success
+	pod, eps := podFixture("http://testdata/feeds/valid.xml")
 	create(db, &pod)
 	for _, ep := range eps {
 		ep.Status = podcasts.EpisodeStatusSuccess
+		create(db, &ep)
+	}
+
+	// pod with eps pending
+	pod, eps = podFixture("http://testdata/feeds/valid-eps-pending.xml")
+	create(db, &pod)
+	for _, ep := range eps {
+		ep.Status = podcasts.EpisodeStatusPending
 		create(db, &ep)
 	}
 
@@ -81,12 +90,12 @@ func create(db *gorm.DB, value any) {
 	}
 }
 
-func podFixture() (podcasts.Podcast, []podcasts.Episode) {
+func podFixture(feedURL string) (podcasts.Podcast, []podcasts.Episode) {
 	// use the testdata feed service to get fixture podcast for convenience
 	feedService := podcasts.FeedService{
 		HTTPClient: TestDataHTTPClient,
 	}
-	pod, eps, err := feedService.ParseFeed(context.Background(), "http://testdata/feeds/valid.xml")
+	pod, eps, err := feedService.ParseFeed(context.Background(), feedURL)
 	if err != nil {
 		panic(err)
 	}

@@ -182,19 +182,6 @@ func truncate(s string, l int) string {
 	return s
 }
 
-func parseRSSTime(s string) (time.Time, error) {
-	formats := []string{time.RFC822, time.RFC822Z, time.RFC1123, time.RFC1123Z}
-	var t time.Time
-	var err error
-	for _, f := range formats {
-		t, err = time.Parse(f, s)
-		if err == nil {
-			return t, nil
-		}
-	}
-	return time.Time{}, fmt.Errorf("failed to parse time '%s'", s)
-}
-
 func parseDuration(item *gopodcast.Item) int {
 	if item.ITunesDuration == "" {
 		return 0

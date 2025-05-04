@@ -1,6 +1,10 @@
 package fixtures
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/gofrs/uuid/v5"
+)
 
 func StrOfLen(n int) string {
 	s := make([]string, 0)
@@ -8,4 +12,8 @@ func StrOfLen(n int) string {
 		s = append(s, "a")
 	}
 	return strings.Join(s, "")
+}
+
+func PodEpGUID(s string) string {
+	return uuid.NewV5(uuid.NamespaceOID, s).String()
 }

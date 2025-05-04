@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
@@ -38,12 +37,12 @@ func TestParseFeed(t *testing.T) {
 			url: "http://testdata/feeds/valid.xml",
 			expectedPodcast: fakePodcast(
 				"http://testdata/feeds/valid.xml",
-				genGUID("abc-123"),
+				fixtures.PodEpGUID("abc-123"),
 				timePtrStr("2024-12-27T11:12:13"),
 			),
 			expectedEpisodes: []podcasts.Episode{
-				fakeEpisode(genGUID("ep-1"), genGUID("abc-123"), timeFromStr("2024-12-26T11:12:13")),
-				fakeEpisode(genGUID("ep-2"), genGUID("abc-123"), timeFromStr("2024-12-27T11:12:13")),
+				fakeEpisode(fixtures.PodEpGUID("ep-1"), fixtures.PodEpGUID("abc-123"), timeFromStr("2024-12-26T11:12:13")),
+				fakeEpisode(fixtures.PodEpGUID("ep-2"), fixtures.PodEpGUID("abc-123"), timeFromStr("2024-12-27T11:12:13")),
 			},
 			expectedErr: "",
 		},
@@ -51,7 +50,7 @@ func TestParseFeed(t *testing.T) {
 			url: "http://testdata/feeds/no-eps.xml",
 			expectedPodcast: fakePodcast(
 				"http://testdata/feeds/no-eps.xml",
-				genGUID("abc-123"),
+				fixtures.PodEpGUID("abc-123"),
 				nil,
 			),
 			expectedEpisodes: []podcasts.Episode{},
@@ -61,7 +60,7 @@ func TestParseFeed(t *testing.T) {
 			url: "http://testdata/feeds/no-pod-guid.xml",
 			expectedPodcast: fakePodcast(
 				"http://testdata/feeds/no-pod-guid.xml",
-				genGUID("http://www.example.com/feed"), // generated fallback GUID
+				fixtures.PodEpGUID("http://www.example.com/feed"), // generated fallback GUID
 				nil,
 			),
 			expectedEpisodes: []podcasts.Episode{},
@@ -75,7 +74,7 @@ func TestParseFeed(t *testing.T) {
 				nil,
 			),
 			expectedEpisodes: []podcasts.Episode{},
-			expectedErr:      fmt.Sprintf("1 errors whilst parsing episodes: could not read download URL, skipping episode '%s'", genGUID("ep-1")),
+			expectedErr:      fmt.Sprintf("1 errors whilst parsing episodes: could not read download URL, skipping episode '%s'", fixtures.PodEpGUID("ep-1")),
 		},
 		"episode with invalid file type gives error": {
 			url: "http://testdata/feeds/invalid-mime.xml",
@@ -85,7 +84,7 @@ func TestParseFeed(t *testing.T) {
 				nil,
 			),
 			expectedEpisodes: []podcasts.Episode{},
-			expectedErr:      fmt.Sprintf("1 errors whilst parsing episodes: unsupported file type 'not/type', skipping episode '%s'", genGUID("ep-1")),
+			expectedErr:      fmt.Sprintf("1 errors whilst parsing episodes: unsupported file type 'not/type', skipping episode '%s'", fixtures.PodEpGUID("ep-1")),
 		},
 	}
 
@@ -138,14 +137,14 @@ func TestParseFeedEpisodeGUIDFallback(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.Len(t, episodes, 1)
-	assert.Equal(t, genGUID("Test episode with no guid2024-12-26T11:12:13Z"), episodes[0].GUID)
+	assert.Equal(t, fixtures.PodEpGUID("Test episode with no guid2024-12-26T11:12:13Z"), episodes[0].GUID)
 }
 
 func TestGenerateFeed(t *testing.T) {
 	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
 	defer resetDB()
 
-	feed, err := podcasts.GenerateFeed(context.Background(), "http://example.com", db, genGUID("abc-123"))
+	feed, err := podcasts.GenerateFeed(context.Background(), "http://example.com", db, fixtures.PodEpGUID("abc-123"))
 	if err != nil {
 		panic(err)
 	}
@@ -206,8 +205,4 @@ func fakeEpisode(guid, podGuid string, pubAt time.Time) podcasts.Episode {
 		DurationSecs: 1234,
 		PublishedAt:  pubAt,
 	}
-}
-
-func genGUID(s string) string {
-	return uuid.NewV5(uuid.NamespaceOID, s).String()
 }

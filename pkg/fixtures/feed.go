@@ -19,6 +19,13 @@ func (t *testDataTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		panic("unexpected testdata file path")
 	}
 
+	// path to force and error response
+	if r.URL.Path == "/error" {
+		return &http.Response{
+			StatusCode: http.StatusInternalServerError,
+		}, nil
+	}
+
 	testDataRoot, err := os.OpenRoot(path.Join(fixtureDir(), "testdata"))
 	if err != nil {
 		panic(err)

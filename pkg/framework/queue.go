@@ -82,14 +82,14 @@ func PopQueueTask(ctx context.Context, db *gorm.DB, queueName string) (QueueTask
 	return queueTask, nil
 }
 
-func completeQueueTask(ctx context.Context, db *gorm.DB, queueTask QueueTask) error {
+func completeQueueTask(db *gorm.DB, queueTask QueueTask) error {
 	if err := db.Delete(&queueTask).Error; err != nil {
 		return err
 	}
 	return nil
 }
 
-func returnQueueTask(ctx context.Context, db *gorm.DB, queueTask QueueTask) error {
+func returnQueueTask(db *gorm.DB, queueTask QueueTask) error {
 	backoffFactor := math.Pow(backoffExponent, float64(queueTask.ReceiveCount))
 	timeUntilNextTry := backoffInterval * time.Duration(backoffFactor)
 	queueTask.VisibleAfter = time.Now().Add(timeUntilNextTry)
@@ -126,14 +126,14 @@ func (w *QueueWorker) Start(ctx context.Context) error {
 		err = w.HandlerFn(ctx, qt.Data)
 		if err != nil {
 			GetLogger(ctx).ErrorContext(ctx, fmt.Sprintf("failed to process task '%d' of queue '%s' with err '%s'", qt.ID, w.QueueName, err.Error()))
-			err = returnQueueTask(ctx, w.DB, qt)
+			err = returnQueueTask(w.DB, qt)
 			if err != nil {
 				GetLogger(ctx).WarnContext(ctx, fmt.Sprintf("failed to return task '%d' to queue '%s' with err '%s'", qt.ID, w.QueueName, err.Error()))
 			}
 			continue
 		}
 
-		err = completeQueueTask(ctx, w.DB, qt)
+		err = completeQueueTask(w.DB, qt)
 		if err != nil {
 			GetLogger(ctx).WarnContext(ctx, fmt.Sprintf("failed to mark task '%d' complete from queue '%s' with err '%s'", qt.ID, w.QueueName, err.Error()))
 		}
