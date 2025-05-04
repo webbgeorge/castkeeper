@@ -318,8 +318,63 @@ func TestViewPodcast_NotFound(t *testing.T) {
 		End()
 }
 
-// TODO download podcast
-// TODO download image
+func TestDownloadImage(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get(fmt.Sprintf("/podcasts/%s/image", genGUID("abc-123"))).
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Not a real JPG")). // fixture image has text content
+		End()
+}
+
+func TestDownloadImage_NotFound(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get("/podcasts/not-a-pod/image").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusNotFound).
+		End()
+}
+
+func TestDownloadEpisode(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get(fmt.Sprintf("/episodes/%s/download", genGUID("ep-1"))).
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Not a real MP3")). // fixture mp3 has text content
+		End()
+}
+
+func TestDownloadEpisode_NotFound(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get("/episodes/not-an-ep/download").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusNotFound).
+		End()
+}
 
 func TestRequeuePodcast(t *testing.T) {
 	ctx, server, db, _, reset := setupServerForTest()
