@@ -85,7 +85,7 @@ func NewAddPodcastHandler(feedService *podcasts.FeedService, db *gorm.DB, os obj
 	}
 }
 
-func NewViewPodcastHandler(db *gorm.DB) framework.Handler {
+func NewViewPodcastHandler(baseURL string, db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		pod, err := podcasts.GetPodcast(ctx, db, r.PathValue("guid"))
 		if err != nil {
@@ -100,7 +100,7 @@ func NewViewPodcastHandler(db *gorm.DB) framework.Handler {
 			return err
 		}
 
-		return framework.Render(ctx, w, 200, pages.ViewPodcast(csrf.Token(r), pod, eps))
+		return framework.Render(ctx, w, 200, pages.ViewPodcast(csrf.Token(r), baseURL, pod, eps))
 	}
 }
 
