@@ -15,6 +15,13 @@ import (
 	"golang.org/x/term"
 )
 
+// Utility script for creating new users in the database for the given CastKeeper configuration.
+//
+// Usage:
+//
+//	go run cmd/createuser [configPath] [username] [password]
+//
+// accepts interactive inputs when username and password are not given as args
 func main() {
 	configFile := "" // optional specific config file (otherwise uses default locations)
 	if len(os.Args) > 1 {
@@ -33,21 +40,15 @@ func main() {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
 
-	reader := bufio.NewReader(os.Stdin)
-
-	fmt.Print("Enter username: ")
-	username, err := reader.ReadString('\n')
+	username, err := readUsername()
 	if err != nil {
 		log.Fatalf("failed to read username: %v", err)
 	}
-	username = strings.TrimSpace(username)
 
-	fmt.Print("Enter password: ")
-	pwBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
+	password, err := readPassword()
 	if err != nil {
 		log.Fatalf("failed to read password: %v", err)
 	}
-	password := string(pwBytes)
 
 	err = auth.CreateUser(ctx, db, username, password)
 	if err != nil {
@@ -55,4 +56,39 @@ func main() {
 	}
 
 	log.Printf("successfully created user '%s'", username)
+}
+
+func readUsername() (string, error) {
+	argUsername := readArg(2)
+	if argUsername != "" {
+		return argUsername, nil
+	}
+
+	fmt.Print("Enter username: ")
+	username, err := bufio.NewReader(os.Stdin).ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(username), nil
+}
+
+func readPassword() (string, error) {
+	argPassword := readArg(3)
+	if argPassword != "" {
+		return argPassword, nil
+	}
+
+	fmt.Print("Enter password: ")
+	pwBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
+	if err != nil {
+		return "", err
+	}
+	return string(pwBytes), nil
+}
+
+func readArg(i int) string {
+	if len(os.Args) > i {
+		return strings.TrimSpace(os.Args[i])
+	}
+	return ""
 }

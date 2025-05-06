@@ -27,7 +27,8 @@ func ConfigureDBForTestWithFixtures() (db *gorm.DB, resetFn func()) {
 	db, err := database.ConfigureDatabase(config.Config{
 		Database: config.DatabaseConfig{
 			Driver: "sqlite",
-			DSN:    dbPath,
+			// TODO use in memory (":memory:")
+			DSN: dbPath,
 		},
 	}, logger)
 	if err != nil {
