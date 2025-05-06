@@ -141,8 +141,7 @@ func TestParseFeedEpisodeGUIDFallback(t *testing.T) {
 }
 
 func TestGenerateFeed(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	feed, err := podcasts.GenerateFeed(context.Background(), "http://example.com", db, fixtures.PodEpGUID("abc-123"))
 	if err != nil {

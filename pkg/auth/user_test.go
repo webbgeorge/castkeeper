@@ -55,8 +55,7 @@ func TestUserBeforeSave(t *testing.T) {
 }
 
 func TestGetByUsername_Exists(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	// from fixture
 	user, err := auth.GetUserByUsername(context.Background(), db, "unittest")
@@ -69,8 +68,7 @@ func TestGetByUsername_Exists(t *testing.T) {
 }
 
 func TestGetByUsername_NotFound(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	user, err := auth.GetUserByUsername(context.Background(), db, "notauser")
 
@@ -79,8 +77,7 @@ func TestGetByUsername_NotFound(t *testing.T) {
 }
 
 func TestUserCheckPassword(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	user, err := auth.GetUserByUsername(context.Background(), db, "unittest")
 	assert.Nil(t, err)
@@ -102,8 +99,7 @@ func TestUserCheckPassword(t *testing.T) {
 }
 
 func TestCreateUser_Valid(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	err := auth.CreateUser(context.Background(), db, "user1", "pass1")
 	assert.Nil(t, err)
@@ -115,8 +111,7 @@ func TestCreateUser_Valid(t *testing.T) {
 }
 
 func TestCreateUser_InvalidUsername(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	err := auth.CreateUser(context.Background(), db, "", "pass1")
 	assert.Equal(t, "user not valid: Key: 'User.Username' Error:Field validation for 'Username' failed on the 'required' tag", err.Error())

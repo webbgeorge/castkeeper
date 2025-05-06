@@ -6,11 +6,8 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
-	"fmt"
 	"io"
 	"log/slog"
-	"os"
-	"path"
 	"time"
 
 	"github.com/webbgeorge/castkeeper/pkg/auth"
@@ -21,14 +18,12 @@ import (
 	"gorm.io/gorm"
 )
 
-func ConfigureDBForTestWithFixtures() (db *gorm.DB, resetFn func()) {
+func ConfigureDBForTestWithFixtures() *gorm.DB {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	dbPath := path.Join(fixtureDir(), fmt.Sprintf("../../data/test-unit-%s.db", randomHex()))
 	db, err := database.ConfigureDatabase(config.Config{
 		Database: config.DatabaseConfig{
 			Driver: "sqlite",
-			// TODO use in memory (":memory:")
-			DSN: dbPath,
+			DSN:    ":memory:",
 		},
 	}, logger)
 	if err != nil {
@@ -37,9 +32,7 @@ func ConfigureDBForTestWithFixtures() (db *gorm.DB, resetFn func()) {
 
 	applyFixtures(db)
 
-	return db, func() {
-		_ = os.Remove(dbPath)
-	}
+	return db
 }
 
 func applyFixtures(db *gorm.DB) {

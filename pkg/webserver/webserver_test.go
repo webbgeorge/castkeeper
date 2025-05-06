@@ -456,7 +456,7 @@ func TestGetFeed_NotFound(t *testing.T) {
 }
 
 func setupServerForTest() (context.Context, *framework.Server, *gorm.DB, *os.Root, func()) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 	cfg := config.Config{
 		BaseURL: "http://example.com",
 		WebServer: config.WebServerConfig{
@@ -482,7 +482,6 @@ func setupServerForTest() (context.Context, *framework.Server, *gorm.DB, *os.Roo
 	ctx := context.WithValue(context.Background(), "gorilla.csrf.Skip", true)
 
 	return ctx, server, db, root, func() {
-		resetDB()
 		resetFS()
 	}
 }

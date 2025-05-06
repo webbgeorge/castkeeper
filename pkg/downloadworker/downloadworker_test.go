@@ -17,8 +17,7 @@ import (
 )
 
 func TestDownloadWorker(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 	root, resetFS := fixtures.ConfigureFSForTestWithFixtures()
 	defer resetFS()
 
@@ -41,8 +40,7 @@ func TestDownloadWorker(t *testing.T) {
 }
 
 func TestDownloadWorker_InvalidQueueData(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 	root, resetFS := fixtures.ConfigureFSForTestWithFixtures()
 	defer resetFS()
 
@@ -57,8 +55,7 @@ func TestDownloadWorker_InvalidQueueData(t *testing.T) {
 }
 
 func TestDownloadWorker_EpisodeNotFound(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 	root, resetFS := fixtures.ConfigureFSForTestWithFixtures()
 	defer resetFS()
 
@@ -73,8 +70,7 @@ func TestDownloadWorker_EpisodeNotFound(t *testing.T) {
 }
 
 func TestDownloadWorker_FailedToDownload(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 	root, resetFS := fixtures.ConfigureFSForTestWithFixtures()
 	defer resetFS()
 

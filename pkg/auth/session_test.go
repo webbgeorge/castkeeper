@@ -65,8 +65,7 @@ func TestSessionBeforeSave(t *testing.T) {
 }
 
 func TestGetSession_IsValid(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	// use session from fixture
 	s, err := auth.GetSession(context.Background(), db, "validSession1")
@@ -79,8 +78,7 @@ func TestGetSession_IsValid(t *testing.T) {
 }
 
 func TestGetSession_DoesNotExist(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	s, err := auth.GetSession(context.Background(), db, "notASession")
 
@@ -89,8 +87,7 @@ func TestGetSession_DoesNotExist(t *testing.T) {
 }
 
 func TestGetSession_IsExpired(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	// use session from fixture
 	s, err := auth.GetSession(context.Background(), db, "expiredSession1")
@@ -100,8 +97,7 @@ func TestGetSession_IsExpired(t *testing.T) {
 }
 
 func TestCreateSession(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	sessionID, err := auth.CreateSession(context.Background(), db, 456)
 
@@ -115,8 +111,7 @@ func TestCreateSession(t *testing.T) {
 }
 
 func TestUpdateLastSeen(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	s, err := auth.GetSession(context.Background(), db, "validSession30MinsOld")
 	assert.Nil(t, err)
@@ -131,8 +126,7 @@ func TestUpdateLastSeen(t *testing.T) {
 }
 
 func TestDeleteExpiredSessions(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	_, err := auth.GetSession(context.Background(), db, "expiredSession1")
 	assert.Equal(t, "session expired", err.Error())
@@ -146,8 +140,7 @@ func TestDeleteExpiredSessions(t *testing.T) {
 }
 
 func TestHouseKeepingQueueWorker(t *testing.T) {
-	db, resetDB := fixtures.ConfigureDBForTestWithFixtures()
-	defer resetDB()
+	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	_, err := auth.GetSession(context.Background(), db, "expiredSession1")
 	assert.Equal(t, "session expired", err.Error())
