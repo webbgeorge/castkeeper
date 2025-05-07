@@ -15,14 +15,19 @@ import (
 	"github.com/go-rod/rod/lib/launcher"
 )
 
-func setupE2ETests(verbose, debug bool) (browser *rod.Browser, cleanup func()) {
-	deleteDatabase()
-	err := createTestUser()
+const (
+	configProfileSqlite   = "sqlite"
+	configProfilePostgres = "postgres"
+)
+
+func setupE2ETests(configProfile string, verbose, debug bool) (browser *rod.Browser, cleanup func()) {
+	deleteDatabase(configProfile)
+	err := createTestUser(configProfile)
 	if err != nil {
 		panic(err)
 	}
 
-	logBuf, killServer, err := startServer()
+	logBuf, killServer, err := startServer(configProfile)
 	if err != nil {
 		panic(err)
 	}
@@ -32,7 +37,7 @@ func setupE2ETests(verbose, debug bool) (browser *rod.Browser, cleanup func()) {
 	return browser, func() {
 		cleanupBrowser()
 		killServer()
-		deleteDatabase()
+		deleteDatabase(configProfile)
 		if verbose {
 			fmt.Println("")
 			log.Print("E2E test server logs: \n", logBuf.String(), "\n")
@@ -40,18 +45,15 @@ func setupE2ETests(verbose, debug bool) (browser *rod.Browser, cleanup func()) {
 	}
 }
 
-func startServer() (logBuf *bytes.Buffer, killFn func(), err error) {
-	cmd, logBuf := createGoRunCmd("server")
+func startServer(configProfile string) (logBuf *bytes.Buffer, killFn func(), err error) {
+	cmd, logBuf := createGoRunCmd(configProfile, "server")
 	if err := cmd.Start(); err != nil {
 		return nil, nil, fmt.Errorf("failed to start server in e2e tests '%w'", err)
 	}
 
 	// wait for server to have started
 	i := 0
-	for {
-		if strings.Contains(logBuf.String(), "Starting server at ':8081'") {
-			break
-		}
+	for !strings.Contains(logBuf.String(), "Server listening at") {
 		time.Sleep(time.Millisecond * 100)
 		if i > 50 {
 			fmt.Println("")
@@ -68,9 +70,12 @@ func startServer() (logBuf *bytes.Buffer, killFn func(), err error) {
 	}, nil
 }
 
-func createGoRunCmd(cmdName string, arg ...string) (*exec.Cmd, *bytes.Buffer) {
+func createGoRunCmd(configProfile, cmdName string, arg ...string) (*exec.Cmd, *bytes.Buffer) {
 	_, filename, _, _ := runtime.Caller(0)
-	configPath := filepath.Join(filepath.Dir(filename), "castkeeper.yml")
+	configPath := filepath.Join(
+		filepath.Dir(filename),
+		fmt.Sprintf("castkeeper.%s.yml", configProfile),
+	)
 	cmdStr := filepath.Join(filepath.Dir(filename), "..", "cmd", cmdName)
 
 	cmdArg := []string{"run", cmdStr, configPath}
@@ -85,21 +90,38 @@ func createGoRunCmd(cmdName string, arg ...string) (*exec.Cmd, *bytes.Buffer) {
 	return cmd, logBuf
 }
 
-func createTestUser() error {
+func createTestUser(configProfile string) error {
 	username := "e2euser"
 	password := "e2epass"
 
-	cmd, logBuf := createGoRunCmd("createuser", username, password)
+	cmd, logBuf := createGoRunCmd(configProfile, "createuser", username, password)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to create user in e2e tests '%s', cmd logs: %s", err.Error(), logBuf.String())
 	}
 	return nil
 }
 
-func deleteDatabase() {
+func deleteDatabase(configProfile string) {
 	_, filename, _, _ := runtime.Caller(0)
-	dbPath := filepath.Join(filepath.Dir(filename), "..", "data", "test-e2e.db")
-	_ = os.Remove(dbPath)
+	switch configProfile {
+	case configProfileSqlite:
+		dbPath := filepath.Join(filepath.Dir(filename), "..", "data", "test-e2e.db")
+		_ = os.Remove(dbPath)
+	case configProfilePostgres:
+		cmd := exec.Command("make", "reset_postgres")
+		cmd.Dir = filepath.Join(filepath.Dir(filename), "..")
+
+		logBuf := &bytes.Buffer{}
+		cmd.Stdout = logBuf
+		cmd.Stderr = logBuf
+
+		err := cmd.Run()
+		if err != nil {
+			log.Print("reset postgres DB faile, logs: \n", logBuf.String(), "\n")
+		}
+	default:
+		panic("unexpected configProfile")
+	}
 }
 
 func setupBrowser(debug bool) (*rod.Browser, func()) {

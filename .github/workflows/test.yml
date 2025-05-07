@@ -25,5 +25,8 @@ jobs:
       - name: Test
         run: |
           make install
-          make pre_build
           make test
+      - name: E2E Test
+        run: |
+          docker compose up -d
+          make test_e2e

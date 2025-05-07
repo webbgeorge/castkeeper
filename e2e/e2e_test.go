@@ -3,23 +3,44 @@ package e2e
 import (
 	"testing"
 
+	"github.com/go-rod/rod"
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	baseURL          = "http://localhost:8081"
-	debugModeEnabled = false
-)
+const debugModeEnabled = false
 
-// TODO add test for postgres+s3
 func TestE2E_SQLite_LocalObjects(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
 
-	browser, cleanup := setupE2ETests(testing.Verbose(), debugModeEnabled)
+	browser, cleanup := setupE2ETests(
+		configProfileSqlite,
+		testing.Verbose(),
+		debugModeEnabled,
+	)
 	t.Cleanup(cleanup)
 
+	runE2ETests(t, browser, "http://localhost:8082")
+}
+
+// NOTE: this test requires that docker compose is running
+func TestE2E_PostgreSQL_S3Objects(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
+	browser, cleanup := setupE2ETests(
+		configProfilePostgres,
+		testing.Verbose(),
+		debugModeEnabled,
+	)
+	t.Cleanup(cleanup)
+
+	runE2ETests(t, browser, "http://localhost:8083")
+}
+
+func runE2ETests(t *testing.T, browser *rod.Browser, baseURL string) {
 	page := browser.
 		MustIncognito().
 		MustPage(baseURL).

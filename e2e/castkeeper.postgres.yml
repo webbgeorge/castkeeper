@@ -1,12 +1,11 @@
-# config file for local development only
-# alternative to default local dev config - uses posgres and localstack s3 instead
+# config file for e2e tests - using postgres and s3
 
-EnvName: local
-LogLevel: info
-BaseURL: http://localhost:8081
+EnvName: e2e
+LogLevel: debug
+BaseURL: http://localhost:8083
 
 WebServer:
-  Port: 8081
+  Port: 8083
   CSRFSecretKey: testValueDoNotUseInProd
   CSRFSecureCookie: false
 

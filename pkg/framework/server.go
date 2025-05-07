@@ -79,8 +79,13 @@ func (s *Server) Start(ctx context.Context) error {
 
 	srvErr := make(chan error, 1)
 	go func() {
-		s.Logger.Info(fmt.Sprintf("Starting server at '%s'", httpServer.Addr))
-		srvErr <- httpServer.ListenAndServe()
+		ln, err := net.Listen("tcp", httpServer.Addr)
+		if err != nil {
+			srvErr <- err
+			return
+		}
+		s.Logger.Info(fmt.Sprintf("Server listening at '%s'", httpServer.Addr))
+		srvErr <- httpServer.Serve(ln)
 	}()
 
 	// Wait for interruption.

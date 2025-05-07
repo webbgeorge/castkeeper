@@ -2,10 +2,10 @@
 
 EnvName: e2e
 LogLevel: debug
-BaseURL: http://localhost:8081
+BaseURL: http://localhost:8082
 
 WebServer:
-  Port: 8081
+  Port: 8082
   CSRFSecretKey: testValueDoNotUseInProd
   CSRFSecureCookie: false
 
