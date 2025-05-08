@@ -97,17 +97,45 @@ func runE2ETests(t *testing.T, browser *rod.Browser, baseURL string) {
 	})
 
 	t.Run("add_podcast_from_url", func(t *testing.T) {
-		// TODO
-		t.Skip("Not implemented")
+		page.MustReload() // just to make it easier to assert for success alert
+		page.MustWaitDOMStable()
+
+		page.MustElementR("button", "Add Feed URL").MustClick()
+		page.MustWaitDOMStable()
+
+		page.
+			MustElementR("input", "Feed URL").
+			MustInput("https://feeds.simplecast.com/Sp_45INC")
+		page.MustElementR("button", "Add Podcast").MustClick()
+		page.MustWaitDOMStable()
+
+		assert.Equal(t, "Podcast added", page.MustElement(".alert").MustText())
+
+		// close modal
+		page.MustElementR("button", "✕").MustClick()
 	})
 
 	t.Run("list_podcasts", func(t *testing.T) {
-		// TODO
-		t.Skip("Not implemented")
+		page.MustElementR("a", "CastKeeper").MustClick()
+		page.MustWaitDOMStable()
+
+		page.MustElementR("h2", "How Do You Cope\\? …with Elis and John")
+		page.MustElementR("h2", "Top Scallops")
 	})
 
 	t.Run("view_podcast", func(t *testing.T) {
-		// TODO
-		t.Skip("Not implemented")
+		page.
+			MustElementR("h2", "How Do You Cope\\? …with Elis and John").
+			MustParent().
+			MustElementR("a", "View").
+			MustClick()
+		page.MustWaitDOMStable()
+
+		episodeRow := page.
+			MustElementR("td", "How Do You Cope - Series 4 teaser").
+			MustParent()
+
+		assert.Equal(t, "pending", episodeRow.MustElement(".badge").MustText())
+		page.MustElementR("td", "3m7s")
 	})
 }
