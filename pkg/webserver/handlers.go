@@ -10,6 +10,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
 	"github.com/webbgeorge/castkeeper/pkg/components/partials"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
+	"github.com/webbgeorge/castkeeper/pkg/feedworker"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/itunes"
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
@@ -79,6 +80,11 @@ func NewAddPodcastHandler(feedService *podcasts.FeedService, db *gorm.DB, os obj
 		_, err = os.SaveRemoteFile(ctx, podcast.ImageURL, util.SanitiseGUID(podcast.GUID), fileName)
 		if err != nil {
 			framework.GetLogger(ctx).WarnContext(ctx, "failed to download image, continuing without", "error", err)
+		}
+
+		err = framework.PushQueueTask(ctx, db, feedworker.FeedWorkerQueueName, "")
+		if err != nil {
+			framework.GetLogger(ctx).WarnContext(ctx, "failed to queue feed worker, continuing without", "error", err)
 		}
 
 		return framework.Render(ctx, w, 200, partials.AddPodcast(""))

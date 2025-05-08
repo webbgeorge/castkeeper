@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
+	"github.com/webbgeorge/castkeeper/pkg/feedworker"
 	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/itunes"
@@ -247,6 +248,10 @@ func TestAddPodcast_Success(t *testing.T) {
 	}
 	// compare against fixture content
 	assert.Equal(t, "Not a real JPG", strings.TrimSpace(string(data)))
+
+	// verify feed worker job was added to queue
+	_, err = framework.PopQueueTask(ctx, db, feedworker.FeedWorkerQueueName)
+	assert.Nil(t, err)
 }
 
 func TestAddPodcast_InvalidFeed(t *testing.T) {
