@@ -22,14 +22,14 @@ templ SearchPodcasts(csrfToken string) {
 					hx-swap="innerHTML"
 					class="join w-full"
 				>
-					@components.CSRFInput(csrfToken)
 					<input
 						id="search-input"
 						name="query"
 						type="text"
 						placeholder="Search"
-						class="input input-bordered join-item grow"
+						class="input join-item grow"
 					/>
+					@components.CSRFInput(csrfToken)
 					<button type="submit" class="btn btn-primary join-item">Search</button>
 				</form>
 				<div class="flex justify-end items-center gap-4 mt-4">

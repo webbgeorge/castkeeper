@@ -1,13 +1,14 @@
 {
   "scripts": {
-    "buildcss": "tailwindcss -i ./src/main.css -o ./static/bundle.css --minify",
+    "buildcss": "npx @tailwindcss/cli -i ./src/main.css -o ./static/bundle.css --minify",
     "buildjs": "esbuild src/main.js --bundle --minify --outfile=static/bundle.js"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.1.6",
     "@tailwindcss/typography": "^0.5.15",
-    "daisyui": "^4.12.23",
+    "daisyui": "^5.0.35",
     "esbuild": "^0.24.2",
-    "tailwindcss": "^3.4.17"
+    "tailwindcss": "^4.1.6"
   },
   "dependencies": {
     "htmx.org": "^2.0.4"

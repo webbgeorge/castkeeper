@@ -18,30 +18,26 @@ templ Login(csrfToken, redirect, errText string) {
 				>
 					@components.CSRFInput(csrfToken)
 					<input type="hidden" name="redirect" value={ redirect }/>
-					<label for="usernameInput" class="form-control mb-4">
-						<div class="label">
-							<span class="label-text">Username</span>
-						</div>
+					<fieldset class="fieldset">
+						<legend class="fieldset-legend">Username</legend>
 						<input
 							id="usernameInput"
 							name="username"
 							type="text"
 							placeholder="Username"
-							class="input input-bordered w-full"
+							class="input w-full"
 						/>
-					</label>
-					<label for="passwordInput" class="form-control mb-4">
-						<div class="label">
-							<span class="label-text">Password</span>
-						</div>
+					</fieldset>
+					<fieldset class="fieldset">
+						<legend class="fieldset-legend">Password</legend>
 						<input
 							id="passwordInput"
 							name="password"
 							type="password"
 							placeholder="Password"
-							class="input input-bordered w-full"
+							class="input w-full"
 						/>
-					</label>
+					</fieldset>
 					<div class="flex justify-end mt-6">
 						<button type="submit" class="btn btn-primary">Login</button>
 					</div>

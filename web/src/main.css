@@ -1,3 +1,5 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss" source("../../");
+@plugin "@tailwindcss/typography";
+@plugin "daisyui" {
+  themes: lemonade --default, dim --prefersdark;
+}

@@ -21,21 +21,17 @@ templ AddFeedUrlModal(csrfToken string) {
 					hx-disabled-elt="find button"
 				>
 					@components.CSRFInput(csrfToken)
-					<div>
-						<label for="feedUrlInput" class="form-control mb-4">
-							<div class="label">
-								<span class="label-text">Feed URL</span>
-							</div>
-							<input
-                name="feedUrl"
-                id="feedUrlInput"
-                type="text"
-                class="input input-bordered w-full"
-                placeholder="Feed URL"
-              />
-						</label>
-					</div>
-					<div class="flex justify-end">
+					<fieldset class="fieldset">
+						<legend class="fieldset-legend">Feed URL</legend>
+						<input
+							name="feedUrl"
+							id="feedUrlInput"
+							type="text"
+							class="input w-full"
+							placeholder="Feed URL"
+						/>
+					</fieldset>
+					<div class="flex justify-end mt-4">
 						<button type="submit" class="btn btn-primary">Add Podcast</button>
 					</div>
 				</form>
