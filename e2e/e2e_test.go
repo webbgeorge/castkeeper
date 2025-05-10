@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"testing"
+	"time"
 
 	"github.com/go-rod/rod"
 	"github.com/stretchr/testify/assert"
@@ -114,6 +115,9 @@ func runE2ETests(t *testing.T, browser *rod.Browser, baseURL string) {
 		// close modal
 		page.MustElementR("button", "✕").MustClick()
 	})
+
+	// ensure require queue jobs are processed before proceeding with test
+	time.Sleep(time.Second * 2)
 
 	t.Run("list_podcasts", func(t *testing.T) {
 		page.MustElementR("a", "CastKeeper").MustClick()

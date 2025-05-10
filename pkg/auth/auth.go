@@ -34,19 +34,17 @@ func GetSessionFromCtx(ctx context.Context) *Session {
 	return session
 }
 
-func NewAuthenticationMiddleware(db *gorm.DB) framework.Middleware {
+func NewAuthenticationMiddleware(db *gorm.DB, redirectToLoginOnUnauth bool) framework.Middleware {
 	return func(next framework.Handler) framework.Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			c, err := r.Cookie(sessionIDCookie)
 			if err != nil || c.Value == "" {
-				redirectToLogin(w, r)
-				return nil
+				return unauthResponse(w, r, redirectToLoginOnUnauth)
 			}
 
 			s, err := GetSession(ctx, db, c.Value)
 			if err != nil {
-				redirectToLogin(w, r)
-				return nil
+				return unauthResponse(w, r, redirectToLoginOnUnauth)
 			}
 			err = UpdateSessionLastSeen(ctx, db, &s)
 			if err != nil {
@@ -63,6 +61,14 @@ func NewAuthenticationMiddleware(db *gorm.DB) framework.Middleware {
 			return next(sessionCtx, w, r)
 		}
 	}
+}
+
+func unauthResponse(w http.ResponseWriter, r *http.Request, redirectToLoginOnUnauth bool) error {
+	if redirectToLoginOnUnauth {
+		redirectToLogin(w, r)
+		return nil
+	}
+	return framework.HttpUnauthorized()
 }
 
 func redirectToLogin(w http.ResponseWriter, r *http.Request) {

@@ -38,11 +38,11 @@ func TestAuthenticationMiddleware_ValidSessionIsPassedThrough(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.NewAuthenticationMiddleware(db)
+	mw := auth.NewAuthenticationMiddleware(db, true)
 	err := mw(nextFn)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
-	assert.Empty(t, resRec.Header().Get("Location"))
+	assert.Empty(t, resRec.Result().Header.Get("Location"))
 	assert.Equal(t, 123, int(userID))
 	assert.Equal(t, "unittest", username)
 }
@@ -59,11 +59,11 @@ func TestAuthenticationMiddleware_RedirectsWhenNoCookie(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.NewAuthenticationMiddleware(db)
+	mw := auth.NewAuthenticationMiddleware(db, true)
 	err := mw(nextFn)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "/auth/login?redirect=%2Ftest", resRec.Header().Get("Location"))
+	assert.Equal(t, "/auth/login?redirect=%2Ftest", resRec.Result().Header.Get("Location"))
 }
 
 func TestAuthenticationMiddleware_RedirectsWhenInvalidCookie(t *testing.T) {
@@ -81,11 +81,34 @@ func TestAuthenticationMiddleware_RedirectsWhenInvalidCookie(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.NewAuthenticationMiddleware(db)
+	mw := auth.NewAuthenticationMiddleware(db, true)
 	err := mw(nextFn)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "/auth/login?redirect=%2Ftest", resRec.Header().Get("Location"))
+	assert.Equal(t, "/auth/login?redirect=%2Ftest", resRec.Result().Header.Get("Location"))
+}
+
+func TestAuthenticationMiddleware_Returns401WhenRedirectToLoginDisabled(t *testing.T) {
+	db := fixtures.ConfigureDBForTestWithFixtures()
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	req.AddCookie(&http.Cookie{
+		Name:  "Session-Id",
+		Value: "invalidSession1", // not in DB
+	})
+	resRec := &httptest.ResponseRecorder{}
+
+	nextFn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		assert.Fail(t, "next function should not be called when not authed")
+		return nil
+	}
+
+	// false == return 401 instead of redirect to login
+	mw := auth.NewAuthenticationMiddleware(db, false)
+	err := mw(nextFn)(context.Background(), resRec, req)
+
+	assert.Equal(t, framework.HttpUnauthorized(), err)
+	assert.Empty(t, resRec.Result().Header.Get("Location"))
 }
 
 func TestAuthenticationMiddleware_ValidSessionUpdatesLastSeen(t *testing.T) {
@@ -104,7 +127,7 @@ func TestAuthenticationMiddleware_ValidSessionUpdatesLastSeen(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.NewAuthenticationMiddleware(db)
+	mw := auth.NewAuthenticationMiddleware(db, true)
 	err := mw(nextFn)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)

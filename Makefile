@@ -33,7 +33,7 @@ test:
 
 test_e2e:
 	$(MAKE) pre_build
-	go test ./e2e/... -count=1
+	go test ./e2e/... -count=1 -v
 
 test_cover:
 	$(MAKE) pre_build

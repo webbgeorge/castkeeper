@@ -90,6 +90,22 @@ func TestInvalidSessionRedirectsToLogin(t *testing.T) {
 		End()
 }
 
+func TestInvalidSessionOnPartialReturns401InsteadOfRedirectToLogin(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/podcasts/search"). // this is a partials route
+		WithContext(ctx).
+		Cookie("Session-Id", "notASession").
+		Expect(t).
+		Status(http.StatusUnauthorized).
+		HeaderNotPresent("Location").
+		Body("").
+		End()
+}
+
 func TestNotFound(t *testing.T) {
 	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
