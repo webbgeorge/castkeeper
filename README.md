@@ -59,7 +59,7 @@ make test_e2e
 #### Running local development server (default configuration)
 
 To run locally with the default configuration, using SQLite and local object
-storage.
+storage:
 
 ```shell
 # Create a user to log in with (first time only)
@@ -72,9 +72,11 @@ make run
 make watch
 ```
 
+Visit the web UI at: <http://localhost:8080>
+
 #### Running local development server (alt configuration)
 
-To run locally with the alt configuration, using PostgreSQL and S3 (localstack).
+To run locally with the alt configuration, using PostgreSQL and S3 (localstack):
 
 ```shell
 # Start Docker Compose
@@ -86,6 +88,8 @@ make create_user_postgres
 # Run server
 make run_postgres_s3
 ```
+
+Visit the web UI at: <http://localhost:8081>
 
 ## License
 
