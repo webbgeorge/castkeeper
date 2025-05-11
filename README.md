@@ -37,14 +37,14 @@ desired - as I want to make sure your time isn't wasted.
 - Node.js 22
 - Docker and Docker Compose (or equivalent)
 
-```
+```shell
 # Install tools and dependencies
 make install
 ```
 
 #### Running tests
 
-```
+```shell
 # Run unit tests + static analysis checks
 make test
 
@@ -61,7 +61,7 @@ make test_e2e
 To run locally with the default configuration, using SQLite and local object
 storage.
 
-```
+```shell
 # Create a user to log in with (first time only)
 make create_user
 
@@ -76,7 +76,7 @@ make watch
 
 To run locally with the alt configuration, using PostgreSQL and S3 (localstack).
 
-```
+```shell
 # Start Docker Compose
 docker compose up -d
 
