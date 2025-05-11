@@ -9,7 +9,7 @@ import { themes as prismThemes } from 'prism-react-renderer';
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: 'CastKeeper',
-  tagline: 'Backup the podcasts you love',
+  tagline: 'A free application for archiving podcasts',
   favicon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎙</text></svg>',
   url: 'https://castkeeper.org',
   // Set the /<baseUrl>/ pathname under which your site is served

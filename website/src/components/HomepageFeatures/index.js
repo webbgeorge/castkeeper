@@ -8,7 +8,7 @@ const FeatureList = [
     icon: '💾',
     description: (
       <>
-        Store your podcast backups wherever you prefer: locally, or in your
+        Store archived podcasts wherever you prefer: locally, or in the
         cloud storage provider of choice. Keep your collection safe, accessible,
         and always under your control.
       </>
@@ -19,9 +19,9 @@ const FeatureList = [
     icon: '📥',
     description: (
       <>
-        Subscribe to your favourite podcasts, and let CastKeeper automatically
+        Subscribe to your favourite podcasts, and CastKeeper will automatically
         download new episodes as they&apos;re released. Never miss an episode -
-        your backups stay current without any effort.
+        your archive stays current without any effort.
       </>
     ),
   },
