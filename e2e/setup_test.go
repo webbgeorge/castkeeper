@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -125,29 +126,33 @@ func deleteDatabase(configProfile string) {
 }
 
 func setupBrowser(debug bool) (*rod.Browser, func()) {
-	if !debug {
-		browser := rod.New().MustConnect()
-		return browser, func() {
-			browser.MustClose()
-		}
-	}
-
+	isCI, _ := strconv.ParseBool(os.Getenv("CI"))
 	l := launcher.New().
-		Headless(false).
-		Devtools(true)
+		NoSandbox(isCI)
+
+	if debug {
+		l = l.
+			Headless(false).
+			Devtools(true)
+	}
 
 	url := l.MustLaunch()
 
 	browser := rod.New().
-		ControlURL(url).
-		Trace(true).
-		SlowMotion(time.Second).
-		NoDefaultDevice().
-		MustConnect()
+		ControlURL(url)
+
+	if debug {
+		browser = browser.
+			Trace(true).
+			SlowMotion(time.Second).
+			NoDefaultDevice()
+	}
+
+	browser.MustConnect()
 
 	cleanup := func() {
-		l.Cleanup()
 		browser.MustClose()
+		l.Cleanup()
 	}
 
 	return browser, cleanup
