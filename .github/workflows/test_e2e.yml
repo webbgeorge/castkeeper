@@ -1,4 +1,4 @@
-name: Test
+name: Test E2E
 
 on:
   pull_request:
@@ -22,7 +22,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Test
+      - name: E2E Test
         run: |
           make install
-          make test
+          docker compose up -d
+          make test_e2e
