@@ -25,6 +25,8 @@ jobs:
       - name: E2E Test
         run: |
           make install
+          go vet ./...
+          gosec ./...
           docker compose up -d
           go mod download
           make test_e2e
