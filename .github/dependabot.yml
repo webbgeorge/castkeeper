@@ -4,6 +4,9 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+    groups:
+      non-major:
+        update-types: [minor, patch]
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
@@ -12,10 +15,16 @@ updates:
     directory: "/web/"
     schedule:
       interval: "daily"
+    groups:
+      non-major:
+        update-types: [minor, patch]
   - package-ecosystem: "npm"
     directory: "/website/"
     schedule:
       interval: "weekly"
+    groups:
+      non-major:
+        update-types: [minor, patch]
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
