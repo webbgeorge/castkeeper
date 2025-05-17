@@ -12,8 +12,7 @@ require (
 	github.com/go-rod/rod v0.116.2
 	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/csrf v1.7.2
-	github.com/microcosm-cc/bluemonday v1.0.27
+	github.com/gorilla/csrf v1.7.3
 	github.com/orandin/slog-gorm v1.4.0
 	github.com/spf13/viper v1.20.1
 	github.com/steinfletcher/apitest v1.6.0
@@ -46,14 +45,12 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.10 // indirect
 	github.com/aws/smithy-go v1.22.2 // indirect
-	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
-	github.com/gorilla/css v1.0.1 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
