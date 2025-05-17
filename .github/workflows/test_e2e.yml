@@ -26,4 +26,5 @@ jobs:
         run: |
           make install
           docker compose up -d
+          go mod download
           make test_e2e
