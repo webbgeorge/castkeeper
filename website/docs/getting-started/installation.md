@@ -29,9 +29,10 @@ Also note if using this approach, you should back up the `castkeeper_data`
 volume.
 
 ```yml
+# docker-compose.yml
 services:
   castkeeper:
-    image: ghcr.io/webbgeorge/castkeeper:<version>
+    image: ghcr.io/webbgeorge/castkeeper:latest
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -41,6 +42,26 @@ services:
 
 volumes:
   castkeeper_data:
+```
+
+```YAML
+# castkeeper.yml
+# See the configuration page for more information about configuring CastKeeper
+EnvName: prod
+LogLevel: warn
+BaseURL: http://localhost:8080
+
+WebServer:
+  Port: 8080
+  CSRFSecretKey: <REPLACE_THIS_VALUE>
+
+Database:
+  Driver: sqlite
+  DSN: /data/castkeeper.db
+
+ObjectStorage:
+  Driver: local
+  LocalBasePath: /data/objects
 ```
 
 ### Helm
