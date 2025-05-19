@@ -19,7 +19,7 @@ require (
 	github.com/steinfletcher/apitest v1.6.0
 	github.com/steinfletcher/apitest-css-selector v0.2.0
 	github.com/stretchr/testify v1.10.0
-	github.com/webbgeorge/gopodcast v0.1.1
+	github.com/webbgeorge/gopodcast v0.1.2
 	golang.org/x/crypto v0.38.0
 	golang.org/x/sync v0.14.0
 	golang.org/x/term v0.32.0
