@@ -3,7 +3,7 @@ project_name: castkeeper
 builds:
   - id: castkeeper
     binary: castkeeper
-    main: ./cmd/server/main.go
+    main: ./cmd/main.go
     env: [CGO_ENABLED=0]
     goos:
       - linux
@@ -11,6 +11,10 @@ builds:
     goarch:
       - amd64
       - arm64
+    hooks:
+      pre: make pre_build
+    ldflags:
+      - -X github.com/webbgeorge/castkeeper.Version={{.Version}}
 dockers:
   - image_templates:
       - "ghcr.io/webbgeorge/castkeeper:latest"

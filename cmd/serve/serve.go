@@ -1,14 +1,14 @@
-package main
+package serve
 
 import (
 	"context"
 	"errors"
 	"log"
-	"os"
 	"time"
 
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/spf13/cobra"
 	"github.com/webbgeorge/castkeeper/pkg/auth"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/database"
@@ -22,13 +22,21 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func main() {
-	configFile := "" // optional specific config file (otherwise uses default locations)
-	if len(os.Args) > 1 {
-		configFile = os.Args[1]
-	}
+var ServeCmd = &cobra.Command{
+	Use:   "serve",
+	Short: "Start the CastKeeper server",
+	Long:  "TODO",
+	Run:   run,
+}
 
-	cfg, logger, err := config.LoadConfig(configFile)
+var cfgFile string
+
+func init() {
+	ServeCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (otherwise uses default locations)")
+}
+
+func run(cmd *cobra.Command, args []string) {
+	cfg, logger, err := config.LoadConfig(cfgFile)
 	if err != nil {
 		log.Fatalf("failed to read config: %v", err)
 	}

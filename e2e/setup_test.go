@@ -47,7 +47,7 @@ func setupE2ETests(configProfile string, verbose, debug bool) (browser *rod.Brow
 }
 
 func startServer(configProfile string) (logBuf *bytes.Buffer, killFn func(), err error) {
-	cmd, logBuf := createGoRunCmd(configProfile, "server")
+	cmd, logBuf := createGoRunCmd(configProfile, "serve")
 	if err := cmd.Start(); err != nil {
 		return nil, nil, fmt.Errorf("failed to start server in e2e tests '%w'", err)
 	}
@@ -77,9 +77,9 @@ func createGoRunCmd(configProfile, cmdName string, arg ...string) (*exec.Cmd, *b
 		filepath.Dir(filename),
 		fmt.Sprintf("castkeeper.%s.yml", configProfile),
 	)
-	cmdStr := filepath.Join(filepath.Dir(filename), "..", "cmd", cmdName)
+	cmdStr := filepath.Join(filepath.Dir(filename), "..", "cmd", "main.go")
 
-	cmdArg := []string{"run", cmdStr, configPath}
+	cmdArg := []string{"run", cmdStr, cmdName, "--config", configPath}
 	cmdArg = append(cmdArg, arg...)
 
 	cmd := exec.Command("go", cmdArg...)
@@ -95,7 +95,12 @@ func createTestUser(configProfile string) error {
 	username := "e2euser"
 	password := "e2epass"
 
-	cmd, logBuf := createGoRunCmd(configProfile, "createuser", username, password)
+	cmd, logBuf := createGoRunCmd(
+		configProfile,
+		"createuser",
+		"--username", username,
+		"--password", password,
+	)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to create user in e2e tests '%s', cmd logs: %s", err.Error(), logBuf.String())
 	}

@@ -3,5 +3,5 @@
 postgresql-data
 web/node_modules
 web/static
-cmd/server/server
+cmd/castkeeper
 profile.cov

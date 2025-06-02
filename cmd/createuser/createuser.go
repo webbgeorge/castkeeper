@@ -1,4 +1,4 @@
-package main
+package createuser
 
 import (
 	"bufio"
@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/spf13/cobra"
 	"github.com/webbgeorge/castkeeper/pkg/auth"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/database"
@@ -15,20 +16,27 @@ import (
 	"golang.org/x/term"
 )
 
-// Utility script for creating new users in the database for the given CastKeeper configuration.
-//
-// Usage:
-//
-//	go run cmd/createuser [configPath] [username] [password]
-//
-// accepts interactive inputs when username and password are not given as args
-func main() {
-	configFile := "" // optional specific config file (otherwise uses default locations)
-	if len(os.Args) > 1 {
-		configFile = os.Args[1]
-	}
+var CreateUserCmd = &cobra.Command{
+	Use:   "createuser",
+	Short: "Create a new CastKeeper user",
+	Long:  "Utility script for creating new users in the database for the given CastKeeper configuration.",
+	Run:   run,
+}
 
-	cfg, logger, err := config.LoadConfig(configFile)
+var (
+	cfgFile  string
+	username string
+	password string
+)
+
+func init() {
+	CreateUserCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (otherwise uses default locations)")
+	CreateUserCmd.Flags().StringVar(&username, "username", "", "username for the user to create (otherwise entered interactively)")
+	CreateUserCmd.Flags().StringVar(&password, "password", "", "password for the user to create (otherwise entered interactively)")
+}
+
+func run(cmd *cobra.Command, args []string) {
+	cfg, logger, err := config.LoadConfig(cfgFile)
 	if err != nil {
 		log.Fatalf("failed to read config: %v", err)
 	}
@@ -59,7 +67,7 @@ func main() {
 }
 
 func readUsername() (string, error) {
-	argUsername := readArg(2)
+	argUsername := username
 	if argUsername != "" {
 		return argUsername, nil
 	}
@@ -73,7 +81,7 @@ func readUsername() (string, error) {
 }
 
 func readPassword() (string, error) {
-	argPassword := readArg(3)
+	argPassword := password
 	if argPassword != "" {
 		return argPassword, nil
 	}
@@ -84,11 +92,4 @@ func readPassword() (string, error) {
 		return "", err
 	}
 	return string(pwBytes), nil
-}
-
-func readArg(i int) string {
-	if len(os.Args) > i {
-		return strings.TrimSpace(os.Args[i])
-	}
-	return ""
 }
