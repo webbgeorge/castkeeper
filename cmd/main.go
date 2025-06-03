@@ -11,12 +11,16 @@ import (
 )
 
 func main() {
+	userRootCmd := &cobra.Command{Use: "user"}
+	userRootCmd.AddCommand(createuser.CreateUserCmd)
+
 	rootCmd := &cobra.Command{Use: "castkeeper"}
 	rootCmd.AddCommand(
 		serve.ServeCmd,
-		createuser.CreateUserCmd,
+		userRootCmd,
 		version.VersionCmd,
 	)
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

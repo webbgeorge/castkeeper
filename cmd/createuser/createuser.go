@@ -17,7 +17,7 @@ import (
 )
 
 var CreateUserCmd = &cobra.Command{
-	Use:   "createuser",
+	Use:   "create",
 	Short: "Create a new CastKeeper user",
 	Long:  "Utility script for creating new users in the database for the given CastKeeper configuration.",
 	Run:   run,

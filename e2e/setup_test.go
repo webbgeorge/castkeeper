@@ -97,7 +97,8 @@ func createTestUser(configProfile string) error {
 
 	cmd, logBuf := createGoRunCmd(
 		configProfile,
-		"createuser",
+		"user",
+		"create",
 		"--username", username,
 		"--password", password,
 	)

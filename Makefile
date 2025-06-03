@@ -19,7 +19,7 @@ run:
 	go run -ldflags="$(FLAGS)" cmd/main.go serve
 
 watch:
-	air -c cmd/server/air.toml
+	air -c air.toml
 
 build:
 	$(MAKE) pre_build
@@ -51,7 +51,7 @@ reset_postgres:
 	docker compose exec postgres psql "postgresql://localdev:localdev@127.0.0.1:5432/postgres?sslmode=disable" -c "create database castkeeper;"
 
 create_user:
-	go run cmd/main.go createuser
+	go run cmd/main.go user create
 
 create_user_postgres:
-	go run cmd/main.go createuser --config ./castkeeper.alt.yml
+	go run cmd/main.go user create --config ./castkeeper.alt.yml
