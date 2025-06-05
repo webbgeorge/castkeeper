@@ -23,7 +23,7 @@ It takes a few flags:
 
 - `--config <path_to_config>`. OPTIONAL. The same config file used for the
   CastKeeper server. By default uses the standard config file paths
-  (see [Configuration](/docs/getting-started/configuration)).
+  (see [Configuration](/getting-started/configuration)).
 - `--username <username>`. OPTIONAL. The username to create. If not provided
   it will provide an interactive prompt.
 - `--password <password>`. OPTIONAL. The user's password. If not provided

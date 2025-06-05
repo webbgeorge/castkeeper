@@ -33,9 +33,10 @@ const config = {
       /** @type {import('@docusaurus/preset-classic').Options} */
       ({
         docs: {
+          routeBasePath: '/',
           sidebarPath: './sidebars.js',
           editUrl:
-            'https://github.com/webbgeorge/castkeeper/tree/main/website/docs/',
+            'https://github.com/webbgeorge/castkeeper/tree/main/website/',
         },
         theme: {
           customCss: './src/css/custom.css',
@@ -71,19 +72,19 @@ const config = {
             items: [
               {
                 label: 'Getting started',
-                to: '/docs/intro',
+                to: '/',
               },
               {
                 label: 'Installation',
-                to: '/docs/getting-started/installation',
+                to: '/getting-started/installation',
               },
               {
                 label: 'Configuration',
-                to: '/docs/getting-started/configuration',
+                to: '/getting-started/configuration',
               },
               {
                 label: 'Using CastKeeper',
-                to: '/docs/category/using-castkeeper',
+                to: '/category/using-castkeeper',
               },
             ],
           },
@@ -114,7 +115,7 @@ const config = {
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} <a target="_blank" href="https://github.com/webbgeorge">George Webb</a>. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} George Webb. Built with Docusaurus.`,
       },
       prism: {
         theme: prismThemes.github,

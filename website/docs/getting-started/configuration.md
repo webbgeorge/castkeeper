@@ -14,7 +14,7 @@ from a path specified when starting the server, or from the default CastKeeper
 config path. Only the first config file found is loaded, following this order:
 
 1. The path specified as an argument when running the CastKeeper server, e.g.
-   `castkeeper /path/to/my/castkeeper.yml`
+   `castkeeper serve --config /path/to/my/castkeeper.yml`
 2. `./castkeeper.yml` - in the current working directory where the CastKeeper
    server was started.
 3. `/etc/castkeeper/castkeeper.yml`

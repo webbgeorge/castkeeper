@@ -4,20 +4,20 @@ CastKeeper is a free application for archiving podcasts. It is designed to be
 easy to self-host, using either Docker or a self-contained executable. It
 supports a variety of file storage options.
 
-CastKeeper was built primarily to do 2 things I wanted:
+CastKeeper was built primarily to do 2 things:
 
-1. Store copies of podcasts I listen to, safe from being taken offline or
-   being modified (e.g. due to being abandoned or censored), allowing me to
-   re-listen to them in future.
-2. Transcribe and index the text content of those podcasts, allowing me to
-   search for when certain topics were discussed (coming very soon in a
+1. Store copies of podcasts, safe from being taken offline or being modified
+   (e.g. due to abandonment or editorial changes), allowing for future
+   re-listening.
+2. Transcribe and index the text content of those podcasts, allowing
+   searching for when certain topics were discussed (coming very soon in a
    future release).
 
 ## Getting started
 
-- [Getting started](https://castkeeper.org/docs/intro)
-  - [Installation](https://castkeeper.org/docs/getting-started/installation)
-  - [Configuration](https://castkeeper.org/docs/getting-started/configuration)
+- [Getting started](https://castkeeper.org/)
+  - [Installation](https://castkeeper.org/getting-started/installation)
+  - [Configuration](https://castkeeper.org/getting-started/configuration)
 
 ## Documentation
 

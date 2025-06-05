@@ -1,5 +1,5 @@
 @import "tailwindcss" source("../../");
 @plugin "@tailwindcss/typography";
 @plugin "daisyui" {
-  themes: lemonade --default, dim --prefersdark;
+  themes: dim --default, dim --prefersdark;
 }

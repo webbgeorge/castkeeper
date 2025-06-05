@@ -4,9 +4,8 @@ sidebar_position: 7
 
 # Updating
 
-Firstly, note that CastKeeper is in early development, and breaking changes are
-likely. Semantic versioning is used, along with release notes, to inform uses
-about breaking changes.
+CastKeeper is in early development, so breaking changes are likely. Semantic
+versioning and release notes are used to inform uses about breaking changes.
 
 ## Performing updates
 
