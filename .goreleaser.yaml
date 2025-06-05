@@ -12,7 +12,9 @@ builds:
       - amd64
       - arm64
     hooks:
-      pre: make pre_build
+      pre:
+        - make install
+        - make pre_build
     ldflags:
       - -X github.com/webbgeorge/castkeeper.Version={{.Version}}
     tags:
