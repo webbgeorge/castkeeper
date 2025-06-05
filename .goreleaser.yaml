@@ -4,7 +4,7 @@ builds:
   - id: castkeeper
     binary: castkeeper
     main: ./cmd/main.go
-    env: [CGO_ENABLED=0]
+    # env: [CGO_ENABLED=0] # SQLite requires CGO
     goos:
       - linux
       - darwin
@@ -15,6 +15,10 @@ builds:
       pre: make pre_build
     ldflags:
       - -X github.com/webbgeorge/castkeeper.Version={{.Version}}
+    tags:
+      - netgo
+      - osusergo
+      - static_build
 dockers:
   - image_templates:
       - "ghcr.io/webbgeorge/castkeeper:latest"

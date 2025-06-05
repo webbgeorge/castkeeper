@@ -7,7 +7,7 @@ sidebar_position: 1
 The CastKeeper server can be installed in multiple ways:
 
 - [Docker image](#docker-image)
-- [Static binary](#static-binary)
+- [Binary](#binary)
 
 ## Docker image
 
@@ -68,9 +68,9 @@ ObjectStorage:
 
 Coming soon
 
-## Static binary
+## Binary
 
-Note that CastKeeper static binaries currently only run on Linux and MacOS.
+Note that CastKeeper binaries currently only run on Linux and MacOS.
 
 1. Obtain the binary from [releases on GitHub](https://github.com/webbgeorge/castkeeper/releases)
 2. Place the CastKeeper binary in a location in your system's `$PATH`.

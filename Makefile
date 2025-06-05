@@ -23,7 +23,7 @@ watch:
 
 build:
 	$(MAKE) pre_build
-	go build -o cmd/castkeeper -ldflags="$(FLAGS)" cmd/main.go
+	go build -tags netgo,static_build,osusergo -a -o castkeeper -ldflags="$(FLAGS)" cmd/main.go
 
 test:
 	$(MAKE) pre_build
