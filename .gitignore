@@ -2,6 +2,6 @@
 *_templ.txt
 postgresql-data
 web/node_modules
-web/static
+web/static/bundle*
 cmd/castkeeper
 profile.cov

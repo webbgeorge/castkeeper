@@ -10,7 +10,7 @@ import { themes as prismThemes } from 'prism-react-renderer';
 const config = {
   title: 'CastKeeper',
   tagline: 'A free application for archiving podcasts',
-  favicon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎙</text></svg>',
+  favicon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22 viewBox=%220 0 64 64%22>  <rect width=%2264%22 height=%2264%22 rx=%2212%22 fill=%22%23242933%22/><text x=%2250%25%22 y=%2254%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 font-family=%22Segoe UI, Arial, sans-serif%22 font-size=%2232%22 fill=%22%23fff%22 font-weight=%22bold%22 letter-spacing=%222%22>CK</text></svg>',
   url: 'https://castkeeper.org',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
