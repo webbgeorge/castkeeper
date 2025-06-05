@@ -3,7 +3,7 @@ module github.com/webbgeorge/castkeeper
 go 1.24.2
 
 require (
-	github.com/a-h/templ v0.3.887
+	github.com/a-h/templ v0.3.894
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.29.14
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.77
@@ -15,6 +15,7 @@ require (
 	github.com/gorilla/csrf v1.7.2
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/orandin/slog-gorm v1.4.0
+	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	github.com/steinfletcher/apitest v1.6.0
 	github.com/steinfletcher/apitest-css-selector v0.2.0
@@ -24,7 +25,7 @@ require (
 	golang.org/x/sync v0.14.0
 	golang.org/x/term v0.32.0
 	gorm.io/driver/postgres v1.6.0
-	gorm.io/driver/sqlite v1.5.7
+	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.30.0
 )
 
@@ -71,7 +72,6 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
 	github.com/spf13/cast v1.8.0 // indirect
-	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/ysmood/fetchup v0.2.3 // indirect
