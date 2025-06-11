@@ -1,5 +1,9 @@
 version: 2
 project_name: castkeeper
+before:
+  hooks:
+    - make install
+    - make pre_build
 builds:
   - id: castkeeper
     binary: castkeeper
@@ -11,10 +15,6 @@ builds:
     goarch:
       - amd64
       - arm64
-    hooks:
-      pre:
-        - make install
-        - make pre_build
     ldflags:
       - -X github.com/webbgeorge/castkeeper.Version={{.Version}}
     tags:
