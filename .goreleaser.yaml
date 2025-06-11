@@ -26,7 +26,7 @@ dockers:
       - "ghcr.io/webbgeorge/castkeeper:latest"
       - "ghcr.io/webbgeorge/castkeeper:{{ .Version }}"
       - "ghcr.io/webbgeorge/castkeeper:{{ .Major }}"
-      - "ghcr.io/webbgeorge/castkeeper:{{ .Minor }}"
+      - "ghcr.io/webbgeorge/castkeeper:{{ .Major }}.{{ .Minor }}"
     build_flag_templates:
       - --label=org.opencontainers.image.title={{ .ProjectName }}
       - --label=org.opencontainers.image.description={{ .ProjectName }}
