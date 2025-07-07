@@ -3,12 +3,12 @@ module github.com/webbgeorge/castkeeper
 go 1.24.2
 
 require (
-	github.com/a-h/templ v0.3.898
+	github.com/a-h/templ v0.3.906
 	github.com/aws/aws-sdk-go-v2 v1.36.5
 	github.com/aws/aws-sdk-go-v2/config v1.29.17
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.80
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.80.3
-	github.com/go-playground/validator/v10 v10.26.0
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.82
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.82.0
+	github.com/go-playground/validator/v10 v10.27.0
 	github.com/go-rod/rod v0.116.2
 	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/google/uuid v1.6.0
