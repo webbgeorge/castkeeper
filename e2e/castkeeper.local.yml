@@ -3,16 +3,12 @@
 EnvName: e2e
 LogLevel: debug
 BaseURL: http://localhost:8082
+DataDirPath: ./data/e2e-local
 
 WebServer:
   Port: 8082
   CSRFSecretKey: testValueDoNotUseInProd
   CSRFSecureCookie: false
 
-Database:
-  Driver: sqlite
-  DSN: ../data/test-e2e.db
-
 ObjectStorage:
   Driver: local
-  LocalBasePath: ../data/objects-e2e

@@ -16,8 +16,6 @@ import (
 
 const (
 	applicationName          = "castkeeper"
-	DatabaseDriverPostgres   = "postgres"
-	DatabaseDriverSqlite     = "sqlite"
 	ObjectStorageDriverLocal = "local"
 	ObjectStorageDriverS3    = "awss3"
 	LogLevelDebug            = "debug"
@@ -30,8 +28,8 @@ type Config struct {
 	LogLevel      string              `validate:"required,oneof=debug info warn error"`
 	EnvName       string              `validate:"required"`
 	BaseURL       string              `validate:"required"`
+	DataDirPath   string              `validate:"required"`
 	WebServer     WebServerConfig     `validate:"required"`
-	Database      DatabaseConfig      `validate:"required"`
 	ObjectStorage ObjectStorageConfig `validate:"required"`
 }
 
@@ -41,14 +39,8 @@ type WebServerConfig struct {
 	CSRFSecureCookie bool
 }
 
-type DatabaseConfig struct {
-	Driver string `validate:"required,oneof=postgres sqlite"`
-	DSN    string `validate:"required" secret:"true"`
-}
-
 type ObjectStorageConfig struct {
 	Driver           string `validate:"required,oneof=local awss3"`
-	LocalBasePath    string `validate:"required_if=Driver local"`
 	S3Bucket         string `validate:"required_if=Driver awss3"`
 	S3Prefix         string `validate:"lte=250"`
 	S3ForcePathStyle bool   // used for localstack testing, unlikely to be ever used in prod
@@ -126,7 +118,6 @@ func debugConfig(cfg Config) string {
 	debugVals := make([]string, 0)
 	debugStruct(cfg, "", &debugVals)
 	debugStruct(cfg.WebServer, "WebServer.", &debugVals)
-	debugStruct(cfg.Database, "Database.", &debugVals)
 	debugStruct(cfg.ObjectStorage, "ObjectStorage.", &debugVals)
 	return strings.Join(debugVals, ", ")
 }

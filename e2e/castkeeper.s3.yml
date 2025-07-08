@@ -1,17 +1,14 @@
-# config file for e2e tests - using postgres and s3
+# config file for e2e tests - using s3
 
 EnvName: e2e
 LogLevel: debug
 BaseURL: http://localhost:8083
+DataDirPath: ./data/e2e-s3
 
 WebServer:
   Port: 8083
   CSRFSecretKey: testValueDoNotUseInProd
   CSRFSecureCookie: false
-
-Database:
-  Driver: postgres
-  DSN: host=localhost user=localdev password=localdev dbname=castkeeper port=5432 sslmode=disable
 
 ObjectStorage:
   Driver: awss3

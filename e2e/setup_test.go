@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	configProfileSqlite   = "sqlite"
-	configProfilePostgres = "postgres"
+	configProfileLocal = "local"
+	configProfileS3    = "s3"
 )
 
 func setupE2ETests(configProfile string, verbose, debug bool) (browser *rod.Browser, cleanup func()) {
@@ -110,25 +110,15 @@ func createTestUser(configProfile string) error {
 
 func deleteDatabase(configProfile string) {
 	_, filename, _, _ := runtime.Caller(0)
+	dataDir := ""
 	switch configProfile {
-	case configProfileSqlite:
-		dbPath := filepath.Join(filepath.Dir(filename), "..", "data", "test-e2e.db")
-		_ = os.Remove(dbPath)
-	case configProfilePostgres:
-		cmd := exec.Command("make", "reset_postgres")
-		cmd.Dir = filepath.Join(filepath.Dir(filename), "..")
-
-		logBuf := &bytes.Buffer{}
-		cmd.Stdout = logBuf
-		cmd.Stderr = logBuf
-
-		err := cmd.Run()
-		if err != nil {
-			log.Print("reset postgres DB faile, logs: \n", logBuf.String(), "\n")
-		}
-	default:
-		panic("unexpected configProfile")
+	case configProfileLocal:
+		dataDir = "e2e-local"
+	case configProfileS3:
+		dataDir = "e2e-s3"
 	}
+	dbPath := filepath.Join(filepath.Dir(filename), "..", "data", dataDir, "data.db")
+	_ = os.Remove(dbPath)
 }
 
 func setupBrowser(debug bool) (*rod.Browser, func()) {

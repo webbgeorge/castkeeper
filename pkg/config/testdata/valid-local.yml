@@ -1,17 +1,12 @@
 EnvName: testdata
-LogLevel: error
+LogLevel: debug
 BaseURL: http://www.example.com
+DataDirPath: ./data
 
 WebServer:
   Port: 80
   CSRFSecretKey: testValueDoNotUseInProd
   CSRFSecureCookie: true
 
-Database:
-  Driver: postgres
-  DSN: testValue
-
 ObjectStorage:
-  Driver: awss3
-  S3Bucket: my-bucket
-  S3Prefix: some-prefix
+  Driver: local

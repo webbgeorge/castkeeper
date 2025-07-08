@@ -1,16 +1,12 @@
 EnvName: testdata
 LogLevel: notALogLevel
 BaseURL: http://www.example.com
+DataDirPath: ./data
 
 WebServer:
   Port: 80
   CSRFSecretKey: testValueDoNotUseInProd
   CSRFSecureCookie: true
 
-Database:
-  Driver: sqlite
-  DSN: ./data/db.sql
-
 ObjectStorage:
   Driver: local
-  LocalBasePath: ./data/objects

@@ -76,17 +76,17 @@ Visit the web UI at: <http://localhost:8080>
 
 #### Running local development server (alt configuration)
 
-To run locally with the alt configuration, using PostgreSQL and S3 (localstack):
+To run locally with the alt configuration, using S3 (localstack):
 
 ```shell
 # Start Docker Compose
 docker compose up -d
 
 # Create a user to log in with (first time only)
-make create_user_postgres
+make create_user_alt_config
 
 # Run server
-make run_postgres_s3
+make run_alt_config
 ```
 
 Visit the web UI at: <http://localhost:8081>

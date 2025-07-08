@@ -40,18 +40,14 @@ test_cover:
 	go test -coverpkg=./... -coverprofile=profile.cov ./... -short -count=1
 	go tool cover -func profile.cov
 
-# run locally to test with alternative drivers: postgres instead of sqlite and s3 instead of local fs
-run_postgres_s3:
+# run locally to test with alternative drivers: s3 instead of local fs
+run_alt_config:
 	docker compose up -d
 	$(MAKE) pre_build
 	AWS_ENDPOINT_URL=http://localhost:4566 AWS_REGION=us-east-1 AWS_ACCESS_KEY_ID=000000 AWS_SECRET_ACCESS_KEY=000000 go run -ldflags="$(FLAGS)" cmd/main.go serve --config ./castkeeper.alt.yml
 
-reset_postgres:
-	docker compose exec postgres psql "postgresql://localdev:localdev@127.0.0.1:5432/postgres?sslmode=disable" -c "drop database castkeeper;"
-	docker compose exec postgres psql "postgresql://localdev:localdev@127.0.0.1:5432/postgres?sslmode=disable" -c "create database castkeeper;"
-
 create_user:
 	go run cmd/main.go user create
 
-create_user_postgres:
+create_user_alt_config:
 	go run cmd/main.go user create --config ./castkeeper.alt.yml

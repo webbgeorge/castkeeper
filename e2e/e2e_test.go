@@ -10,13 +10,13 @@ import (
 
 const debugModeEnabled = false
 
-func TestE2E_SQLite_LocalObjects(t *testing.T) {
+func TestE2E_LocalObjects(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
 
 	browser, cleanup := setupE2ETests(
-		configProfileSqlite,
+		configProfileLocal,
 		testing.Verbose(),
 		debugModeEnabled,
 	)
@@ -26,13 +26,13 @@ func TestE2E_SQLite_LocalObjects(t *testing.T) {
 }
 
 // NOTE: this test requires that docker compose is running
-func TestE2E_PostgreSQL_S3Objects(t *testing.T) {
+func TestE2E_S3Objects(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
 
 	browser, cleanup := setupE2ETests(
-		configProfilePostgres,
+		configProfileS3,
 		testing.Verbose(),
 		debugModeEnabled,
 	)

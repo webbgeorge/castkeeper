@@ -43,7 +43,7 @@ func run(cmd *cobra.Command, args []string) {
 
 	ctx := framework.ContextWithLogger(context.Background(), logger)
 
-	db, err := database.ConfigureDatabase(cfg, logger)
+	db, err := database.ConfigureDatabase(cfg, logger, false)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}

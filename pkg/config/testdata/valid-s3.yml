@@ -1,15 +1,14 @@
 EnvName: testdata
-LogLevel: debug
+LogLevel: error
 BaseURL: http://www.example.com
+DataDirPath: ./data
 
 WebServer:
   Port: 80
   CSRFSecretKey: testValueDoNotUseInProd
   CSRFSecureCookie: true
 
-Database:
-  Driver: sqlite
-
 ObjectStorage:
-  Driver: local
-  LocalBasePath: ./data/objects
+  Driver: awss3
+  S3Bucket: my-bucket
+  S3Prefix: some-prefix
