@@ -3,7 +3,7 @@
 EnvName: e2e
 LogLevel: debug
 BaseURL: http://localhost:8083
-DataPath: ./data/e2e-s3
+DataPath: ../data/e2e-s3
 
 WebServer:
   Port: 8083

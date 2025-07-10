@@ -3,7 +3,7 @@
 EnvName: e2e
 LogLevel: debug
 BaseURL: http://localhost:8082
-DataPath: ./data/e2e-local
+DataPath: ../data/e2e-local
 
 WebServer:
   Port: 8082
