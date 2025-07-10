@@ -13,7 +13,7 @@ The local file storage driver simply stores all podcasts in the CastKeeper data
 directory on the file system where CastKeeper is running.
 
 ```YAML
-DataDirPath: /data # also used by the CastKeeper database
+DataPath: /data # also used by the CastKeeper database
 
 ObjectStorage:
   Driver: local

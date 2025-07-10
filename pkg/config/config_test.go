@@ -12,10 +12,10 @@ func TestLoadConfig_ValidLocal(t *testing.T) {
 	cfg, _, err := config.LoadConfig("testdata/valid-local.yml")
 	assert.Nil(t, err)
 	assert.Equal(t, config.Config{
-		EnvName:     "testdata",
-		LogLevel:    "debug",
-		BaseURL:     "http://www.example.com",
-		DataDirPath: "./data",
+		EnvName:  "testdata",
+		LogLevel: "debug",
+		BaseURL:  "http://www.example.com",
+		DataPath: "./data",
 		WebServer: config.WebServerConfig{
 			Port:             80,
 			CSRFSecretKey:    "testValueDoNotUseInProd",
@@ -31,10 +31,10 @@ func TestLoadConfig_ValidS3(t *testing.T) {
 	cfg, _, err := config.LoadConfig("testdata/valid-s3.yml")
 	assert.Nil(t, err)
 	assert.Equal(t, config.Config{
-		EnvName:     "testdata",
-		LogLevel:    "error",
-		BaseURL:     "http://www.example.com",
-		DataDirPath: "./data",
+		EnvName:  "testdata",
+		LogLevel: "error",
+		BaseURL:  "http://www.example.com",
+		DataPath: "./data",
 		WebServer: config.WebServerConfig{
 			Port:             80,
 			CSRFSecretKey:    "testValueDoNotUseInProd",
@@ -52,7 +52,7 @@ func TestLoadConfig_EnvVarsOnly(t *testing.T) {
 	os.Setenv("CASTKEEPER_ENVNAME", "testdata")
 	os.Setenv("CASTKEEPER_LOGLEVEL", "error")
 	os.Setenv("CASTKEEPER_BASEURL", "http://www.example.com")
-	os.Setenv("CASTKEEPER_DATADIRPATH", "./data")
+	os.Setenv("CASTKEEPER_DATAPATH", "./data")
 	os.Setenv("CASTKEEPER_WEBSERVER_PORT", "80")
 	os.Setenv("CASTKEEPER_WEBSERVER_CSRFSECRETKEY", "testValueDoNotUseInProd")
 	os.Setenv("CASTKEEPER_WEBSERVER_CSRFSECURECOOKIE", "true")
@@ -63,7 +63,7 @@ func TestLoadConfig_EnvVarsOnly(t *testing.T) {
 		os.Unsetenv("CASTKEEPER_ENVNAME")
 		os.Unsetenv("CASTKEEPER_LOGLEVEL")
 		os.Unsetenv("CASTKEEPER_BASEURL")
-		os.Unsetenv("CASTKEEPER_DATADIRPATH")
+		os.Unsetenv("CASTKEEPER_DATAPATH")
 		os.Unsetenv("CASTKEEPER_WEBSERVER_PORT")
 		os.Unsetenv("CASTKEEPER_WEBSERVER_CSRFSECRETKEY")
 		os.Unsetenv("CASTKEEPER_WEBSERVER_CSRFSECURECOOKIE")
@@ -75,10 +75,10 @@ func TestLoadConfig_EnvVarsOnly(t *testing.T) {
 	cfg, _, err := config.LoadConfig("")
 	assert.Nil(t, err)
 	assert.Equal(t, config.Config{
-		EnvName:     "testdata",
-		LogLevel:    "error",
-		BaseURL:     "http://www.example.com",
-		DataDirPath: "./data",
+		EnvName:  "testdata",
+		LogLevel: "error",
+		BaseURL:  "http://www.example.com",
+		DataPath: "./data",
 		WebServer: config.WebServerConfig{
 			Port:             80,
 			CSRFSecretKey:    "testValueDoNotUseInProd",
@@ -101,10 +101,10 @@ func TestLoadConfig_EnvVarOverride(t *testing.T) {
 	cfg, _, err := config.LoadConfig("testdata/valid-local.yml")
 	assert.Nil(t, err)
 	assert.Equal(t, config.Config{
-		EnvName:     "OverridenByEnv",
-		LogLevel:    "debug",
-		BaseURL:     "http://www.example.com",
-		DataDirPath: "./data",
+		EnvName:  "OverridenByEnv",
+		LogLevel: "debug",
+		BaseURL:  "http://www.example.com",
+		DataPath: "./data",
 		WebServer: config.WebServerConfig{
 			Port:             80,
 			CSRFSecretKey:    "testValueDoNotUseInProd",
@@ -131,7 +131,7 @@ func TestLoadConfig_ValidationErr(t *testing.T) {
 		},
 		"missingDataPath": {
 			configFile:  "testdata/invalid-missing-data-path.yml",
-			expectedErr: "Key: 'Config.DataDirPath' Error:Field validation for 'DataDirPath' failed on the 'required' tag",
+			expectedErr: "Key: 'Config.DataPath' Error:Field validation for 'DataPath' failed on the 'required' tag",
 		},
 		"invalidStorageDriver": {
 			configFile:  "testdata/invalid-storage-driver.yml",

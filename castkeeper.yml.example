@@ -1,7 +1,7 @@
 EnvName: prod
 LogLevel: warn
 BaseURL: https://castkeeper.example.com
-DataDirPath: /app/data
+DataPath: /app/data
 
 WebServer:
   Port: 8080

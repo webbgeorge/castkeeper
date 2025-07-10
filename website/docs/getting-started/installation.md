@@ -50,7 +50,7 @@ volumes:
 EnvName: prod
 LogLevel: warn
 BaseURL: http://localhost:8080
-DataDirPath: /data
+DataPath: /data
 
 WebServer:
   Port: 8080

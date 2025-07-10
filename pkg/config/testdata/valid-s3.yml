@@ -1,7 +1,7 @@
 EnvName: testdata
 LogLevel: error
 BaseURL: http://www.example.com
-DataDirPath: ./data
+DataPath: ./data
 
 WebServer:
   Port: 80

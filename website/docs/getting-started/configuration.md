@@ -25,7 +25,7 @@ config path. Only the first config file found is loaded, following this order:
 EnvName: prod
 LogLevel: warn
 BaseURL: https://castkeeper.example.com
-DataDirPath: /app/data
+DataPath: /app/data
 
 WebServer:
   Port: 8080
@@ -56,7 +56,7 @@ See the reference table below for the full list of environment variables.
 | LogLevel                       | CASTKEEPER_LOGLEVEL                       | Log verbosity. Allowed values: `debug`,`info`, `warn`, `error`. Default value: `info`. |
 | EnvName                        | CASTKEEPER_ENVNAME                        | The name of the environment, used in logs. Default value: `unknown`. |
 | BaseURL                        | CASTKEEPER_BASEURL                        | The URL that CastKeeper is hosted at, e.g. `https://ck.example.com`. Required. |
-| DataDirPath                        | CASTKEEPER_DATADIRPATH                        | The path to the directory that CastKeeper uses to store its data, e.g. `/app/data`. Required. |
+| DataPath                        | CASTKEEPER_DATAPATH                        | The path to the directory that CastKeeper uses to store its data, e.g. `/app/data`. Required. |
 | WebServer.Port                 | CASTKEEPER_WEBSERVER_PORT                 | The port the web server should listen to. Default value: `8080`. |
 | WebServer.CSRFSecretKey        | CASTKEEPER_WEBSERVER_CSRFSECRETKEY        | Unique secret key used to create CSRF tokens. It is very important that this value remains secret. To avoid this key being stored in plain text in the config file, it is recommended that it is provided as an environment variable. Required. |
 | WebServer.CSRFSecureCookie     | CASTKEEPER_WEBSERVER_CSRFSECURECOOKIE     | Boolean value - if true, the CSRF cookie has the secure attribute. Should be true in production if CastKeeper is on HTTPS. Default value: `true`. |

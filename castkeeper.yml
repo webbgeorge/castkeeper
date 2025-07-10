@@ -3,7 +3,7 @@
 EnvName: local
 LogLevel: info
 BaseURL: http://localhost:8080
-DataDirPath: ./data/local
+DataPath: ./data/local
 
 WebServer:
   Port: 8080

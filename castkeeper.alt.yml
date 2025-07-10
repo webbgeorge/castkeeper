@@ -4,7 +4,7 @@
 EnvName: local
 LogLevel: info
 BaseURL: http://localhost:8081
-DataDirPath: ./data/local-alt
+DataPath: ./data/local-alt
 
 WebServer:
   Port: 8081

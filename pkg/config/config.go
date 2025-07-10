@@ -28,7 +28,7 @@ type Config struct {
 	LogLevel      string              `validate:"required,oneof=debug info warn error"`
 	EnvName       string              `validate:"required"`
 	BaseURL       string              `validate:"required"`
-	DataDirPath   string              `validate:"required"`
+	DataPath      string              `validate:"required"`
 	WebServer     WebServerConfig     `validate:"required"`
 	ObjectStorage ObjectStorageConfig `validate:"required"`
 }

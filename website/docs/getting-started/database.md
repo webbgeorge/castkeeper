@@ -13,7 +13,7 @@ in the config file.
 The data directory is defined in the config file:
 
 ```YAML
-DataDirPath: /data
+DataPath: /data
 ```
 
 ## Database migrations

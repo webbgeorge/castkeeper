@@ -62,10 +62,10 @@ func dbDialector(cfg config.Config, inMemory bool) (gorm.Dialector, error) {
 		return sqlite.Open(":memory:"), nil
 	}
 
-	err := os.MkdirAll(cfg.DataDirPath, 0750)
+	err := os.MkdirAll(cfg.DataPath, 0750)
 	if err != nil {
 		return nil, err
 	}
-	dsn := path.Join(cfg.DataDirPath, "data.db")
+	dsn := path.Join(cfg.DataPath, "data.db")
 	return sqlite.Open(dsn), nil
 }

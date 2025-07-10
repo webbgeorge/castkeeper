@@ -120,7 +120,7 @@ func configureObjectStorage(ctx context.Context, cfg config.Config) (objectstora
 		return &objectstorage.LocalObjectStorage{
 			HTTPClient: httpClient,
 			Root: objectstorage.MustOpenLocalFSRoot(
-				path.Join(cfg.DataDirPath, "objects"),
+				path.Join(cfg.DataPath, "objects"),
 			),
 		}, nil
 
