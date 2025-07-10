@@ -20,12 +20,7 @@ import (
 
 func ConfigureDBForTestWithFixtures() *gorm.DB {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	db, err := database.ConfigureDatabase(config.Config{
-		Database: config.DatabaseConfig{
-			Driver: "sqlite",
-			DSN:    ":memory:",
-		},
-	}, logger)
+	db, err := database.ConfigureDatabase(config.Config{}, logger, true)
 	if err != nil {
 		panic(err)
 	}

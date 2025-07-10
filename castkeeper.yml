@@ -3,16 +3,12 @@
 EnvName: local
 LogLevel: info
 BaseURL: http://localhost:8080
+DataPath: ./data/local
 
 WebServer:
   Port: 8080
   CSRFSecretKey: testValueDoNotUseInProd
   CSRFSecureCookie: false
 
-Database:
-  Driver: sqlite
-  DSN: data/test.db
-
 ObjectStorage:
   Driver: local
-  LocalBasePath: ./data/objects

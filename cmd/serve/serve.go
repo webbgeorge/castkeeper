@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"path"
 	"time"
 
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
@@ -43,7 +44,7 @@ func run(cmd *cobra.Command, args []string) {
 
 	ctx := framework.ContextWithLogger(context.Background(), logger)
 
-	db, err := database.ConfigureDatabase(cfg, logger)
+	db, err := database.ConfigureDatabase(cfg, logger, false)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
@@ -119,7 +120,7 @@ func configureObjectStorage(ctx context.Context, cfg config.Config) (objectstora
 		return &objectstorage.LocalObjectStorage{
 			HTTPClient: httpClient,
 			Root: objectstorage.MustOpenLocalFSRoot(
-				cfg.ObjectStorage.LocalBasePath,
+				path.Join(cfg.DataPath, "objects"),
 			),
 		}, nil
 

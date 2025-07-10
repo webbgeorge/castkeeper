@@ -1,16 +1,4 @@
 services:
-  # For testing the postgres DB driver
-  postgres:
-    image: postgres:17
-    ports:
-      - 5432:5432
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_PASSWORD=localdev
-      - POSTGRES_USER=localdev
-      - POSTGRES_DB=castkeeper
-
   # For testing the S3 object storage driver
   localstack:
     image: localstack/localstack
@@ -18,6 +6,3 @@ services:
       - "127.0.0.1:4566:4566"
     volumes:
       - ./localstack-setup.sh:/etc/localstack/init/ready.d/script.sh
-
-volumes:
-  pgdata:

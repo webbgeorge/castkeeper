@@ -7,9 +7,5 @@ WebServer:
   CSRFSecretKey: testValueDoNotUseInProd
   CSRFSecureCookie: true
 
-Database:
-  Driver: sqlite
-
 ObjectStorage:
   Driver: local
-  LocalBasePath: ./data/objects

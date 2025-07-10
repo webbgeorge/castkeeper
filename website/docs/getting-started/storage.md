@@ -9,20 +9,22 @@ files locally, or using a cloud storage provider.
 
 ## Local file storage
 
-The local file storage driver simply stores all podcasts in a given directory
-on the file system where CastKeeper is running.
+The local file storage driver simply stores all podcasts in the CastKeeper data
+directory on the file system where CastKeeper is running.
 
 ```YAML
+DataPath: /data # also used by the CastKeeper database
+
 ObjectStorage:
   Driver: local
-  LocalBasePath: /path/to/storage/dir
 ```
 
 ## Amazon S3
 
 The Amazon S3 driver uses the AWS API to store all podcasts on Amazon S3. Note
 that only podcast audio files and images associated with the podcast are stored
-in S3 - the database (e.g. if using SQLite) is still stored on the file system.
+in S3 - the other application data, e.g. the SQLite database, is still stored on
+the file system.
 
 ```YAML
 ObjectStorage:

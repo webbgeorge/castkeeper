@@ -19,8 +19,8 @@ docker pull ghcr.io/webbgeorge/castkeeper
 
 ### Docker Compose
 
-Below is a simple Docker Compose setup, using SQLite and
-local file storage in a Docker volume `castkeeper_data`.
+Below is a simple Docker Compose setup, using local file storage
+in a Docker volume `castkeeper_data`.
 
 See [configuration](/getting-started/configuration#docker-compose) for
 how to set up the `castkeeper.yml` file.
@@ -50,18 +50,14 @@ volumes:
 EnvName: prod
 LogLevel: warn
 BaseURL: http://localhost:8080
+DataPath: /data
 
 WebServer:
   Port: 8080
   CSRFSecretKey: <REPLACE_THIS_VALUE>
 
-Database:
-  Driver: sqlite
-  DSN: /data/castkeeper.db
-
 ObjectStorage:
   Driver: local
-  LocalBasePath: /data/objects
 ```
 
 ### Helm

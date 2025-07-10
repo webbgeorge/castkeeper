@@ -1,14 +1,11 @@
 EnvName: prod
 LogLevel: warn
 BaseURL: https://castkeeper.example.com
+DataPath: /app/data
 
 WebServer:
   Port: 8080
   CSRFSecretKey: testValueDoNotUseInProd
-
-Database:
-  Driver: sqlite
-  DSN: /app/data/castkeeper.db
 
 ObjectStorage:
   Driver: awss3
