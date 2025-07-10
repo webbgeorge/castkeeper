@@ -58,7 +58,7 @@ make test_e2e
 
 #### Running local development server (default configuration)
 
-To run locally with the default configuration, using SQLite and local object
+To run locally with the default configuration, using local object
 storage:
 
 ```shell

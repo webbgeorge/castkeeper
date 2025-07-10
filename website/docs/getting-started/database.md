@@ -2,32 +2,18 @@
 sidebar_position: 4
 ---
 
-# Database support
+# Database
 
-CastKeeper uses a database to store data, such as podcast metadata and users.
-It supports both SQLite and PostgreSQL.
+CastKeeper uses a SQLite database to store data, such as podcast metadata and
+users. The database is stored under the CastKeeper data directory, as specified
+in the config file.
 
-## SQLite
+## Config
 
-SQLite is the recommended choice for most users running a single node or
-local deployment of CastKeeper.
-
-```YAML
-Database:
-  Driver: sqlite
-  DSN: /app/data/castkeeper.db
-```
-
-## PostgreSQL
-
-PostgreSQL is recommended for users who are familiar with managing a
-database server, and who wish to run CastKeeper as a multi-node cluster,
-which isn't supported with SQLite.
+The data directory is defined in the config file:
 
 ```YAML
-Database:
-  Driver: postgres
-  DSN: host=localhost user=localdev password=localdev dbname=castkeeper port=5432 sslmode=disable
+DataDirPath: /data
 ```
 
 ## Database migrations
