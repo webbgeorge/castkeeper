@@ -1,8 +1,8 @@
 # CastKeeper
 
 CastKeeper is a free application for archiving podcasts. It is designed to be
-easy to self-host, using either Docker or a self-contained executable. It
-supports a variety of file storage options.
+easy to self-host, published as a Docker container. It supports a variety of
+file storage options.
 
 CastKeeper was built primarily to do 2 things:
 
