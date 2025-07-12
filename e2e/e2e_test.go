@@ -61,8 +61,8 @@ func runE2ETests(t *testing.T, browser *rod.Browser, baseURL string) {
 	})
 
 	t.Run("login_success", func(t *testing.T) {
-		page.MustElementR("input", "Username").MustInput("e2euser")
-		page.MustElementR("input", "Password").MustInput("e2epass")
+		page.MustElementR("input", "Username").MustInput(e2eUsername)
+		page.MustElementR("input", "Password").MustInput(e2ePassword)
 		page.MustElementR("button", "Login").MustClick()
 
 		page.MustWaitDOMStable()
