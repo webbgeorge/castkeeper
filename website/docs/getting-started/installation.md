@@ -60,6 +60,17 @@ ObjectStorage:
   Driver: local
 ```
 
+```shell
+# Start the docker compose example
+docker compose up -d
+
+# Create a user (interactive prompt, required on first run only)
+docker compose exec castkeeper ./castkeeper user create
+
+# View the logs
+docker compose logs castkeeper -f
+```
+
 ### Helm
 
 Coming soon
