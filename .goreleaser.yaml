@@ -8,13 +8,10 @@ builds:
   - id: castkeeper
     binary: castkeeper
     main: ./cmd/main.go
-    # env: [CGO_ENABLED=0] # SQLite requires CGO
     goos:
       - linux
-      - darwin
     goarch:
       - amd64
-      - arm64
     ldflags:
       - -X github.com/webbgeorge/castkeeper.Version={{.Version}}
     tags:
@@ -39,3 +36,9 @@ dockers:
     extra_files:
       - castkeeper.yml.example
       - LICENSE
+release:
+  skip_upload: true
+  header: |
+    ## CastKeeper {{ .Version }}
+
+    Container image at ghcr.io/webbgeorge/castkeeper:{{ .Version }}

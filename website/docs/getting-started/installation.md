@@ -7,7 +7,7 @@ sidebar_position: 1
 The CastKeeper server can be installed in multiple ways:
 
 - [Docker image](#docker-image)
-- [Binary](#binary)
+- [Build from source](#build-from-source)
 
 ## Docker image
 
@@ -64,11 +64,12 @@ ObjectStorage:
 
 Coming soon
 
-## Binary
+## Build From Source
 
-Note that CastKeeper binaries currently only run on Linux and MacOS.
+Note that CastKeeper currently can only be built from source on Linux and
+MacOS.
 
-1. Obtain the binary from [releases on GitHub](https://github.com/webbgeorge/castkeeper/releases)
+1. Follow the developer instructions in the [README](https://github.com/webbgeorge/castkeeper).
 2. Place the CastKeeper binary in a location in your system's `$PATH`.
 3. Install CastKeeper as a system service, e.g. using `systemctl`.
 4. [Configure CastKeeper](/getting-started/configuration).
