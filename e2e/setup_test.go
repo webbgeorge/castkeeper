@@ -19,6 +19,8 @@ import (
 const (
 	configProfileLocal = "local"
 	configProfileS3    = "s3"
+	e2eUsername        = "e2euser"
+	e2ePassword        = "stronge2epass"
 )
 
 func setupE2ETests(configProfile string, verbose, debug bool) (browser *rod.Browser, cleanup func()) {
@@ -92,15 +94,12 @@ func createGoRunCmd(configProfile, cmdName string, arg ...string) (*exec.Cmd, *b
 }
 
 func createTestUser(configProfile string) error {
-	username := "e2euser"
-	password := "e2epass"
-
 	cmd, logBuf := createGoRunCmd(
 		configProfile,
 		"user",
 		"create",
-		"--username", username,
-		"--password", password,
+		"--username", e2eUsername,
+		"--password", e2ePassword,
 	)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to create user in e2e tests '%s', cmd logs: %s", err.Error(), logBuf.String())

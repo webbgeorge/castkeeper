@@ -1,7 +1,10 @@
 package auth
 
 import (
+	"bufio"
 	"context"
+	"embed"
+	"errors"
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
@@ -9,7 +12,13 @@ import (
 	"gorm.io/gorm"
 )
 
-const passwordHashCost = 10
+//go:embed ncsc_common_passwords_8_chars_up.txt
+var commonPasswordsFS embed.FS
+
+const (
+	commonPasswordsFile = "ncsc_common_passwords_8_chars_up.txt"
+	passwordHashCost    = 10
+)
 
 var userValidate = validator.New(validator.WithRequiredStructEnabled())
 
@@ -41,6 +50,10 @@ func GetUserByUsername(ctx context.Context, db *gorm.DB, username string) (User,
 }
 
 func CreateUser(ctx context.Context, db *gorm.DB, username string, password string) error {
+	if err := validatePasswordStrength(password); err != nil {
+		return err
+	}
+
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), passwordHashCost)
 	if err != nil {
 		return err
@@ -51,6 +64,40 @@ func CreateUser(ctx context.Context, db *gorm.DB, username string, password stri
 		Password: string(passwordHash),
 	}
 	if err = db.Create(&user).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validatePasswordStrength(password string) error {
+	if len(password) < 8 {
+		return errors.New("password must be at least 8 characters")
+	}
+	if len(password) > 64 {
+		return errors.New("password must be 64 characters or less")
+	}
+	if err := validatePasswordNotCommon(password); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validatePasswordNotCommon(password string) error {
+	f, err := commonPasswordsFS.Open(commonPasswordsFile)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		if password == scanner.Text() {
+			return errors.New("password must not be in list of most common passwords")
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
 		return err
 	}
 
