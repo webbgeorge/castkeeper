@@ -13,6 +13,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/webbgeorge/castkeeper/pkg/auth"
+	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
 	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 )
@@ -30,7 +31,7 @@ func TestAuthenticationMiddleware_ValidSessionIsPassedThrough(t *testing.T) {
 	var userID uint
 	var username string
 	nextFn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		s := auth.GetSessionFromCtx(ctx)
+		s := sessions.GetSessionFromCtx(ctx)
 		if s != nil {
 			userID = s.UserID
 			username = s.User.Username
@@ -131,7 +132,7 @@ func TestAuthenticationMiddleware_ValidSessionUpdatesLastSeen(t *testing.T) {
 	err := mw(nextFn)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
-	session, err := auth.GetSession(context.Background(), db, sessionID)
+	session, err := sessions.GetSessionByID(context.Background(), db, sessionID)
 	if err != nil {
 		panic(err)
 	}
@@ -240,6 +241,25 @@ func TestGetLoginHandler(t *testing.T) {
 		End()
 }
 
+func TestGetLoginHandler_DisplaysLogoutMessage(t *testing.T) {
+	h := func(w http.ResponseWriter, r *http.Request) {
+		err := auth.NewGetLoginHandler()(context.Background(), w, r)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	apitest.New().
+		HandlerFunc(h).
+		Get("/auth/login").
+		Query("logout", "true").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Login")).
+		Assert(selector.TextExists("You have been logged out")).
+		End()
+}
+
 func TestPostLoginHandler_ValidCredentials(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 
@@ -343,4 +363,38 @@ func TestPostLoginHandler_InvalidPassword(t *testing.T) {
 		Assert(selector.TextExists("Login")).
 		Assert(selector.TextExists("Unknown username or password")).
 		End()
+}
+
+func TestLogoutHandler(t *testing.T) {
+	db := fixtures.ConfigureDBForTestWithFixtures()
+
+	h := func(w http.ResponseWriter, r *http.Request) {
+		err := auth.NewLogoutHandler("http://example.com", db)(context.Background(), w, r)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	fixtureSessionID := "validSession1"
+
+	// verify session exists
+	sBefore, err := sessions.GetSessionByID(context.Background(), db, fixtureSessionID)
+	if err != nil {
+		panic(err)
+	}
+	assert.Equal(t, uint(123), sBefore.UserID)
+
+	apitest.New().
+		HandlerFunc(h).
+		Get("/auth/logout").
+		Cookie("Session-Id", fixtureSessionID).
+		Expect(t).
+		Status(http.StatusFound).
+		Header("Location", "/auth/login?logout=true").
+		Header("Set-Cookie", "Session-Id=; Path=/; Domain=example.com; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; Secure").
+		End()
+
+	// verify session has been deleted
+	_, err = sessions.GetSessionByID(context.Background(), db, fixtureSessionID)
+	assert.Equal(t, "record not found", err.Error())
 }

@@ -107,6 +107,8 @@ func (s *Server) Start(ctx context.Context) error {
 
 type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
 
+type Middleware func(next Handler) Handler
+
 func Render(ctx context.Context, w http.ResponseWriter, statusCode int, component templ.Component) error {
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	w.WriteHeader(statusCode)

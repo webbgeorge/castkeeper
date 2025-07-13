@@ -1,4 +1,4 @@
-package auth_test
+package users_test
 
 import (
 	"context"
@@ -6,37 +6,37 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/webbgeorge/castkeeper/pkg/auth"
+	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 )
 
 func TestUserBeforeSave(t *testing.T) {
 	testCases := map[string]struct {
-		user        auth.User
+		user        users.User
 		expectedErr string
 	}{
 		"valid": {
-			user: auth.User{
+			user: users.User{
 				Username: "someuser",
 				Password: "aaaaaa",
 			},
 			expectedErr: "",
 		},
 		"usernameMissing": {
-			user: auth.User{
+			user: users.User{
 				Password: "aaaaaa",
 			},
 			expectedErr: "user not valid: Key: 'User.Username' Error:Field validation for 'Username' failed on the 'required' tag",
 		},
 		"usernameTooLong": {
-			user: auth.User{
+			user: users.User{
 				Username: fixtures.StrOfLen(100),
 				Password: "aaaaaa",
 			},
 			expectedErr: "user not valid: Key: 'User.Username' Error:Field validation for 'Username' failed on the 'lte' tag",
 		},
 		"passwordMissing": {
-			user: auth.User{
+			user: users.User{
 				Username: "someuser",
 			},
 			expectedErr: "user not valid: Key: 'User.Password' Error:Field validation for 'Password' failed on the 'required' tag",
@@ -59,7 +59,7 @@ func TestGetByUsername_Exists(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	// from fixture
-	user, err := auth.GetUserByUsername(context.Background(), db, "unittest")
+	user, err := users.GetUserByUsername(context.Background(), db, "unittest")
 
 	assert.Nil(t, err)
 	assert.Equal(t, 123, int(user.ID))
@@ -71,7 +71,7 @@ func TestGetByUsername_Exists(t *testing.T) {
 func TestGetByUsername_NotFound(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 
-	user, err := auth.GetUserByUsername(context.Background(), db, "notauser")
+	user, err := users.GetUserByUsername(context.Background(), db, "notauser")
 
 	assert.Equal(t, "record not found", err.Error())
 	assert.Zero(t, user)
@@ -80,7 +80,7 @@ func TestGetByUsername_NotFound(t *testing.T) {
 func TestUserCheckPassword(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 
-	user, err := auth.GetUserByUsername(context.Background(), db, "unittest")
+	user, err := users.GetUserByUsername(context.Background(), db, "unittest")
 	assert.Nil(t, err)
 
 	t.Run("correct", func(t *testing.T) {
@@ -102,10 +102,10 @@ func TestUserCheckPassword(t *testing.T) {
 func TestCreateUser_Valid(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 
-	err := auth.CreateUser(context.Background(), db, "user1", "aStrongPassword69")
+	err := users.CreateUser(context.Background(), db, "user1", "aStrongPassword69")
 	assert.Nil(t, err)
 
-	user, err := auth.GetUserByUsername(context.Background(), db, "user1")
+	user, err := users.GetUserByUsername(context.Background(), db, "user1")
 	assert.Nil(t, err)
 	err = user.CheckPassword("aStrongPassword69")
 	assert.Nil(t, err)
@@ -114,7 +114,7 @@ func TestCreateUser_Valid(t *testing.T) {
 func TestCreateUser_InvalidUsername(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 
-	err := auth.CreateUser(context.Background(), db, "", "aStrongPassword69")
+	err := users.CreateUser(context.Background(), db, "", "aStrongPassword69")
 	assert.Equal(t, "user not valid: Key: 'User.Username' Error:Field validation for 'Username' failed on the 'required' tag", err.Error())
 }
 
@@ -161,7 +161,7 @@ func TestCreateUser_PasswordValidation(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			db := fixtures.ConfigureDBForTestWithFixtures()
 
-			err := auth.CreateUser(context.Background(), db, "testUser", tc.password)
+			err := users.CreateUser(context.Background(), db, "testUser", tc.password)
 			assert.Equal(t, tc.expectedErr, err)
 		})
 	}

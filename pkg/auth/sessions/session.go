@@ -1,4 +1,4 @@
-package auth
+package sessions
 
 import (
 	"context"
@@ -6,20 +6,29 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"gorm.io/gorm"
+)
+
+const (
+	sessionIDCookie       = "Session-Id"
+	sessionExpiry         = 24 * time.Hour
+	sessionLastSeenExpiry = time.Hour
 )
 
 var sessionValidate = validator.New(validator.WithRequiredStructEnabled())
 
 type Session struct {
-	ID           string `gorm:"primaryKey" validate:"required,gte=1,lte=1000"`
-	UserID       uint   `validate:"required,gte=1"`
-	User         User   `validate:"-" gorm:"foreignKey:UserID"`
+	ID           string     `gorm:"primaryKey" validate:"required,gte=1,lte=1000"`
+	UserID       uint       `validate:"required,gte=1"`
+	User         users.User `validate:"-" gorm:"foreignKey:UserID"`
 	StartTime    time.Time
 	LastSeenTime time.Time
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
@@ -33,7 +42,16 @@ func (s *Session) BeforeSave(tx *gorm.DB) error {
 	return nil
 }
 
-func GetSession(ctx context.Context, db *gorm.DB, sessionID string) (Session, error) {
+func GetSession(ctx context.Context, db *gorm.DB, r *http.Request) (Session, error) {
+	sessionID := getSessionIDFromCookie(r)
+	if sessionID == "" {
+		return Session{}, errors.New("no session id provided")
+	}
+
+	return GetSessionByID(ctx, db, sessionID)
+}
+
+func GetSessionByID(ctx context.Context, db *gorm.DB, sessionID string) (Session, error) {
 	var session Session
 	result := db.
 		Preload("User").
@@ -47,7 +65,13 @@ func GetSession(ctx context.Context, db *gorm.DB, sessionID string) (Session, er
 	return session, nil
 }
 
-func CreateSession(ctx context.Context, db *gorm.DB, userID uint) (sessionID string, err error) {
+func CreateSession(
+	ctx context.Context,
+	baseURL string,
+	db *gorm.DB,
+	userID uint,
+	w http.ResponseWriter,
+) error {
 	id := uuid.New().String()
 	now := time.Now()
 
@@ -57,11 +81,13 @@ func CreateSession(ctx context.Context, db *gorm.DB, userID uint) (sessionID str
 		StartTime:    now,
 		LastSeenTime: now,
 	}
-	if err = db.Create(&session).Error; err != nil {
-		return "", err
+	if err := db.Create(&session).Error; err != nil {
+		return err
 	}
 
-	return id, nil
+	setSessionCookie(w, baseURL, id)
+
+	return nil
 }
 
 func UpdateSessionLastSeen(ctx context.Context, db *gorm.DB, session *Session) error {
@@ -73,6 +99,30 @@ func UpdateSessionLastSeen(ctx context.Context, db *gorm.DB, session *Session) e
 	if result.Error != nil {
 		return result.Error
 	}
+	return nil
+}
+
+func DeleteSession(
+	ctx context.Context,
+	baseURL string,
+	db *gorm.DB,
+	r *http.Request,
+	w http.ResponseWriter,
+) error {
+	sessionID := getSessionIDFromCookie(r)
+	if sessionID == "" {
+		return errors.New("no session id provided")
+	}
+
+	result := db.
+		Where("id = ?", strSHA256(sessionID)).
+		Delete(&Session{})
+	if result.Error != nil {
+		return result.Error
+	}
+
+	deleteSessionCookie(w, baseURL)
+
 	return nil
 }
 
@@ -115,4 +165,44 @@ func strSHA256(str string) string {
 	h := sha256.New()
 	h.Write([]byte(str))
 	return base64.RawStdEncoding.EncodeToString(h.Sum(nil))
+}
+
+func setSessionCookie(w http.ResponseWriter, baseURL, sessionID string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     sessionIDCookie,
+		Value:    sessionID,
+		Expires:  time.Now().Add(sessionExpiry),
+		Path:     "/",
+		Domain:   cookieDomain(baseURL),
+		Secure:   true,
+		HttpOnly: true,
+	})
+}
+
+func deleteSessionCookie(w http.ResponseWriter, baseURL string) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     sessionIDCookie,
+		Value:    "",
+		Expires:  time.Unix(0, 0),
+		Path:     "/",
+		Domain:   cookieDomain(baseURL),
+		Secure:   true,
+		HttpOnly: true,
+	})
+}
+
+func getSessionIDFromCookie(r *http.Request) string {
+	c, err := r.Cookie(sessionIDCookie)
+	if err != nil {
+		return ""
+	}
+	return c.Value
+}
+
+func cookieDomain(baseURL string) string {
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		panic("invalid baseURL")
+	}
+	return u.Hostname()
 }

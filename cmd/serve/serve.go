@@ -10,7 +10,7 @@ import (
 	awsConfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/spf13/cobra"
-	"github.com/webbgeorge/castkeeper/pkg/auth"
+	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/database"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
@@ -74,7 +74,7 @@ func run(cmd *cobra.Command, args []string) {
 			DB: db,
 			Tasks: []framework.ScheduledTaskDefinition{
 				{TaskName: feedworker.FeedWorkerQueueName, Interval: time.Minute},
-				{TaskName: auth.HouseKeepingQueueName, Interval: time.Hour},
+				{TaskName: sessions.HouseKeepingQueueName, Interval: time.Hour},
 			},
 		}
 		return scheduler.Start(ctx)
@@ -101,8 +101,8 @@ func run(cmd *cobra.Command, args []string) {
 	g.Go(func() error {
 		qw := framework.QueueWorker{
 			DB:        db,
-			QueueName: auth.HouseKeepingQueueName,
-			HandlerFn: auth.NewHouseKeepingQueueWorker(db),
+			QueueName: sessions.HouseKeepingQueueName,
+			HandlerFn: sessions.NewHouseKeepingQueueWorker(db),
 		}
 		return qw.Start(ctx)
 	})

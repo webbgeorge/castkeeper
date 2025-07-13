@@ -2,7 +2,7 @@ package pages
 
 import "github.com/webbgeorge/castkeeper/pkg/components"
 
-templ Login(csrfToken, redirect, errText string) {
+templ Login(csrfToken, redirect, errText string, isLogout bool) {
 	@components.Layout("Login") {
 		<div class="w-full max-w-[600px] card md:card-normal bg-base-100 shadow-xl my-6 mx-auto">
 			<div class="card-body">
@@ -10,6 +10,11 @@ templ Login(csrfToken, redirect, errText string) {
 				if errText != "" {
 					<div role="alert" class="alert alert-error">
 						{ errText }
+					</div>
+				}
+				if isLogout {
+					<div role="alert" class="alert alert-success">
+						You have been logged out
 					</div>
 				}
 				<form

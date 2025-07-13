@@ -10,7 +10,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/webbgeorge/castkeeper/pkg/auth"
+	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
+	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/database"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
@@ -91,23 +92,23 @@ func podFixture(feedURL string) (podcasts.Podcast, []podcasts.Episode) {
 	return pod, eps
 }
 
-func userFixture(id uint, username, password string) *auth.User {
+func userFixture(id uint, username, password string) *users.User {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
 		panic(err)
 	}
-	return &auth.User{
+	return &users.User{
 		Model:    gorm.Model{ID: id},
 		Username: username,
 		Password: string(passwordHash),
 	}
 }
 
-func sessionFixture(id string, userID uint, startTime, seenTime time.Time) *auth.Session {
+func sessionFixture(id string, userID uint, startTime, seenTime time.Time) *sessions.Session {
 	h := sha256.New()
 	h.Write([]byte(id))
 	idHash := base64.RawStdEncoding.EncodeToString(h.Sum(nil))
-	return &auth.Session{
+	return &sessions.Session{
 		ID:           idHash,
 		UserID:       userID,
 		StartTime:    startTime,
