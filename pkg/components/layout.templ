@@ -6,6 +6,7 @@ import (
 	"github.com/webbgeorge/castkeeper"
 	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
+	"strings"
 	"time"
 )
 
@@ -26,6 +27,10 @@ func user(ctx context.Context) *users.User {
 }
 
 // TODO function to get first char in upper case
+func avatarText(ctx context.Context) string {
+	firstChar := string([]rune(user(ctx).Username)[0])
+	return strings.ToUpper(firstChar)
+}
 
 templ Layout(title string) {
 	<!DOCTYPE html>
@@ -45,23 +50,21 @@ templ Layout(title string) {
 				if user(ctx) != nil {
 					<div class="flex-none">
 						<div class="dropdown dropdown-end">
-							<div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar avatar-placeholder">
-								<div class="bg-neutral text-neutral-content w-8 rounded-full">
-									<span class="text-xs">{ string([]rune(user(ctx).Username)[0]) }</span>
+							<div tabindex="0" role="button" class="btn btn-ghost btn-circle w-8 h-8 avatar avatar-placeholder">
+								<div class="bg-info text-info-content w-8 rounded-full">
+									<span class="text-xs">{ avatarText(ctx) }</span>
 								</div>
 							</div>
 							<ul
 								tabindex="0"
-								class="menu menu-sm dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow"
+								class="menu dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow-xl"
 							>
-								<li>
-									<a class="justify-between">
-										Profile
-										<span class="badge">New</span>
-									</a>
+								<li class="menu-title">
+									<div class="w-42 truncate">
+										Logged in as { user(ctx).Username }
+									</div>
 								</li>
-								<li><a>Settings</a></li>
-								<li><a>Logout</a></li>
+								<li><a href="/auth/logout">Logout</a></li>
 							</ul>
 						</div>
 					</div>
