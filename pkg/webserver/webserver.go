@@ -8,6 +8,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/auth"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
+	"github.com/webbgeorge/castkeeper/pkg/framework/middleware"
 	"github.com/webbgeorge/castkeeper/pkg/itunes"
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
@@ -26,8 +27,8 @@ func NewWebserver(
 	port := fmt.Sprintf(":%d", cfg.WebServer.Port)
 	server := framework.NewServer(port, logger)
 
-	middleware := framework.DefaultMiddlewareStack()
-	middleware = append(middleware, framework.NewCSRFMiddleware(
+	mw := middleware.DefaultMiddlewareStack()
+	mw = append(mw, middleware.NewCSRFMiddleware(
 		cfg.WebServer.CSRFSecretKey,
 		cfg.WebServer.CSRFSecureCookie,
 	))
@@ -36,11 +37,12 @@ func NewWebserver(
 	partialAuthMW := auth.NewAuthenticationMiddleware(db, false)
 	feedAuthMW := auth.NewFeedAuthenticationMiddleware(db)
 
-	return server.SetServerMiddlewares(middleware...).
+	return server.SetServerMiddlewares(mw...).
 		AddFileServer("GET /static/", http.FileServer(http.FS(web.StaticAssets))).
 		AddRoute("GET /", NewHomeHandler(db), authMW).
 		AddRoute("GET /auth/login", auth.NewGetLoginHandler()).
 		AddRoute("POST /auth/login", auth.NewPostLoginHandler(cfg.BaseURL, db)).
+		AddRoute("GET /auth/logout", auth.NewLogoutHandler(cfg.BaseURL, db)).
 		AddRoute("GET /podcasts/{guid}", NewViewPodcastHandler(cfg.BaseURL, db), authMW).
 		AddRoute("GET /podcasts/search", NewSearchPodcastsHandler(), authMW).
 		AddRoute("POST /podcasts/search", NewSearchResultsHandler(itunesAPI), partialAuthMW).

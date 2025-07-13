@@ -1,4 +1,4 @@
-package framework
+package middleware
 
 import (
 	"context"
@@ -9,12 +9,11 @@ import (
 
 	"github.com/gorilla/csrf"
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
+	"github.com/webbgeorge/castkeeper/pkg/framework"
 )
 
-type Middleware func(next Handler) Handler
-
-func DefaultMiddlewareStack() []Middleware {
-	return []Middleware{
+func DefaultMiddlewareStack() []framework.Middleware {
+	return []framework.Middleware{
 		NewLogMiddleware(),
 		NewResHeaderMiddleware(),
 		NewErrorHandlerMiddleware(),
@@ -32,20 +31,20 @@ func (lrw *loggingResponseWriter) WriteHeader(statusCode int) {
 	lrw.ResponseWriter.WriteHeader(statusCode)
 }
 
-func NewLogMiddleware() Middleware {
-	return func(next Handler) Handler {
+func NewLogMiddleware() framework.Middleware {
+	return func(next framework.Handler) framework.Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			startTime := time.Now()
 
 			// inherit server logger
-			logger := GetLogger(ctx)
+			logger := framework.GetLogger(ctx)
 			if logger == nil {
 				log.Printf("WARN: no logger in request context (LogMiddleware)")
 				return next(ctx, w, r)
 			}
 
 			// add the updated logger to the ctx, so it can be used throughout the request
-			ctxWithLogger := ContextWithLogger(ctx, logger)
+			ctxWithLogger := framework.ContextWithLogger(ctx, logger)
 
 			// captures the status code from the res writer, so we can log it
 			loggingResW := &loggingResponseWriter{ResponseWriter: w, statusCode: 200}
@@ -67,8 +66,8 @@ func NewLogMiddleware() Middleware {
 	}
 }
 
-func NewResHeaderMiddleware() Middleware {
-	return func(next Handler) Handler {
+func NewResHeaderMiddleware() framework.Middleware {
+	return func(next framework.Handler) framework.Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			w.Header().Set("X-Frame-Options", "DENY")
 			w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -83,45 +82,45 @@ func NewResHeaderMiddleware() Middleware {
 	}
 }
 
-func NewErrorHandlerMiddleware() Middleware {
-	return func(next Handler) Handler {
+func NewErrorHandlerMiddleware() framework.Middleware {
+	return func(next framework.Handler) framework.Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			defer func() {
 				if rec := recover(); rec != nil {
-					GetLogger(ctx).ErrorContext(
+					framework.GetLogger(ctx).ErrorContext(
 						ctx, "recovered from panic",
 						"error", fmt.Sprintf("Panic: %+v, req: %s %s", rec, r.Method, r.URL.Path),
 					)
-					_ = Render(ctx, w, 500, pages.Error("Internal server error"))
+					_ = framework.Render(ctx, w, 500, pages.Error("Internal server error"))
 				}
 			}()
 
 			err := next(ctx, w, r)
 			if err != nil {
-				var httpError HttpError
+				var httpError framework.HttpError
 				switch err := err.(type) {
-				case HttpError:
+				case framework.HttpError:
 					// info log expected http errors (i.e. not a 500)
-					GetLogger(ctx).InfoContext(
+					framework.GetLogger(ctx).InfoContext(
 						ctx, "handled HTTP error",
 						"error", err.Error(),
 					)
 					httpError = err
 				default:
-					GetLogger(ctx).ErrorContext(
+					framework.GetLogger(ctx).ErrorContext(
 						ctx, "unhandled error",
 						"error", err.Error(),
 					)
-					httpError = HttpError{
+					httpError = framework.HttpError{
 						StatusCode: http.StatusInternalServerError,
 						Message:    "Internal server error",
 					}
 				}
 
 				if httpError.StatusCode == 404 {
-					return Render(ctx, w, httpError.StatusCode, pages.NotFound())
+					return framework.Render(ctx, w, httpError.StatusCode, pages.NotFound())
 				}
-				return Render(ctx, w, httpError.StatusCode, pages.Error(httpError.Message))
+				return framework.Render(ctx, w, httpError.StatusCode, pages.Error(httpError.Message))
 			}
 
 			return nil
@@ -130,8 +129,8 @@ func NewErrorHandlerMiddleware() Middleware {
 }
 
 // wraps the gorilla CSRF Middleware
-func NewCSRFMiddleware(csrfSecretKey string, csrfSecureCookie bool) Middleware {
-	return func(next Handler) Handler {
+func NewCSRFMiddleware(csrfSecretKey string, csrfSecureCookie bool) framework.Middleware {
+	return func(next framework.Handler) framework.Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 			var err error
 			hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

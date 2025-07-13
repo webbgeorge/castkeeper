@@ -1,8 +1,12 @@
 package components
 
 import (
+	"context"
 	"fmt"
 	"github.com/webbgeorge/castkeeper"
+	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
+	"github.com/webbgeorge/castkeeper/pkg/auth/users"
+	"strings"
 	"time"
 )
 
@@ -14,6 +18,19 @@ func cssURL() string {
 	return fmt.Sprintf("/static/bundle.css?cb=%s", castkeeper.Version)
 }
 
+func user(ctx context.Context) *users.User {
+	session := sessions.GetSessionFromCtx(ctx)
+	if session == nil {
+		return nil
+	}
+	return &session.User
+}
+
+func avatarText(ctx context.Context) string {
+	firstChar := string([]rune(user(ctx).Username)[0])
+	return strings.ToUpper(firstChar)
+}
+
 templ Layout(title string) {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -22,11 +39,35 @@ templ Layout(title string) {
 			<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1"/>
 			<title>{ pageTitle(title) }</title>
 			<link rel="stylesheet" href={ cssURL() }/>
-			<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+			<link rel="icon" href="/static/favicon.svg" type="image/svg+xml"/>
 		</head>
 		<body class="bg-base-200 text-base-content min-h-screen flex flex-col">
 			<header class="navbar py-6 px-4 sm:px-6 bg-base-300 text-base-content">
-				<h2 class="text-lg"><a href="/">CastKeeper</a></h2>
+				<div class="flex-1">
+					<h2 class="text-lg"><a href="/">CastKeeper</a></h2>
+				</div>
+				if user(ctx) != nil {
+					<div class="flex-none">
+						<div class="dropdown dropdown-end">
+							<div tabindex="0" role="button" class="btn btn-ghost btn-circle w-8 h-8 avatar avatar-placeholder">
+								<div class="bg-info text-info-content w-8 rounded-full">
+									<span class="text-xs">{ avatarText(ctx) }</span>
+								</div>
+							</div>
+							<ul
+								tabindex="0"
+								class="menu dropdown-content bg-base-100 rounded-box z-1 mt-3 w-52 p-2 shadow-xl"
+							>
+								<li class="menu-title">
+									<div class="w-42 truncate">
+										Logged in as { user(ctx).Username }
+									</div>
+								</li>
+								<li><a href="/auth/logout">Logout</a></li>
+							</ul>
+						</div>
+					</div>
+				}
 			</header>
 			<main class="grow mx-4 sm:mx-6">
 				{ children... }

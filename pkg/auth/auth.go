@@ -6,53 +6,29 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/gorilla/csrf"
+	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
+	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"gorm.io/gorm"
 )
 
-const (
-	sessionIDCookie       = "Session-Id"
-	authStateExpiry       = time.Hour
-	sessionExpiry         = 24 * time.Hour
-	sessionLastSeenExpiry = time.Hour
-)
-
-type sessionCtxKey struct{}
-
-func GetSessionFromCtx(ctx context.Context) *Session {
-	if ctx == nil {
-		return nil
-	}
-	session, ok := ctx.Value(sessionCtxKey{}).(*Session)
-	if !ok {
-		return nil
-	}
-	return session
-}
-
 func NewAuthenticationMiddleware(db *gorm.DB, redirectToLoginOnUnauth bool) framework.Middleware {
 	return func(next framework.Handler) framework.Handler {
 		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-			c, err := r.Cookie(sessionIDCookie)
-			if err != nil || c.Value == "" {
-				return unauthResponse(w, r, redirectToLoginOnUnauth)
-			}
-
-			s, err := GetSession(ctx, db, c.Value)
+			s, err := sessions.GetSession(ctx, db, r)
 			if err != nil {
 				return unauthResponse(w, r, redirectToLoginOnUnauth)
 			}
-			err = UpdateSessionLastSeen(ctx, db, &s)
+			err = sessions.UpdateSessionLastSeen(ctx, db, &s)
 			if err != nil {
 				// log and continue
 				framework.GetLogger(ctx).WarnContext(ctx, "failed to update session last_seen_time")
 			}
 
-			sessionCtx := context.WithValue(ctx, sessionCtxKey{}, &s)
+			sessionCtx := sessions.CtxWithSession(ctx, s)
 			framework.GetLogger(ctx).InfoContext(
 				ctx, "successfully authenticated user",
 				"userID", s.UserID,
@@ -121,20 +97,10 @@ func NewPostLoginHandler(
 			return renderLoginPage(ctx, w, r, true)
 		}
 
-		sID, err := CreateSession(ctx, db, user.ID)
+		err = sessions.CreateSession(ctx, baseURL, db, user.ID, w)
 		if err != nil {
 			return err
 		}
-
-		http.SetCookie(w, &http.Cookie{
-			Name:     sessionIDCookie,
-			Value:    sID,
-			Expires:  time.Now().Add(sessionExpiry),
-			Path:     "/",
-			Domain:   cookieDomain(baseURL),
-			Secure:   true,
-			HttpOnly: true,
-		})
 
 		redirectURL := urlWithPath(baseURL, redirectPathFromReq(r))
 		http.Redirect(w, r, redirectURL, http.StatusFound)
@@ -142,30 +108,54 @@ func NewPostLoginHandler(
 	}
 }
 
-func checkUsernameAndPassword(ctx context.Context, db *gorm.DB, username, password string) (User, error) {
-	user, err := GetUserByUsername(ctx, db, username)
+func NewLogoutHandler(
+	baseURL string,
+	db *gorm.DB,
+) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		err := sessions.DeleteSession(ctx, baseURL, db, r, w)
+		if err != nil {
+			return err
+		}
+		http.Redirect(w, r, "/auth/login?logout=true", http.StatusFound)
+		return nil
+	}
+}
+
+func checkUsernameAndPassword(ctx context.Context, db *gorm.DB, username, password string) (users.User, error) {
+	user, err := users.GetUserByUsername(ctx, db, username)
 	if err != nil {
 		framework.GetLogger(ctx).InfoContext(ctx, fmt.Sprintf("failed to find username: '%s'", username), "error", err)
-		return User{}, err
+		return users.User{}, err
 	}
 
 	if err := user.CheckPassword(password); err != nil {
 		framework.GetLogger(ctx).InfoContext(ctx, fmt.Sprintf("incorrect password for username: '%s'", username), "error", err)
-		return User{}, err
+		return users.User{}, err
 	}
 
 	return user, nil
 }
 
-func renderLoginPage(ctx context.Context, w http.ResponseWriter, r *http.Request, authErr bool) error {
+func renderLoginPage(
+	ctx context.Context,
+	w http.ResponseWriter,
+	r *http.Request,
+	authErr bool,
+) error {
 	errText := ""
 	if authErr {
 		errText = "Unknown username or password"
 	}
+
+	// query param is set when redirecting to login page from logout
+	isLogout := r.URL.Query().Get("logout") == "true"
+
 	return framework.Render(ctx, w, 200, pages.Login(
 		csrf.Token(r),
 		redirectPathFromReq(r), // pass from GET to be rendered into a hidden input
 		errText,
+		isLogout,
 	))
 }
 
@@ -204,12 +194,4 @@ func urlWithPath(baseURL, path string) string {
 	}
 	u.Path = path
 	return u.String()
-}
-
-func cookieDomain(baseURL string) string {
-	u, err := url.Parse(baseURL)
-	if err != nil {
-		panic("invalid baseURL")
-	}
-	return u.Hostname()
 }

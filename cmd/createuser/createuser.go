@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/webbgeorge/castkeeper/pkg/auth"
+	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/database"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
@@ -58,7 +58,7 @@ func run(cmd *cobra.Command, args []string) {
 		log.Fatalf("failed to read password: %v", err)
 	}
 
-	err = auth.CreateUser(ctx, db, username, password)
+	err = users.CreateUser(ctx, db, username, password)
 	if err != nil {
 		log.Fatalf("failed to create user: %v", err)
 	}
