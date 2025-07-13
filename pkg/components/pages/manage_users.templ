@@ -1,0 +1,44 @@
+package pages
+
+import (
+	"github.com/webbgeorge/castkeeper/pkg/auth/users"
+	"github.com/webbgeorge/castkeeper/pkg/components"
+	"time"
+)
+
+templ ManageUsers(users []users.User) {
+	@components.Layout("Manage Users") {
+		<div class="flex justify-between items-center my-6">
+			<h1 class="text-xl">Manage Users</h1>
+			<a href="/users/create" class="btn btn-primary">Create a new user</a>
+		</div>
+		if len(users) == 0 {
+			<h2 class="text-3xl font-bold">No users yet</h2>
+		} else {
+			<div class="card card-compact bg-base-100 shadow-xl">
+				<div class="card-body overflow-x-auto">
+					<table class="table table-sm lg:table-md">
+						<thead>
+							<tr>
+								<th>Username</th>
+								<th>Created</th>
+								<th>Edit</th>
+								<th>Delete</th>
+							</tr>
+						</thead>
+						<tbody>
+							for _, user := range users {
+								<tr>
+									<td>{ user.Username }</td>
+									<td>{ user.CreatedAt.Format(time.DateOnly) }</td>
+									<td><a>Edit</a></td>
+									<td><a>Delete</a></td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		}
+	}
+}

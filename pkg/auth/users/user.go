@@ -49,6 +49,17 @@ func GetUserByUsername(ctx context.Context, db *gorm.DB, username string) (User,
 	return user, nil
 }
 
+func ListUsers(ctx context.Context, db *gorm.DB) ([]User, error) {
+	var users []User
+	result := db.
+		Order("id asc").
+		Find(&users)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return users, nil
+}
+
 func CreateUser(ctx context.Context, db *gorm.DB, username string, password string) error {
 	if err := validatePasswordStrength(password); err != nil {
 		return err
