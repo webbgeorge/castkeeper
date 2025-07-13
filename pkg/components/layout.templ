@@ -63,7 +63,15 @@ templ Layout(title string) {
 										Logged in as { user(ctx).Username }
 									</div>
 								</li>
-								<li><a href="/auth/logout">Logout</a></li>
+								<li>
+									<a href="/auth/logout">Logout</a>
+								</li>
+								<li class="menu-title">
+									<div class="divider my-0"></div>
+								</li>
+								<li>
+									<a href="/users">Manage users</a>
+								</li>
 							</ul>
 						</div>
 					</div>

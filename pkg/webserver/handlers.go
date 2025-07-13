@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/csrf"
+	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
 	"github.com/webbgeorge/castkeeper/pkg/components/partials"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
@@ -201,5 +202,15 @@ func NewFeedHandler(baseURL string, db *gorm.DB) framework.Handler {
 
 		w.Header().Set("Content-Type", "application/xml")
 		return feed.WriteFeedXML(w)
+	}
+}
+
+func NewManageUsersHandler(db *gorm.DB) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		users, err := users.ListUsers(ctx, db)
+		if err != nil {
+			return err
+		}
+		return framework.Render(ctx, w, 200, pages.ManageUsers(users))
 	}
 }
