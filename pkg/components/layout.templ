@@ -26,7 +26,6 @@ func user(ctx context.Context) *users.User {
 	return &session.User
 }
 
-// TODO function to get first char in upper case
 func avatarText(ctx context.Context) string {
 	firstChar := string([]rune(user(ctx).Username)[0])
 	return strings.ToUpper(firstChar)
