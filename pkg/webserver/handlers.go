@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/csrf"
+	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
 	"github.com/webbgeorge/castkeeper/pkg/components/partials"
@@ -211,6 +213,70 @@ func NewManageUsersHandler(db *gorm.DB) framework.Handler {
 		if err != nil {
 			return err
 		}
-		return framework.Render(ctx, w, 200, pages.ManageUsers(users))
+		return framework.Render(ctx, w, 200, pages.ManageUsers(
+			csrf.Token(r),
+			users,
+		))
+	}
+}
+
+func NewDeleteUserHandler(db *gorm.DB) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		currentUser := sessions.GetSessionFromCtx(ctx).User
+
+		// TODO figure out if we should do this
+		// currentUserPassword := r.PostFormValue("currentUserPassword")
+		// err := currentUser.CheckPassword(currentUserPassword)
+		// if err != nil {
+		// 	// TODO proper err response
+		// 	return errors.New("failed to verify current user password")
+		// }
+
+		userID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+		if err != nil || userID == 0 {
+			framework.GetLogger(ctx).Info("cannot delete user: invalid user ID in request")
+			w.Header().Add("HX-Trigger", `{"showMessage":"Invalid user ID in request"}`)
+			w.Header().Add("HX-Reswap", "none")
+			return nil
+		}
+
+		if uint(userID) == currentUser.ID {
+			framework.GetLogger(ctx).Info("cannot delete the current user")
+			w.Header().Add("HX-Trigger", `{"showMessage":"Cannot delete the current user"}`)
+			w.Header().Add("HX-Reswap", "none")
+			return nil
+		}
+
+		return users.DeleteUser(ctx, db, uint(userID))
+	}
+}
+
+func NewCreateUserGetHandler(db *gorm.DB) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// TODO render form
+		return nil
+	}
+}
+
+func NewCreateUserPostHandler(db *gorm.DB) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// TODO verify pw
+		// TODO create user
+		return nil
+	}
+}
+
+func NewEditUserGetHandler(db *gorm.DB) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// TODO render form
+		return nil
+	}
+}
+
+func NewEditUserPostHandler(db *gorm.DB) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// TODO verify pw
+		// TODO create user
+		return nil
 	}
 }
