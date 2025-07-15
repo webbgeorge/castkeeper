@@ -81,6 +81,14 @@ func CreateUser(ctx context.Context, db *gorm.DB, username string, password stri
 	return nil
 }
 
+func DeleteUser(ctx context.Context, db *gorm.DB, id uint) error {
+	user := User{Model: gorm.Model{ID: id}}
+	if err := db.Delete(&user).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
 func validatePasswordStrength(password string) error {
 	if len(password) < 8 {
 		return errors.New("password must be at least 8 characters")

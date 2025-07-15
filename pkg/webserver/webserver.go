@@ -44,6 +44,11 @@ func NewWebserver(
 		AddRoute("POST /auth/login", auth.NewPostLoginHandler(cfg.BaseURL, db)).
 		AddRoute("GET /auth/logout", auth.NewLogoutHandler(cfg.BaseURL, db)).
 		AddRoute("GET /users", NewManageUsersHandler(db), authMW).
+		AddRoute("GET /users/create", NewCreateUserGetHandler(db), authMW).
+		AddRoute("POST /users/create", NewCreateUserPostHandler(db), authMW).
+		AddRoute("GET /users/{id}/edit", NewEditUserGetHandler(db), authMW).
+		AddRoute("POST /users/{id}/edit", NewEditUserPostHandler(db), authMW).
+		AddRoute("POST /users/{id}/delete", NewDeleteUserHandler(db), authMW).
 		AddRoute("GET /podcasts/{guid}", NewViewPodcastHandler(cfg.BaseURL, db), authMW).
 		AddRoute("GET /podcasts/search", NewSearchPodcastsHandler(), authMW).
 		AddRoute("POST /podcasts/search", NewSearchResultsHandler(itunesAPI), partialAuthMW).

@@ -1,12 +1,13 @@
 package pages
 
 import (
+	"fmt"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/components"
 	"time"
 )
 
-templ ManageUsers(users []users.User) {
+templ ManageUsers(csrfToken string, users []users.User) {
 	@components.Layout("Manage Users") {
 		<div class="flex justify-between items-center my-6">
 			<h1 class="text-xl">Manage Users</h1>
@@ -28,11 +29,23 @@ templ ManageUsers(users []users.User) {
 						</thead>
 						<tbody>
 							for _, user := range users {
-								<tr>
+								<tr class="hover user-list-item">
 									<td>{ user.Username }</td>
 									<td>{ user.CreatedAt.Format(time.DateOnly) }</td>
 									<td><a>Edit</a></td>
-									<td><a>Delete</a></td>
+									<td>
+										<button
+											class="link"
+											type="button"
+											hx-post={ string(templ.URL(fmt.Sprintf("/users/%d/delete", user.ID))) }
+											hx-vals={ fmt.Sprintf("{\"%s\": \"%s\"}", components.CSRFTokenInputName, csrfToken) }
+											hx-confirm="Are you sure you want to delete this user?"
+											hx-target="closest .user-list-item"
+											hx-swap="outerHTML"
+										>
+											Delete
+										</button>
+									</td>
 								</tr>
 							}
 						</tbody>

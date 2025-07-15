@@ -8,6 +8,10 @@ document.body.addEventListener("htmx:sendError", function (event) {
   createToast("Failed to connect to the server");
 });
 
+document.body.addEventListener("showMessage", function (event) {
+  createToast(event.detail.value);
+});
+
 function createToast(message) {
   document.getElementById("toasts").insertAdjacentHTML("beforeend", `
     <div class="toast">
