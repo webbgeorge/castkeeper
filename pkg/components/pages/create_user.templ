@@ -1,0 +1,77 @@
+package pages
+
+import "github.com/webbgeorge/castkeeper/pkg/components"
+
+type CreateUserViewModel struct {
+	CSRFToken string
+	ErrorText string
+	FormData  CreateUserFormData
+}
+
+type CreateUserFormData struct {
+	Username       string `schema:"username" validate:"required,gte=1,lte=50"`
+	Password       string `schema:"password" validate:"required,gte=8,lte=64"`
+	RepeatPassword string `schema:"repeatPassword" validate:"required,gte=8,lte=64"`
+}
+
+templ CreateUser(vm CreateUserViewModel) {
+	@components.Layout("Create New User") {
+		<div class="breadcrumbs text-sm my-4">
+			<ul>
+				<li><a href="/">Home</a></li>
+				<li><a href="/users">Manage Users</a></li>
+				<li>Create New User</li>
+			</ul>
+		</div>
+		<div class="w-full max-w-[600px] card md:card-normal bg-base-100 shadow-xl my-6 mx-auto">
+			<div class="card-body">
+				<h1 class="card-title">Create New User</h1>
+				if vm.ErrorText != "" {
+					<div role="alert" class="alert alert-error">
+						{ vm.ErrorText }
+					</div>
+				}
+				<form
+					method="post"
+					action="/users/create"
+				>
+					@components.CSRFInput(vm.CSRFToken)
+					<fieldset class="fieldset">
+						<legend class="fieldset-legend">Username</legend>
+						<input
+							id="usernameInput"
+							name="username"
+							type="text"
+							placeholder="Username"
+							class="input w-full"
+							value={ vm.FormData.Username }
+						/>
+					</fieldset>
+					<fieldset class="fieldset">
+						<legend class="fieldset-legend">Password</legend>
+						<input
+							id="passwordInput"
+							name="password"
+							type="password"
+							placeholder="Password"
+							class="input w-full"
+						/>
+					</fieldset>
+					<fieldset class="fieldset">
+						<legend class="fieldset-legend">Repeat Password</legend>
+						<input
+							id="repearPasswordInput"
+							name="repeatPassword"
+							type="password"
+							placeholder="Repeat Password"
+							class="input w-full"
+						/>
+					</fieldset>
+					<div class="flex justify-end mt-6">
+						<button type="submit" class="btn btn-primary">Submit</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	}
+}
