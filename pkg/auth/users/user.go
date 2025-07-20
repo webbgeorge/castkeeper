@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"embed"
-	"errors"
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
@@ -89,12 +88,20 @@ func DeleteUser(ctx context.Context, db *gorm.DB, id uint) error {
 	return nil
 }
 
+type PasswordStrengthError struct {
+	Message string
+}
+
+func (e PasswordStrengthError) Error() string {
+	return e.Message
+}
+
 func validatePasswordStrength(password string) error {
 	if len(password) < 8 {
-		return errors.New("password must be at least 8 characters")
+		return PasswordStrengthError{"password must be at least 8 characters"}
 	}
 	if len(password) > 64 {
-		return errors.New("password must be 64 characters or less")
+		return PasswordStrengthError{"password must be 64 characters or less"}
 	}
 	if err := validatePasswordNotCommon(password); err != nil {
 		return err
@@ -112,7 +119,7 @@ func validatePasswordNotCommon(password string) error {
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		if password == scanner.Text() {
-			return errors.New("password must not be in list of most common passwords")
+			return PasswordStrengthError{"password is too easy to guess"}
 		}
 	}
 

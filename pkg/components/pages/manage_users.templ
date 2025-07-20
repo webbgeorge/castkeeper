@@ -9,7 +9,13 @@ import (
 
 templ ManageUsers(csrfToken string, users []users.User) {
 	@components.Layout("Manage Users") {
-		<div class="flex justify-between items-center my-6">
+		<div class="breadcrumbs text-sm my-4">
+			<ul>
+				<li><a href="/">Home</a></li>
+				<li>Manage Users</li>
+			</ul>
+		</div>
+		<div class="flex justify-between items-center mb-6">
 			<h1 class="text-xl">Manage Users</h1>
 			<a href="/users/create" class="btn btn-primary">Create a new user</a>
 		</div>

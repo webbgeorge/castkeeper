@@ -6,8 +6,14 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
+	"github.com/go-playground/locales/en"
+	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/validator/v10"
+	en_translations "github.com/go-playground/validator/v10/translations/en"
 	"github.com/gorilla/csrf"
+	"github.com/gorilla/schema"
 	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
@@ -21,6 +27,18 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/util"
 	"gorm.io/gorm"
 )
+
+var (
+	decoder    = schema.NewDecoder()
+	validate   = validator.New(validator.WithRequiredStructEnabled())
+	uni        = ut.New(en.New(), en.New())
+	enTrans, _ = uni.GetTranslator("en")
+)
+
+func init() {
+	decoder.IgnoreUnknownKeys(true)
+	en_translations.RegisterDefaultTranslations(validate, enTrans)
+}
 
 func NewHomeHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -224,14 +242,6 @@ func NewDeleteUserHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		currentUser := sessions.GetSessionFromCtx(ctx).User
 
-		// TODO figure out if we should do this
-		// currentUserPassword := r.PostFormValue("currentUserPassword")
-		// err := currentUser.CheckPassword(currentUserPassword)
-		// if err != nil {
-		// 	// TODO proper err response
-		// 	return errors.New("failed to verify current user password")
-		// }
-
 		userID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
 		if err != nil || userID == 0 {
 			framework.GetLogger(ctx).Info("cannot delete user: invalid user ID in request")
@@ -253,15 +263,55 @@ func NewDeleteUserHandler(db *gorm.DB) framework.Handler {
 
 func NewCreateUserGetHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO render form
-		return nil
+		return framework.Render(ctx, w, 200, pages.CreateUser(pages.CreateUserViewModel{
+			CSRFToken: csrf.Token(r),
+		}))
 	}
 }
 
 func NewCreateUserPostHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO verify pw
-		// TODO create user
+		renderPage := func(formData pages.CreateUserFormData, errorText string) error {
+			return framework.Render(ctx, w, 200, pages.CreateUser(
+				pages.CreateUserViewModel{
+					CSRFToken: csrf.Token(r),
+					ErrorText: errorText,
+					FormData:  formData,
+				},
+			))
+		}
+
+		var formData pages.CreateUserFormData
+		err := parseFormData(r, &formData)
+		if err != nil {
+			return renderPage(formData, "invalid request")
+		}
+
+		err = validate.Struct(formData)
+		if err != nil {
+			if errorText, ok := translateValidationErrs(err); ok {
+				return renderPage(formData, errorText)
+			}
+			return renderPage(formData, "invalid request")
+		}
+
+		if formData.Password != formData.RepeatPassword {
+			return renderPage(formData, "passwords must match")
+		}
+
+		err = users.CreateUser(ctx, db, formData.Username, formData.Password)
+		if err != nil {
+			if pErr, ok := err.(users.PasswordStrengthError); ok {
+				return renderPage(formData, pErr.Error())
+			}
+			framework.GetLogger(ctx).Error(
+				fmt.Sprintf("failed to create user: %s", err.Error()),
+			)
+			return renderPage(formData, "failed to create user")
+		}
+
+		// TODO success message
+		http.Redirect(w, r, "/users", http.StatusFound)
 		return nil
 	}
 }
@@ -279,4 +329,35 @@ func NewEditUserPostHandler(db *gorm.DB) framework.Handler {
 		// TODO create user
 		return nil
 	}
+}
+
+func parseFormData(r *http.Request, formData any) error {
+	err := r.ParseForm()
+	if err != nil {
+		return err
+	}
+
+	err = decoder.Decode(formData, r.PostForm)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// TODO move to validation package
+func translateValidationErrs(err error) (string, bool) {
+	errorTexts := make([]string, 0)
+
+	var vErr validator.ValidationErrors
+	if !errors.As(err, &vErr) {
+		return "", false
+	}
+	for _, e := range vErr {
+		errorTexts = append(errorTexts, e.Translate(enTrans))
+	}
+	if len(errorTexts) == 0 {
+		return "", false
+	}
+	return strings.Join(errorTexts, ", "), true
 }
