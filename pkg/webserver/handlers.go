@@ -320,8 +320,7 @@ func NewEditUserGetHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		userID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
 		if err != nil {
-			// TODO handle err
-			return err
+			return framework.HttpBadRequest("Invalid request URL")
 		}
 
 		return framework.Render(ctx, w, 200, pages.EditUser(pages.EditUserViewModel{
