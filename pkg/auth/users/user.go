@@ -48,6 +48,15 @@ func GetUserByUsername(ctx context.Context, db *gorm.DB, username string) (User,
 	return user, nil
 }
 
+func GetUserByID(ctx context.Context, db *gorm.DB, id uint) (User, error) {
+	var user User
+	result := db.First(&user, "id = ?", id)
+	if result.Error != nil {
+		return user, result.Error
+	}
+	return user, nil
+}
+
 func ListUsers(ctx context.Context, db *gorm.DB) ([]User, error) {
 	var users []User
 	result := db.
@@ -74,6 +83,43 @@ func CreateUser(ctx context.Context, db *gorm.DB, username string, password stri
 		Password: string(passwordHash),
 	}
 	if err = db.Create(&user).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func UpdateUsername(ctx context.Context, db *gorm.DB, id uint, newUsername string) error {
+	user, err := GetUserByID(ctx, db, id)
+	if err != nil {
+		return fmt.Errorf("failed to GetUserByID: %w", err)
+	}
+
+	user.Username = newUsername
+	if err = db.Save(&user).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func UpdatePassword(ctx context.Context, db *gorm.DB, id uint, newPassword string) error {
+	user, err := GetUserByID(ctx, db, id)
+	if err != nil {
+		return fmt.Errorf("failed to GetUserByID: %w", err)
+	}
+
+	if err := validatePasswordStrength(newPassword); err != nil {
+		return err
+	}
+
+	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), passwordHashCost)
+	if err != nil {
+		return err
+	}
+
+	user.Password = string(newPasswordHash)
+	if err = db.Save(&user).Error; err != nil {
 		return err
 	}
 
