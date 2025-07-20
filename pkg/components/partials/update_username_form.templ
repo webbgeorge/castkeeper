@@ -1,0 +1,53 @@
+package partials
+
+import "github.com/webbgeorge/castkeeper/pkg/components"
+import "fmt"
+
+type UpdateUsernameFormViewModel struct {
+	CSRFToken string
+	ErrorText string
+	IsSuccess bool
+	UserID    uint
+	FormData  UpdateUsernameFormData
+}
+
+type UpdateUsernameFormData struct {
+	Username string `schema:"username" validate:"required,gte=1,lte=50"`
+}
+
+templ UpdateUsernameForm(vm UpdateUsernameFormViewModel) {
+	<div id="update-username-form-partial">
+		<h2 class="text-lg">Update Username</h2>
+		if vm.ErrorText != "" {
+			<div role="alert" class="alert alert-error mt-2">
+				{ vm.ErrorText }
+			</div>
+		}
+		if vm.IsSuccess {
+			<div role="alert" class="alert alert-success mt-2">
+				Username was updated successfully
+			</div>
+		}
+		<form
+			hx-put={ templ.URL(fmt.Sprintf("/users/%d/username", vm.UserID)) }
+			hx-target="#update-username-form-partial"
+			hx-swap="outerHTML"
+		>
+			@components.CSRFInput(vm.CSRFToken)
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">Username</legend>
+				<input
+					id="usernameInput"
+					name="username"
+					type="text"
+					placeholder="Username"
+					class="input w-full"
+					value={ vm.FormData.Username }
+				/>
+			</fieldset>
+			<div class="flex justify-end mt-6">
+				<button type="submit" class="btn btn-primary">Save</button>
+			</div>
+		</form>
+	</div>
+}

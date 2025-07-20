@@ -284,7 +284,7 @@ func NewCreateUserPostHandler(db *gorm.DB) framework.Handler {
 		var formData pages.CreateUserFormData
 		err := parseFormData(r, &formData)
 		if err != nil {
-			return renderPage(formData, "invalid request")
+			return renderPage(formData, "Invalid request")
 		}
 
 		err = validate.Struct(formData)
@@ -292,11 +292,11 @@ func NewCreateUserPostHandler(db *gorm.DB) framework.Handler {
 			if errorText, ok := translateValidationErrs(err); ok {
 				return renderPage(formData, errorText)
 			}
-			return renderPage(formData, "invalid request")
+			return renderPage(formData, "Invalid request")
 		}
 
 		if formData.Password != formData.RepeatPassword {
-			return renderPage(formData, "passwords must match")
+			return renderPage(formData, "Passwords must match")
 		}
 
 		err = users.CreateUser(ctx, db, formData.Username, formData.Password)
@@ -307,7 +307,7 @@ func NewCreateUserPostHandler(db *gorm.DB) framework.Handler {
 			framework.GetLogger(ctx).Error(
 				fmt.Sprintf("failed to create user: %s", err.Error()),
 			)
-			return renderPage(formData, "failed to create user")
+			return renderPage(formData, "Failed to create user")
 		}
 
 		// TODO success message
@@ -318,16 +318,123 @@ func NewCreateUserPostHandler(db *gorm.DB) framework.Handler {
 
 func NewEditUserGetHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO render form
-		return nil
+		userID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+		if err != nil {
+			// TODO handle err
+			return err
+		}
+
+		return framework.Render(ctx, w, 200, pages.EditUser(pages.EditUserViewModel{
+			UpdateUsernameFormVM: partials.UpdateUsernameFormViewModel{
+				CSRFToken: csrf.Token(r),
+				UserID:    uint(userID),
+			},
+			UpdatePasswordFormVM: partials.UpdatePasswordFormViewModel{
+				CSRFToken: csrf.Token(r),
+				UserID:    uint(userID),
+			},
+		}))
 	}
 }
 
-func NewEditUserPostHandler(db *gorm.DB) framework.Handler {
+func NewUpdateUsernameHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// TODO verify pw
-		// TODO create user
-		return nil
+		userID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+		if err != nil {
+			return framework.HttpBadRequest("Invalid request URL")
+		}
+
+		renderPage := func(formData partials.UpdateUsernameFormData, errorText string, isSuccess bool) error {
+			return framework.Render(ctx, w, 200, partials.UpdateUsernameForm(
+				partials.UpdateUsernameFormViewModel{
+					CSRFToken: csrf.Token(r),
+					ErrorText: errorText,
+					IsSuccess: isSuccess,
+					UserID:    uint(userID),
+					FormData:  formData,
+				},
+			))
+		}
+
+		var formData partials.UpdateUsernameFormData
+		err = parseFormData(r, &formData)
+		if err != nil {
+			return renderPage(formData, "Invalid request", false)
+		}
+
+		err = validate.Struct(formData)
+		if err != nil {
+			if errorText, ok := translateValidationErrs(err); ok {
+				return renderPage(formData, errorText, false)
+			}
+			return renderPage(formData, "Invalid request", false)
+		}
+
+		err = users.UpdateUsername(ctx, db, uint(userID), formData.Username)
+		if err != nil {
+			framework.GetLogger(ctx).Error(fmt.Sprintf(
+				"failed to update username for user '%d': %s",
+				userID,
+				err.Error(),
+			))
+			return renderPage(formData, "Failed to update username", false)
+		}
+
+		return renderPage(partials.UpdateUsernameFormData{}, "", true)
+	}
+}
+
+func NewUpdatePasswordHandler(db *gorm.DB) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		userID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+		if err != nil {
+			return framework.HttpBadRequest("Invalid request URL")
+		}
+
+		renderPage := func(formData partials.UpdatePasswordFormData, errorText string, isSuccess bool) error {
+			return framework.Render(ctx, w, 200, partials.UpdatePasswordForm(
+				partials.UpdatePasswordFormViewModel{
+					CSRFToken: csrf.Token(r),
+					ErrorText: errorText,
+					IsSuccess: isSuccess,
+					UserID:    uint(userID),
+					FormData:  formData,
+				},
+			))
+		}
+
+		var formData partials.UpdatePasswordFormData
+		err = parseFormData(r, &formData)
+		if err != nil {
+			return renderPage(formData, "Invalid request", false)
+		}
+
+		err = validate.Struct(formData)
+		if err != nil {
+			if errorText, ok := translateValidationErrs(err); ok {
+				return renderPage(formData, errorText, false)
+			}
+			return renderPage(formData, "Invalid request", false)
+		}
+
+		if formData.Password != formData.RepeatPassword {
+			return renderPage(formData, "Passwords must match", false)
+		}
+
+		err = users.UpdatePassword(ctx, db, uint(userID), formData.Password)
+		if err != nil {
+			if pErr, ok := err.(users.PasswordStrengthError); ok {
+				return renderPage(formData, pErr.Error(), false)
+			}
+			framework.GetLogger(ctx).Error(fmt.Sprintf(
+				"failed to update password for user '%d': %s",
+				userID,
+				err.Error(),
+			))
+			return renderPage(formData, "Failed to update password", false)
+		}
+
+		return renderPage(partials.UpdatePasswordFormData{}, "", true)
 	}
 }
 

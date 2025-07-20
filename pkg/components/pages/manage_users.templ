@@ -38,7 +38,9 @@ templ ManageUsers(csrfToken string, users []users.User) {
 								<tr class="hover user-list-item">
 									<td>{ user.Username }</td>
 									<td>{ user.CreatedAt.Format(time.DateOnly) }</td>
-									<td><a>Edit</a></td>
+									<td>
+										<a class="link" href={ templ.URL(fmt.Sprintf("/users/%d/edit", user.ID)) }>Edit</a>
+									</td>
 									<td>
 										<button
 											class="link"
