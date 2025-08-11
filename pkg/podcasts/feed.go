@@ -109,7 +109,7 @@ func episodesFromFeed(feed *gopodcast.Podcast, podcastGUID string) ([]Episode, e
 		mimeType, err := DetectMIMEType(item.Enclosure)
 		if err != nil {
 			errs = append(errs, fmt.Errorf(
-				"failed to parse episode '%s', skipping: '%w'",
+				"failed to parse episode '%s', skipping: %w",
 				episodeGUID(item),
 				err,
 			))
