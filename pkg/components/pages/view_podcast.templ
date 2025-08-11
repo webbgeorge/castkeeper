@@ -37,7 +37,7 @@ templ ViewPodcast(csrfToken string, baseURL string, pod podcasts.Podcast, eps []
 							<br/>
 							{ strconv.Itoa(len(eps)) } episodes
 						</p>
-						<p>
+						<p hx-disable>
 							@templ.Raw(userHTMLPolicy.Sanitize(pod.Description))
 						</p>
 						<fieldset class="fieldset">

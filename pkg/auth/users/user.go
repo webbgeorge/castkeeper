@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"embed"
-	"errors"
 	"fmt"
 
 	"github.com/go-playground/validator/v10"
@@ -49,6 +48,26 @@ func GetUserByUsername(ctx context.Context, db *gorm.DB, username string) (User,
 	return user, nil
 }
 
+func GetUserByID(ctx context.Context, db *gorm.DB, id uint) (User, error) {
+	var user User
+	result := db.First(&user, "id = ?", id)
+	if result.Error != nil {
+		return user, result.Error
+	}
+	return user, nil
+}
+
+func ListUsers(ctx context.Context, db *gorm.DB) ([]User, error) {
+	var users []User
+	result := db.
+		Order("id asc").
+		Find(&users)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return users, nil
+}
+
 func CreateUser(ctx context.Context, db *gorm.DB, username string, password string) error {
 	if err := validatePasswordStrength(password); err != nil {
 		return err
@@ -70,12 +89,70 @@ func CreateUser(ctx context.Context, db *gorm.DB, username string, password stri
 	return nil
 }
 
+func UpdateUsername(ctx context.Context, db *gorm.DB, id uint, newUsername string) error {
+	user, err := GetUserByID(ctx, db, id)
+	if err != nil {
+		return fmt.Errorf("failed to GetUserByID: %w", err)
+	}
+
+	user.Username = newUsername
+	if err = db.Save(&user).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func UpdatePassword(ctx context.Context, db *gorm.DB, id uint, newPassword string) error {
+	user, err := GetUserByID(ctx, db, id)
+	if err != nil {
+		return fmt.Errorf("failed to GetUserByID: %w", err)
+	}
+
+	if err := validatePasswordStrength(newPassword); err != nil {
+		return err
+	}
+
+	newPasswordHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), passwordHashCost)
+	if err != nil {
+		return err
+	}
+
+	user.Password = string(newPasswordHash)
+	if err = db.Save(&user).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func DeleteUser(ctx context.Context, db *gorm.DB, id uint) error {
+	_, err := GetUserByID(ctx, db, id)
+	if err != nil {
+		return fmt.Errorf("failed to GetUserByID: %w", err)
+	}
+
+	user := User{Model: gorm.Model{ID: id}}
+	if err := db.Delete(&user).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+type PasswordStrengthError struct {
+	Message string
+}
+
+func (e PasswordStrengthError) Error() string {
+	return e.Message
+}
+
 func validatePasswordStrength(password string) error {
 	if len(password) < 8 {
-		return errors.New("password must be at least 8 characters")
+		return PasswordStrengthError{"password must be at least 8 characters"}
 	}
 	if len(password) > 64 {
-		return errors.New("password must be 64 characters or less")
+		return PasswordStrengthError{"password must be 64 characters or less"}
 	}
 	if err := validatePasswordNotCommon(password); err != nil {
 		return err
@@ -93,7 +170,7 @@ func validatePasswordNotCommon(password string) error {
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		if password == scanner.Text() {
-			return errors.New("password must not be in list of most common passwords")
+			return PasswordStrengthError{"password is too easy to guess"}
 		}
 	}
 

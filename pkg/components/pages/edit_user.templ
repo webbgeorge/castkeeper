@@ -1,0 +1,33 @@
+package pages
+
+import "github.com/webbgeorge/castkeeper/pkg/components"
+import "github.com/webbgeorge/castkeeper/pkg/components/partials"
+
+type EditUserViewModel struct {
+	UpdateUsernameFormVM partials.UpdateUsernameFormViewModel
+	UpdatePasswordFormVM partials.UpdatePasswordFormViewModel
+}
+
+templ EditUser(vm EditUserViewModel) {
+	@components.Layout("Edit User") {
+		<div class="breadcrumbs text-sm my-4">
+			<ul>
+				<li><a href="/">Home</a></li>
+				<li><a href="/users">Manage Users</a></li>
+				<li>Edit User</li>
+			</ul>
+		</div>
+		<div class="w-full max-w-[600px] card md:card-normal bg-base-100 shadow-xl my-6 mx-auto">
+			<div class="card-body">
+				<h1 class="card-title">Edit User</h1>
+				<div class="mt-2">
+					@partials.UpdateUsernameForm(vm.UpdateUsernameFormVM)
+				</div>
+				<div class="divider"></div>
+				<div>
+					@partials.UpdatePasswordForm(vm.UpdatePasswordFormVM)
+				</div>
+			</div>
+		</div>
+	}
+}

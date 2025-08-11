@@ -49,6 +49,7 @@ func applyFixtures(db *gorm.DB) {
 	}
 
 	create(db, userFixture(123, "unittest", "unittestpw"))
+	create(db, userFixture(456, "unittest2", "unittestpw2"))
 	create(db, sessionFixture(
 		"validSession1",
 		123,

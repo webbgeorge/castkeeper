@@ -1,0 +1,65 @@
+package pages
+
+import (
+	"fmt"
+	"github.com/webbgeorge/castkeeper/pkg/auth/users"
+	"github.com/webbgeorge/castkeeper/pkg/components"
+	"time"
+)
+
+templ ManageUsers(csrfToken string, users []users.User) {
+	@components.Layout("Manage Users") {
+		<div class="breadcrumbs text-sm my-4">
+			<ul>
+				<li><a href="/">Home</a></li>
+				<li>Manage Users</li>
+			</ul>
+		</div>
+		<div class="flex justify-between items-center mb-6">
+			<h1 class="text-xl">Manage Users</h1>
+			<a href="/users/create" class="btn btn-primary">Create a new user</a>
+		</div>
+		if len(users) == 0 {
+			<h2 class="text-3xl font-bold">No users yet</h2>
+		} else {
+			<div class="card card-compact bg-base-100 shadow-xl">
+				<div class="card-body overflow-x-auto">
+					<table class="table table-sm lg:table-md">
+						<thead>
+							<tr>
+								<th>Username</th>
+								<th>Created</th>
+								<th>Edit</th>
+								<th>Delete</th>
+							</tr>
+						</thead>
+						<tbody>
+							for _, user := range users {
+								<tr class="hover user-list-item">
+									<td>{ user.Username }</td>
+									<td>{ user.CreatedAt.Format(time.DateOnly) }</td>
+									<td>
+										<a class="link" href={ templ.URL(fmt.Sprintf("/users/%d/edit", user.ID)) }>Edit</a>
+									</td>
+									<td>
+										<button
+											class="link"
+											type="button"
+											hx-post={ string(templ.URL(fmt.Sprintf("/users/%d/delete", user.ID))) }
+											hx-vals={ fmt.Sprintf("{\"%s\": \"%s\"}", components.CSRFTokenInputName, csrfToken) }
+											hx-confirm="Are you sure you want to delete this user?"
+											hx-target="closest .user-list-item"
+											hx-swap="outerHTML"
+										>
+											Delete
+										</button>
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		}
+	}
+}
