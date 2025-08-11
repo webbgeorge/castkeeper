@@ -304,6 +304,9 @@ func NewCreateUserPostHandler(db *gorm.DB) framework.Handler {
 			if pErr, ok := err.(users.PasswordStrengthError); ok {
 				return renderPage(formData, pErr.Error())
 			}
+			if errors.Is(err, gorm.ErrDuplicatedKey) {
+				return renderPage(formData, "A user with this username already exists")
+			}
 			framework.GetLogger(ctx).Error(
 				fmt.Sprintf("failed to create user: %s", err.Error()),
 			)
@@ -323,10 +326,18 @@ func NewEditUserGetHandler(db *gorm.DB) framework.Handler {
 			return framework.HttpBadRequest("Invalid request URL")
 		}
 
+		user, err := users.GetUserByID(ctx, db, uint(userID))
+		if err != nil {
+			return fmt.Errorf("failed to GetUserByID: %w", err)
+		}
+
 		return framework.Render(ctx, w, 200, pages.EditUser(pages.EditUserViewModel{
 			UpdateUsernameFormVM: partials.UpdateUsernameFormViewModel{
 				CSRFToken: csrf.Token(r),
 				UserID:    uint(userID),
+				FormData: partials.UpdateUsernameFormData{
+					Username: user.Username,
+				},
 			},
 			UpdatePasswordFormVM: partials.UpdatePasswordFormViewModel{
 				CSRFToken: csrf.Token(r),
@@ -371,6 +382,9 @@ func NewUpdateUsernameHandler(db *gorm.DB) framework.Handler {
 
 		err = users.UpdateUsername(ctx, db, uint(userID), formData.Username)
 		if err != nil {
+			if errors.Is(err, gorm.ErrDuplicatedKey) {
+				return renderPage(formData, "A user with this username already exists", false)
+			}
 			framework.GetLogger(ctx).Error(fmt.Sprintf(
 				"failed to update username for user '%d': %s",
 				userID,
@@ -379,7 +393,9 @@ func NewUpdateUsernameHandler(db *gorm.DB) framework.Handler {
 			return renderPage(formData, "Failed to update username", false)
 		}
 
-		return renderPage(partials.UpdateUsernameFormData{}, "", true)
+		return renderPage(partials.UpdateUsernameFormData{
+			Username: formData.Username,
+		}, "", true)
 	}
 }
 
