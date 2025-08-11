@@ -106,11 +106,12 @@ func episodesFromFeed(feed *gopodcast.Podcast, podcastGUID string) ([]Episode, e
 			continue
 		}
 
-		if _, ok := MimeToExt[item.Enclosure.Type]; !ok {
+		mimeType, err := DetectMIMEType(item.Enclosure)
+		if err != nil {
 			errs = append(errs, fmt.Errorf(
-				"unsupported file type '%s', skipping episode '%s'",
-				item.Enclosure.Type,
+				"failed to parse episode '%s', skipping: '%w'",
 				episodeGUID(item),
+				err,
 			))
 			continue
 		}
@@ -121,7 +122,7 @@ func episodesFromFeed(feed *gopodcast.Podcast, podcastGUID string) ([]Episode, e
 			Title:        truncate(item.Title, 500),
 			Description:  truncate(desc, 10000),
 			DownloadURL:  item.Enclosure.URL,
-			MimeType:     item.Enclosure.Type,
+			MimeType:     mimeType,
 			DurationSecs: parseDuration(item),
 			PublishedAt:  pub,
 		}

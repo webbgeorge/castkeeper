@@ -55,13 +55,6 @@ type Episode struct {
 	DeletedAt    gorm.DeletedAt `gorm:"index"`
 }
 
-var MimeToExt = map[string]string{
-	"audio/mpeg":      "mp3",
-	"audio/x-m4a":     "m4a",
-	"video/mp4":       "mp4",
-	"video/quicktime": "mov",
-}
-
 var validate = validator.New(validator.WithRequiredStructEnabled())
 
 func (p *Podcast) BeforeSave(tx *gorm.DB) error {
