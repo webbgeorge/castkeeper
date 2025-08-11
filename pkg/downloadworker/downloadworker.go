@@ -25,7 +25,12 @@ func NewDownloadWorkerQueueHandler(db *gorm.DB, os objectstorage.ObjectStorage) 
 			return fmt.Errorf("failed to get a pending episode: %w", err)
 		}
 
-		fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(episode.GUID), podcasts.MimeToExt[episode.MimeType])
+		extension, err := podcasts.MIMETypeExtension(episode.MimeType)
+		if err != nil {
+			return fmt.Errorf("failed to get episode file extension from MimeType: %w", err)
+		}
+
+		fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(episode.GUID), extension)
 		n, err := os.SaveRemoteFile(ctx, episode.DownloadURL, util.SanitiseGUID(episode.PodcastGUID), fileName)
 		if err != nil {
 			upErr := podcasts.UpdateEpisodeStatus(ctx, db, &episode, podcasts.EpisodeStatusFailed, nil)

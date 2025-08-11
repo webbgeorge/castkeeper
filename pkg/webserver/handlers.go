@@ -64,8 +64,12 @@ func NewAddPodcastHandler(feedService *podcasts.FeedService, db *gorm.DB, os obj
 		feedURL := r.PostFormValue("feedUrl")
 		podcast, _, err := feedService.ParseFeed(ctx, feedURL)
 		if err != nil {
-			framework.GetLogger(ctx).ErrorContext(ctx, "error parsing feed", "error", err)
-			return framework.Render(ctx, w, 200, partials.AddPodcast("Invalid feed"))
+			if !errors.Is(err, podcasts.ParseErrors{}) {
+				framework.GetLogger(ctx).ErrorContext(ctx, "error parsing feed", "error", err)
+				return framework.Render(ctx, w, 200, partials.AddPodcast("Invalid feed"))
+			}
+			framework.GetLogger(ctx).WarnContext(ctx, fmt.Sprintf("some episodes of podcast '%s' had parsing errors: %s", podcast.GUID, err.Error()))
+			// continue even with some episode parse failures...
 		}
 
 		if err = db.Create(&podcast).Error; err != nil {
@@ -120,10 +124,18 @@ func NewDownloadEpisodeHandler(db *gorm.DB, os objectstorage.ObjectStorage) fram
 			return err
 		}
 
-		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.%s", ep.GUID, podcasts.MimeToExt[ep.MimeType]))
+		extension, err := podcasts.MIMETypeExtension(ep.MimeType)
+		if err != nil {
+			return err
+		}
+
+		w.Header().Set(
+			"Content-Disposition",
+			fmt.Sprintf("attachment; filename=%s.%s", ep.GUID, extension),
+		)
 		w.Header().Set("Content-Type", ep.MimeType)
 
-		fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(ep.GUID), podcasts.MimeToExt[ep.MimeType])
+		fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(ep.GUID), extension)
 		return os.ServeFile(ctx, r, w, util.SanitiseGUID(ep.PodcastGUID), fileName)
 	}
 }

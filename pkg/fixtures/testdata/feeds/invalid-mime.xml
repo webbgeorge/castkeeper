@@ -22,7 +22,7 @@
     <itunes:complete>yes</itunes:complete>
     <item>
       <title>Test episode ep-1</title>
-      <enclosure url="http://www.example.com/episode-ep-1.mp3" length="1001" type="not/type"/>
+      <enclosure url="http://www.example.com/episode-ep-1.txt" length="1001" type="not/type"/>
       <guid>ep-1</guid>
       <link>http://www.example.com/ep-link</link>
       <pubDate>Thu, 26 Dec 2024 11:12:13 UTC</pubDate>

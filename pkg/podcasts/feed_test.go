@@ -84,7 +84,7 @@ func TestParseFeed(t *testing.T) {
 				nil,
 			),
 			expectedEpisodes: []podcasts.Episode{},
-			expectedErr:      fmt.Sprintf("1 errors whilst parsing episodes: unsupported file type 'not/type', skipping episode '%s'", fixtures.PodEpGUID("ep-1")),
+			expectedErr:      fmt.Sprintf("1 errors whilst parsing episodes: failed to parse episode '%s', skipping: unable to detect MIME type, enclosure type: 'not/type', url: 'http://www.example.com/episode-ep-1.txt'", fixtures.PodEpGUID("ep-1")),
 		},
 	}
 
