@@ -14,6 +14,7 @@ import (
 	"github.com/steinfletcher/apitest"
 	selector "github.com/steinfletcher/apitest-css-selector"
 	"github.com/stretchr/testify/assert"
+	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/feedworker"
@@ -475,6 +476,157 @@ func TestGetFeed_NotFound(t *testing.T) {
 		Status(http.StatusNotFound).
 		End()
 }
+
+func TestManageUserPage(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get("/users").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Manage users")).
+		Assert(selector.ContainsTextValue(
+			"table > tbody > tr:nth-child(1) > td:nth-child(1)",
+			"unittest",
+		)).
+		End()
+}
+
+func TestCreateUserPage(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get("/users/create").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Create New User")).
+		Assert(selector.Exists(
+			"input[name=username]",
+			"input[name=password]",
+			"input[name=repeatPassword]",
+		)).
+		Assert(selector.ContainsTextValue("button[type=submit]", "Submit")).
+		End()
+}
+
+func TestCreateUserSubmit_Success(t *testing.T) {
+	ctx, server, db, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/users/create").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("username=mytestuser&password=GoodPasswordForTesting&repeatPassword=GoodPasswordForTesting").
+		Expect(t).
+		Status(http.StatusFound).
+		Header("Location", "/users").
+		End()
+
+	// verify added to DB
+	user, err := users.GetUserByUsername(ctx, db, "mytestuser")
+	if err != nil {
+		panic(err)
+	}
+	assert.NotEmpty(t, user.ID)
+	assert.Nil(t, user.CheckPassword("GoodPasswordForTesting"))
+}
+
+func TestCreateUserSubmit_InvalidRequest(t *testing.T) {
+	ctx, server, db, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/users/create").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("notAValid=Request").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Username is a required field")).
+		End()
+
+	// verify user is not saved
+	_, err := users.GetUserByUsername(ctx, db, "mytestuser")
+	assert.Equal(t, "record not found", err.Error())
+}
+
+func TestCreateUserSubmit_PasswordsDoNotMatch(t *testing.T) {
+	ctx, server, db, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/users/create").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("username=mytestuser&password=GoodPasswordForTesting&repeatPassword=OtherPassword").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Passwords must match")).
+		End()
+
+	// verify user is not saved
+	_, err := users.GetUserByUsername(ctx, db, "mytestuser")
+	assert.Equal(t, "record not found", err.Error())
+}
+
+func TestCreateUserSubmit_PasswordTooWeak(t *testing.T) {
+	ctx, server, db, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/users/create").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("username=mytestuser&password=password123&repeatPassword=password123").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("password is too easy to guess")).
+		End()
+
+	// verify user is not saved
+	_, err := users.GetUserByUsername(ctx, db, "mytestuser")
+	assert.Equal(t, "record not found", err.Error())
+}
+
+func TestCreateUserSubmit_DuplicateUsername(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/users/create").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		// username from fixtures
+		Body("username=unittest&password=GoodPasswordForTesting&repeatPassword=GoodPasswordForTesting").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("A user with this username already exists")).
+		End()
+}
+
+// TODO edit user page test
+// TODO submit edit username form test
+// TODO submit edit password form test
+// TODO delete user test
 
 func setupServerForTest() (context.Context, *framework.Server, *gorm.DB, *os.Root, func()) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
