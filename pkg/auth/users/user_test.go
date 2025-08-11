@@ -2,7 +2,6 @@ package users_test
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -125,11 +124,11 @@ func TestCreateUser_PasswordValidation(t *testing.T) {
 	}{
 		"no password": {
 			password:    "",
-			expectedErr: errors.New("password must be at least 8 characters"),
+			expectedErr: users.PasswordStrengthError{Message: "password must be at least 8 characters"},
 		},
 		"too short": {
 			password:    "1111111",
-			expectedErr: errors.New("password must be at least 8 characters"),
+			expectedErr: users.PasswordStrengthError{Message: "password must be at least 8 characters"},
 		},
 		"8 chars": {
 			password:    "akqndkqp",
@@ -141,15 +140,15 @@ func TestCreateUser_PasswordValidation(t *testing.T) {
 		},
 		"too long": {
 			password:    "12345678901234567890123456789012345678901234567890123456789012345",
-			expectedErr: errors.New("password must be 64 characters or less"),
+			expectedErr: users.PasswordStrengthError{Message: "password must be 64 characters or less"},
 		},
 		"common password 1": {
 			password:    "password1",
-			expectedErr: errors.New("password must not be in list of most common passwords"),
+			expectedErr: users.PasswordStrengthError{Message: "password is too easy to guess"},
 		},
 		"common password 2": {
 			password:    "crossroad",
-			expectedErr: errors.New("password must not be in list of most common passwords"),
+			expectedErr: users.PasswordStrengthError{Message: "password is too easy to guess"},
 		},
 		"valid password": {
 			password:    "a!£$%^&*()qs123",
