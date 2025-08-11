@@ -37,7 +37,7 @@ var (
 
 func init() {
 	decoder.IgnoreUnknownKeys(true)
-	en_translations.RegisterDefaultTranslations(validate, enTrans)
+	_ = en_translations.RegisterDefaultTranslations(validate, enTrans)
 }
 
 func NewHomeHandler(db *gorm.DB) framework.Handler {
@@ -247,6 +247,7 @@ func NewDeleteUserHandler(db *gorm.DB) framework.Handler {
 			framework.GetLogger(ctx).Info("cannot delete user: invalid user ID in request")
 			w.Header().Add("HX-Trigger", `{"showMessage":"Invalid user ID in request"}`)
 			w.Header().Add("HX-Reswap", "none")
+			w.WriteHeader(http.StatusOK)
 			return nil
 		}
 
@@ -254,10 +255,20 @@ func NewDeleteUserHandler(db *gorm.DB) framework.Handler {
 			framework.GetLogger(ctx).Info("cannot delete the current user")
 			w.Header().Add("HX-Trigger", `{"showMessage":"Cannot delete the current user"}`)
 			w.Header().Add("HX-Reswap", "none")
+			w.WriteHeader(http.StatusOK)
 			return nil
 		}
 
-		return users.DeleteUser(ctx, db, uint(userID))
+		if err := users.DeleteUser(ctx, db, uint(userID)); err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return framework.HttpNotFound()
+			}
+			return err
+		}
+
+		w.WriteHeader(http.StatusOK)
+
+		return nil
 	}
 }
 

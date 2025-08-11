@@ -127,6 +127,11 @@ func UpdatePassword(ctx context.Context, db *gorm.DB, id uint, newPassword strin
 }
 
 func DeleteUser(ctx context.Context, db *gorm.DB, id uint) error {
+	_, err := GetUserByID(ctx, db, id)
+	if err != nil {
+		return fmt.Errorf("failed to GetUserByID: %w", err)
+	}
+
 	user := User{Model: gorm.Model{ID: id}}
 	if err := db.Delete(&user).Error; err != nil {
 		return err

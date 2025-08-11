@@ -623,10 +623,254 @@ func TestCreateUserSubmit_DuplicateUsername(t *testing.T) {
 		End()
 }
 
-// TODO edit user page test
-// TODO submit edit username form test
-// TODO submit edit password form test
-// TODO delete user test
+func TestEditUserPage(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get("/users/123/edit"). //  user ID from fixtures
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Edit User")).
+		Assert(selector.TextExists("Update Username")).
+		Assert(selector.Exists("input[name=username][value=unittest]")).
+		Assert(selector.TextExists("Update Password")).
+		Assert(selector.Exists("input[name=password]", "input[name=repeatPassword]")).
+		End()
+}
+
+func TestUpdateUsernameSubmit_Success(t *testing.T) {
+	ctx, server, db, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Put("/users/456/username"). // user 'unittest2' from fixtures
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures (user 'unittest')
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("username=unittestnew").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Username was updated successfully")).
+		End()
+
+	// verify old username not in DB
+	_, err := users.GetUserByUsername(ctx, db, "unittest2")
+	assert.Equal(t, "record not found", err.Error())
+
+	// verify new username is in DB
+	user, err := users.GetUserByUsername(ctx, db, "unittestnew")
+	if err != nil {
+		panic(err)
+	}
+	assert.NotEmpty(t, user.ID)
+}
+
+func TestUpdateUsernameSubmit_UserNotFound(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Put("/users/999/username"). // user doesn't exist in fixtures
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures (user 'unittest')
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("username=unittestnew").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Failed to update username")).
+		End()
+}
+
+func TestUpdateUsernameSubmit_InvalidUsername(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Put("/users/456/username"). // user 'unittest2' from fixtures
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures (user 'unittest')
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("username=").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Username is a required field")).
+		End()
+}
+
+func TestUpdateUsernameSubmit_UsernameExists(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Put("/users/456/username"). // user 'unittest2' from fixtures
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures (user 'unittest')
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("username=unittest"). // username already exists in fixtures
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("A user with this username already exists")).
+		End()
+}
+
+func TestUpdatePasswordSubmit_Success(t *testing.T) {
+	ctx, server, db, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Put("/users/456/password").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("password=GoodPasswordForTesting&repeatPassword=GoodPasswordForTesting").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Password was updated successfully")).
+		End()
+
+	// verify updated in DB
+	user, err := users.GetUserByID(ctx, db, 456)
+	if err != nil {
+		panic(err)
+	}
+	assert.NotEmpty(t, user.ID)
+	assert.Nil(t, user.CheckPassword("GoodPasswordForTesting"))
+}
+
+func TestUpdatePasswordSubmit_InvalidPassword(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Put("/users/456/password").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Password is a required field, RepeatPassword is a required field")).
+		End()
+}
+
+func TestUpdatePasswordSubmit_PasswordsDoNotMatch(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Put("/users/456/password").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("password=GoodPasswordForTesting&repeatPassword=NotTheSame").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Passwords must match")).
+		End()
+}
+
+func TestUpdatePasswordSubmit_PasswordsTooWeak(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Put("/users/456/password").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("password=password123&repeatPassword=password123").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("password is too easy to guess")).
+		End()
+}
+
+func TestDeleteUser_Success(t *testing.T) {
+	ctx, server, db, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/users/456/delete").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("").
+		Expect(t).
+		Status(http.StatusOK).
+		HeaderNotPresent("HX-Trigger").
+		End()
+
+	// verify deleted in DB
+	_, err := users.GetUserByID(ctx, db, 456)
+	assert.Equal(t, "record not found", err.Error())
+}
+
+func TestDeleteUser_InvalidUserID(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/users/invalidIDFormat/delete").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("").
+		Expect(t).
+		Status(http.StatusOK).
+		Header("HX-Trigger", `{"showMessage":"Invalid user ID in request"}`).
+		End()
+}
+
+func TestDeleteUser_CannotDeleteCurrentUser(t *testing.T) {
+	ctx, server, db, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/users/123/delete"). // 123 is current user in fixtures
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("").
+		Expect(t).
+		Status(http.StatusOK).
+		Header("HX-Trigger", `{"showMessage":"Cannot delete the current user"}`).
+		End()
+
+	// verify not deleted in DB
+	_, err := users.GetUserByID(ctx, db, 123)
+	assert.Nil(t, err)
+}
+
+func TestDeleteUser_UserNotFound(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/users/999/delete").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("").
+		Expect(t).
+		Status(http.StatusNotFound).
+		End()
+}
 
 func setupServerForTest() (context.Context, *framework.Server, *gorm.DB, *os.Root, func()) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
