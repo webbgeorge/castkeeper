@@ -13,7 +13,13 @@ templ EpisodeListItem(csrfToken string, ep podcasts.Episode) {
 		<td>
 			@badge(ep.Status)
 		</td>
-		<td>{ fmt.Sprintf("%s", time.Duration(ep.DurationSecs) * time.Second) }</td>
+		<td>
+			if ep.DurationSecs == 0 {
+				<span>-</span>
+			} else {
+				{ fmt.Sprintf("%s", time.Duration(ep.DurationSecs) * time.Second) }
+			}
+		</td>
 		<td>
 			if ep.Status == podcasts.EpisodeStatusSuccess {
 				<a
