@@ -81,11 +81,23 @@ templ Layout(title string) {
 				{ children... }
 			</main>
 			<footer class="my-6 mx-4 sm:mx-6 text-center">
-				CastKeeper is licensed under the <a class="link" target="_blank" href="https://opensource.org/license/agpl-v3/">AGPL-3.0 License</a>.
-				<br/>
-				Copyright &copy; { time.Now().Format("2006") } George Webb
-				<br/>
-				<a class="link" target="_blank" href="https://github.com/webbgeorge/castkeeper">GitHub</a>
+				<div>
+					CastKeeper is licensed under the <a class="link" target="_blank" href="https://opensource.org/license/agpl-v3/">AGPL-3.0 License</a>.
+				</div>
+				<div>
+					Copyright &copy; { time.Now().Format("2006") } George Webb
+				</div>
+				<div class="flex gap-4 justify-center">
+					<div>
+						<a class="link" target="_blank" href="https://castkeeper.org">Docs</a>
+					</div>
+					<div>
+						<a class="link" target="_blank" href="https://github.com/webbgeorge/castkeeper">GitHub</a>
+					</div>
+				</div>
+				<div class="opacity-50">
+					Version { castkeeper.Version }
+				</div>
 			</footer>
 			<div id="toasts" class="fixed bottom-4 right-4 flex flex-col gap-4"></div>
 			<script src={ jsURL() }></script>
