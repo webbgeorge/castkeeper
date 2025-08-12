@@ -33,16 +33,22 @@ func (s *Server) SetServerMiddlewares(middlewares ...Middleware) *Server {
 	return s
 }
 
-func (s *Server) AddRoute(pattern string, handler Handler, middlewares ...Middleware) *Server {
-	// global mws are outermost, executed in order of slice
+func (s *Server) AddRoute(pattern string, handler Handler, configs ...MiddlewareConfig) *Server {
+	// mws executed in order of slice
 	mws := make([]Middleware, 0) // new slice to avoid modifying the order of the args
 	mws = append(mws, s.mws...)
-	mws = append(mws, middlewares...)
 	slices.Reverse(mws)
 
 	h := handler
 	for _, mw := range mws {
-		h = mw(h)
+		var mwCfg MiddlewareConfig
+		for _, cfg := range configs {
+			if ok := mw.Match(cfg); ok {
+				mwCfg = cfg
+				break
+			}
+		}
+		h = mw.Handler(h, mwCfg)
 	}
 
 	handlerFunc := http.HandlerFunc(
@@ -60,11 +66,11 @@ func (s *Server) AddRoute(pattern string, handler Handler, middlewares ...Middle
 	return s
 }
 
-func (s *Server) AddFileServer(path string, fileServer http.Handler, middlewares ...Middleware) *Server {
+func (s *Server) AddFileServer(path string, fileServer http.Handler, configs ...MiddlewareConfig) *Server {
 	s.AddRoute(path, func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		fileServer.ServeHTTP(w, r)
 		return nil
-	}, middlewares...)
+	}, configs...)
 	return s
 }
 
@@ -107,7 +113,12 @@ func (s *Server) Start(ctx context.Context) error {
 
 type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
 
-type Middleware func(next Handler) Handler
+type MiddlewareConfig any
+
+type Middleware interface {
+	Handler(next Handler, config MiddlewareConfig) Handler
+	Match(config MiddlewareConfig) bool
+}
 
 func Render(ctx context.Context, w http.ResponseWriter, statusCode int, component templ.Component) error {
 	w.Header().Set("Content-Type", "text/html; charset=UTF-8")

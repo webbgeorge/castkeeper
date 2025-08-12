@@ -39,8 +39,8 @@ func TestAuthenticationMiddleware_ValidSessionIsPassedThrough(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.NewAuthenticationMiddleware(db, true)
-	err := mw(nextFn)(context.Background(), resRec, req)
+	mw := auth.AuthMiddleware{db}
+	err := mw.Handler(nextFn, nil)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
 	assert.Empty(t, resRec.Result().Header.Get("Location"))
@@ -60,8 +60,8 @@ func TestAuthenticationMiddleware_RedirectsWhenNoCookie(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.NewAuthenticationMiddleware(db, true)
-	err := mw(nextFn)(context.Background(), resRec, req)
+	mw := auth.AuthMiddleware{db}
+	err := mw.Handler(nextFn, nil)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
 	assert.Equal(t, "/auth/login?redirect=%2Ftest", resRec.Result().Header.Get("Location"))
@@ -82,14 +82,14 @@ func TestAuthenticationMiddleware_RedirectsWhenInvalidCookie(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.NewAuthenticationMiddleware(db, true)
-	err := mw(nextFn)(context.Background(), resRec, req)
+	mw := auth.AuthMiddleware{db}
+	err := mw.Handler(nextFn, nil)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
 	assert.Equal(t, "/auth/login?redirect=%2Ftest", resRec.Result().Header.Get("Location"))
 }
 
-func TestAuthenticationMiddleware_Returns401WhenRedirectToLoginDisabled(t *testing.T) {
+func TestAuthenticationMiddleware_Returns401ForHTMXRequests(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -104,12 +104,15 @@ func TestAuthenticationMiddleware_Returns401WhenRedirectToLoginDisabled(t *testi
 		return nil
 	}
 
-	// false == return 401 instead of redirect to login
-	mw := auth.NewAuthenticationMiddleware(db, false)
-	err := mw(nextFn)(context.Background(), resRec, req)
+	// this header is sent by HTMX
+	req.Header.Add("HX-Request", "true")
+
+	mw := auth.AuthMiddleware{db}
+	err := mw.Handler(nextFn, nil)(context.Background(), resRec, req)
 
 	assert.Equal(t, framework.HttpUnauthorized(), err)
 	assert.Empty(t, resRec.Result().Header.Get("Location"))
+	assert.Equal(t, "true", resRec.Result().Header.Get("HX-Refresh"))
 }
 
 func TestAuthenticationMiddleware_ValidSessionUpdatesLastSeen(t *testing.T) {
@@ -128,8 +131,8 @@ func TestAuthenticationMiddleware_ValidSessionUpdatesLastSeen(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.NewAuthenticationMiddleware(db, true)
-	err := mw(nextFn)(context.Background(), resRec, req)
+	mw := auth.AuthMiddleware{db}
+	err := mw.Handler(nextFn, nil)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
 	session, err := sessions.GetSessionByID(context.Background(), db, sessionID)
@@ -142,7 +145,34 @@ func TestAuthenticationMiddleware_ValidSessionUpdatesLastSeen(t *testing.T) {
 	assert.Greater(t, time.Since(session.StartTime), time.Minute)
 }
 
-func TestFeedAuthenticationMiddleware_ValidCredentials(t *testing.T) {
+func TestAuthenticationMiddleware_SkipAuth(t *testing.T) {
+	db := fixtures.ConfigureDBForTestWithFixtures()
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	resRec := &httptest.ResponseRecorder{}
+
+	var nextWasRun bool
+	nextFn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		s := sessions.GetSessionFromCtx(ctx)
+		if s != nil {
+			assert.Fail(t, "unexpected session in unauthed request")
+		}
+		nextWasRun = true
+		return nil
+	}
+
+	// tells MW to skip auth
+	cfg := auth.AuthMiddlewareConfig{Skip: true}
+
+	mw := auth.AuthMiddleware{db}
+	err := mw.Handler(nextFn, cfg)(context.Background(), resRec, req)
+
+	assert.Nil(t, err)
+	assert.Empty(t, resRec.Result().Header.Get("Location"))
+	assert.True(t, nextWasRun)
+}
+
+func TestAuthenticationMiddleware_HTTPBasicAuth_ValidCredentials(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -155,14 +185,17 @@ func TestFeedAuthenticationMiddleware_ValidCredentials(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.NewFeedAuthenticationMiddleware(db)
-	err := mw(nextFn)(context.Background(), resRec, req)
+	// signifies HTTP basic auth should be used - i.e. for CK feeds
+	cfg := auth.AuthMiddlewareConfig{UseHTTPBasicAuth: true}
+
+	mw := auth.AuthMiddleware{db}
+	err := mw.Handler(nextFn, cfg)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
 	assert.True(t, passedThrough)
 }
 
-func TestFeedAuthenticationMiddleware_NoCredentials(t *testing.T) {
+func TestAuthenticationMiddleware_HTTPBasicAuth_NoCredentials(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -175,14 +208,17 @@ func TestFeedAuthenticationMiddleware_NoCredentials(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.NewFeedAuthenticationMiddleware(db)
-	err := mw(nextFn)(context.Background(), resRec, req)
+	// signifies HTTP basic auth should be used - i.e. for CK feeds
+	cfg := auth.AuthMiddlewareConfig{UseHTTPBasicAuth: true}
+
+	mw := auth.AuthMiddleware{db}
+	err := mw.Handler(nextFn, cfg)(context.Background(), resRec, req)
 
 	assert.Equal(t, framework.HttpUnauthorized(), err)
 	assert.False(t, passedThrough)
 }
 
-func TestFeedAuthenticationMiddleware_InvalidUsername(t *testing.T) {
+func TestAuthenticationMiddleware_HTTPBasicAuth_InvalidUsername(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -195,14 +231,17 @@ func TestFeedAuthenticationMiddleware_InvalidUsername(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.NewFeedAuthenticationMiddleware(db)
-	err := mw(nextFn)(context.Background(), resRec, req)
+	// signifies HTTP basic auth should be used - i.e. for CK feeds
+	cfg := auth.AuthMiddlewareConfig{UseHTTPBasicAuth: true}
+
+	mw := auth.AuthMiddleware{db}
+	err := mw.Handler(nextFn, cfg)(context.Background(), resRec, req)
 
 	assert.Equal(t, framework.HttpUnauthorized(), err)
 	assert.False(t, passedThrough)
 }
 
-func TestFeedAuthenticationMiddleware_InvalidPassword(t *testing.T) {
+func TestAuthenticationMiddleware_HTTPBasicAuth_InvalidPassword(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 
 	req := httptest.NewRequest("GET", "/test", nil)
@@ -215,8 +254,11 @@ func TestFeedAuthenticationMiddleware_InvalidPassword(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.NewFeedAuthenticationMiddleware(db)
-	err := mw(nextFn)(context.Background(), resRec, req)
+	// signifies HTTP basic auth should be used - i.e. for CK feeds
+	cfg := auth.AuthMiddlewareConfig{UseHTTPBasicAuth: true}
+
+	mw := auth.AuthMiddleware{db}
+	err := mw.Handler(nextFn, cfg)(context.Background(), resRec, req)
 
 	assert.Equal(t, framework.HttpUnauthorized(), err)
 	assert.False(t, passedThrough)

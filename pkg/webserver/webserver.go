@@ -27,35 +27,37 @@ func NewWebserver(
 	port := fmt.Sprintf(":%d", cfg.WebServer.Port)
 	server := framework.NewServer(port, logger)
 
-	mw := middleware.DefaultMiddlewareStack()
-	mw = append(mw, middleware.NewCSRFMiddleware(
+	mw := middleware.DefaultMiddlewareStack(
 		cfg.WebServer.CSRFSecretKey,
 		cfg.WebServer.CSRFSecureCookie,
-	))
+	)
+	mw = append(
+		mw,
+		auth.AuthMiddleware{DB: db},
+	)
 
-	authMW := auth.NewAuthenticationMiddleware(db, true)
-	partialAuthMW := auth.NewAuthenticationMiddleware(db, false)
-	feedAuthMW := auth.NewFeedAuthenticationMiddleware(db)
+	skipAuth := auth.AuthMiddlewareConfig{Skip: true}
+	useBasicAuth := auth.AuthMiddlewareConfig{UseHTTPBasicAuth: true}
 
 	return server.SetServerMiddlewares(mw...).
-		AddFileServer("GET /static/", http.FileServer(http.FS(web.StaticAssets))).
-		AddRoute("GET /", NewHomeHandler(db), authMW).
-		AddRoute("GET /auth/login", auth.NewGetLoginHandler()).
-		AddRoute("POST /auth/login", auth.NewPostLoginHandler(cfg.BaseURL, db)).
-		AddRoute("GET /auth/logout", auth.NewLogoutHandler(cfg.BaseURL, db)).
-		AddRoute("GET /users", NewManageUsersHandler(db), authMW).
-		AddRoute("GET /users/create", NewCreateUserGetHandler(db), authMW).
-		AddRoute("POST /users/create", NewCreateUserPostHandler(db), authMW).
-		AddRoute("GET /users/{id}/edit", NewEditUserGetHandler(db), authMW).
-		AddRoute("PUT /users/{id}/username", NewUpdateUsernameHandler(db), authMW).
-		AddRoute("PUT /users/{id}/password", NewUpdatePasswordHandler(db), authMW).
-		AddRoute("POST /users/{id}/delete", NewDeleteUserHandler(db), authMW).
-		AddRoute("GET /podcasts/{guid}", NewViewPodcastHandler(cfg.BaseURL, db), authMW).
-		AddRoute("GET /podcasts/search", NewSearchPodcastsHandler(), authMW).
-		AddRoute("POST /podcasts/search", NewSearchResultsHandler(itunesAPI), partialAuthMW).
-		AddRoute("POST /podcasts/add", NewAddPodcastHandler(feedService, db, os), partialAuthMW).
-		AddRoute("GET /podcasts/{guid}/image", NewDownloadImageHandler(db, os), partialAuthMW).
-		AddRoute("GET /episodes/{guid}/download", NewDownloadEpisodeHandler(db, os), partialAuthMW).
-		AddRoute("POST /episodes/{guid}/requeue-download", NewRequeueDownloadHandler(db), partialAuthMW).
-		AddRoute("GET /feeds/{guid}", NewFeedHandler(cfg.BaseURL, db), feedAuthMW)
+		AddFileServer("GET /static/", http.FileServer(http.FS(web.StaticAssets)), skipAuth).
+		AddRoute("GET /", NewHomeHandler(db)).
+		AddRoute("GET /auth/login", auth.NewGetLoginHandler(), skipAuth).
+		AddRoute("POST /auth/login", auth.NewPostLoginHandler(cfg.BaseURL, db), skipAuth).
+		AddRoute("GET /auth/logout", auth.NewLogoutHandler(cfg.BaseURL, db), skipAuth).
+		AddRoute("GET /users", NewManageUsersHandler(db)).
+		AddRoute("GET /users/create", NewCreateUserGetHandler(db)).
+		AddRoute("POST /users/create", NewCreateUserPostHandler(db)).
+		AddRoute("GET /users/{id}/edit", NewEditUserGetHandler(db)).
+		AddRoute("PUT /users/{id}/username", NewUpdateUsernameHandler(db)).
+		AddRoute("PUT /users/{id}/password", NewUpdatePasswordHandler(db)).
+		AddRoute("POST /users/{id}/delete", NewDeleteUserHandler(db)).
+		AddRoute("GET /podcasts/{guid}", NewViewPodcastHandler(cfg.BaseURL, db)).
+		AddRoute("GET /podcasts/search", NewSearchPodcastsHandler()).
+		AddRoute("POST /podcasts/search", NewSearchResultsHandler(itunesAPI)).
+		AddRoute("POST /podcasts/add", NewAddPodcastHandler(feedService, db, os)).
+		AddRoute("GET /podcasts/{guid}/image", NewDownloadImageHandler(db, os)).
+		AddRoute("GET /episodes/{guid}/download", NewDownloadEpisodeHandler(db, os)).
+		AddRoute("POST /episodes/{guid}/requeue-download", NewRequeueDownloadHandler(db)).
+		AddRoute("GET /feeds/{guid}", NewFeedHandler(cfg.BaseURL, db), useBasicAuth)
 }

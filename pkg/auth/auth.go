@@ -15,36 +15,61 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewAuthenticationMiddleware(db *gorm.DB, redirectToLoginOnUnauth bool) framework.Middleware {
-	return func(next framework.Handler) framework.Handler {
-		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-			s, err := sessions.GetSession(ctx, db, r)
-			if err != nil {
-				return unauthResponse(w, r, redirectToLoginOnUnauth)
-			}
-			err = sessions.UpdateSessionLastSeen(ctx, db, &s)
-			if err != nil {
-				// log and continue
-				framework.GetLogger(ctx).WarnContext(ctx, "failed to update session last_seen_time")
-			}
+type AuthMiddlewareConfig struct {
+	Skip             bool
+	UseHTTPBasicAuth bool
+}
 
-			sessionCtx := sessions.CtxWithSession(ctx, s)
-			framework.GetLogger(ctx).InfoContext(
-				ctx, "successfully authenticated user",
-				"userID", s.UserID,
-			)
+type AuthMiddleware struct {
+	DB *gorm.DB
+}
 
-			return next(sessionCtx, w, r)
+func (mw AuthMiddleware) Handler(next framework.Handler, config framework.MiddlewareConfig) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		authConfig, ok := config.(AuthMiddlewareConfig)
+		if ok && authConfig.Skip {
+			return next(ctx, w, r)
 		}
+
+		if ok && authConfig.UseHTTPBasicAuth {
+			return handleHTTPBasicAuth(mw.DB, next, ctx, w, r)
+		}
+
+		s, err := sessions.GetSession(ctx, mw.DB, r)
+		if err != nil {
+			return unauthResponse(w, r)
+		}
+		err = sessions.UpdateSessionLastSeen(ctx, mw.DB, &s)
+		if err != nil {
+			// log and continue
+			framework.GetLogger(ctx).WarnContext(ctx, "failed to update session last_seen_time")
+		}
+
+		sessionCtx := sessions.CtxWithSession(ctx, s)
+		framework.GetLogger(ctx).InfoContext(
+			ctx, "successfully authenticated user",
+			"userID", s.UserID,
+		)
+
+		return next(sessionCtx, w, r)
 	}
 }
 
-func unauthResponse(w http.ResponseWriter, r *http.Request, redirectToLoginOnUnauth bool) error {
-	if redirectToLoginOnUnauth {
-		redirectToLogin(w, r)
-		return nil
+func (mw AuthMiddleware) Match(config framework.MiddlewareConfig) bool {
+	_, ok := config.(AuthMiddlewareConfig)
+	return ok
+}
+
+func unauthResponse(w http.ResponseWriter, r *http.Request) error {
+	// return 401 instead of redirecting to login for HTMX requests
+	hxRequest := r.Header.Get("HX-Request")
+	if hxRequest == "true" {
+		// ask HTMX to refresh the page
+		w.Header().Add("HX-Refresh", "true")
+		return framework.HttpUnauthorized()
 	}
-	return framework.HttpUnauthorized()
+	redirectToLogin(w, r)
+	return nil
 }
 
 func redirectToLogin(w http.ResponseWriter, r *http.Request) {
@@ -55,27 +80,23 @@ func redirectToLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 // handles auth for podcast feeds - using basic auth and no redirecting or sessions
-func NewFeedAuthenticationMiddleware(db *gorm.DB) framework.Middleware {
-	return func(next framework.Handler) framework.Handler {
-		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-			username, password, ok := r.BasicAuth()
-			if !ok {
-				return framework.HttpUnauthorized()
-			}
-
-			user, err := checkUsernameAndPassword(ctx, db, username, password)
-			if err != nil {
-				return framework.HttpUnauthorized()
-			}
-
-			framework.GetLogger(ctx).InfoContext(
-				ctx, "successfully authenticated user to feed",
-				"userID", user.ID,
-			)
-
-			return next(ctx, w, r)
-		}
+func handleHTTPBasicAuth(db *gorm.DB, next framework.Handler, ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	username, password, ok := r.BasicAuth()
+	if !ok {
+		return framework.HttpUnauthorized()
 	}
+
+	user, err := checkUsernameAndPassword(ctx, db, username, password)
+	if err != nil {
+		return framework.HttpUnauthorized()
+	}
+
+	framework.GetLogger(ctx).InfoContext(
+		ctx, "successfully authenticated user via HTTP Basic Auth",
+		"userID", user.ID,
+	)
+
+	return next(ctx, w, r)
 }
 
 func NewGetLoginHandler() framework.Handler {
