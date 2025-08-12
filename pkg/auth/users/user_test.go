@@ -16,29 +16,41 @@ func TestUserBeforeSave(t *testing.T) {
 	}{
 		"valid": {
 			user: users.User{
-				Username: "someuser",
-				Password: "aaaaaa",
+				Username:    "someuser",
+				Password:    "aaaaaa",
+				AccessLevel: 1,
 			},
 			expectedErr: "",
 		},
 		"usernameMissing": {
 			user: users.User{
-				Password: "aaaaaa",
+				Password:    "aaaaaa",
+				AccessLevel: 2,
 			},
 			expectedErr: "user not valid: Key: 'User.Username' Error:Field validation for 'Username' failed on the 'required' tag",
 		},
 		"usernameTooLong": {
 			user: users.User{
-				Username: fixtures.StrOfLen(100),
-				Password: "aaaaaa",
+				Username:    fixtures.StrOfLen(100),
+				Password:    "aaaaaa",
+				AccessLevel: 3,
 			},
 			expectedErr: "user not valid: Key: 'User.Username' Error:Field validation for 'Username' failed on the 'lte' tag",
 		},
 		"passwordMissing": {
 			user: users.User{
-				Username: "someuser",
+				Username:    "someuser",
+				AccessLevel: 1,
 			},
 			expectedErr: "user not valid: Key: 'User.Password' Error:Field validation for 'Password' failed on the 'required' tag",
+		},
+		"invalidAccessLevel": {
+			user: users.User{
+				Username:    "someuser",
+				Password:    "aaaaaa",
+				AccessLevel: 4,
+			},
+			expectedErr: "user not valid: Key: 'User.AccessLevel' Error:Field validation for 'AccessLevel' failed on the 'lte' tag",
 		},
 	}
 
@@ -65,6 +77,7 @@ func TestGetByUsername_Exists(t *testing.T) {
 	assert.Equal(t, "unittest", user.Username)
 	assert.NotEqual(t, "unittestpw", user.Password)
 	assert.NotEmpty(t, user.Password)
+	assert.NotEmpty(t, user.AccessLevel)
 }
 
 func TestGetByUsername_NotFound(t *testing.T) {
@@ -101,7 +114,7 @@ func TestUserCheckPassword(t *testing.T) {
 func TestCreateUser_Valid(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 
-	err := users.CreateUser(context.Background(), db, "user1", "aStrongPassword69")
+	err := users.CreateUser(context.Background(), db, "user1", "aStrongPassword69", 3)
 	assert.Nil(t, err)
 
 	user, err := users.GetUserByUsername(context.Background(), db, "user1")
@@ -113,8 +126,15 @@ func TestCreateUser_Valid(t *testing.T) {
 func TestCreateUser_InvalidUsername(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 
-	err := users.CreateUser(context.Background(), db, "", "aStrongPassword69")
+	err := users.CreateUser(context.Background(), db, "", "aStrongPassword69", 3)
 	assert.Equal(t, "user not valid: Key: 'User.Username' Error:Field validation for 'Username' failed on the 'required' tag", err.Error())
+}
+
+func TestCreateUser_InvalidAccessLevel(t *testing.T) {
+	db := fixtures.ConfigureDBForTestWithFixtures()
+
+	err := users.CreateUser(context.Background(), db, "user1", "aStrongPassword69", 0)
+	assert.Equal(t, "user not valid: Key: 'User.AccessLevel' Error:Field validation for 'AccessLevel' failed on the 'required' tag", err.Error())
 }
 
 func TestCreateUser_PasswordValidation(t *testing.T) {
@@ -160,7 +180,7 @@ func TestCreateUser_PasswordValidation(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			db := fixtures.ConfigureDBForTestWithFixtures()
 
-			err := users.CreateUser(context.Background(), db, "testUser", tc.password)
+			err := users.CreateUser(context.Background(), db, "testUser", tc.password, 1)
 			assert.Equal(t, tc.expectedErr, err)
 		})
 	}

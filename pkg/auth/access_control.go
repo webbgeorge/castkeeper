@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"gorm.io/gorm"
@@ -34,8 +33,8 @@ func (mw AccessControlMiddleware) Handler(next framework.Handler, config framewo
 			return next(ctx, w, r)
 		}
 
-		session := sessions.GetSessionFromCtx(ctx)
-		if session == nil {
+		user := users.GetUserFromCtx(ctx)
+		if user == nil {
 			framework.GetLogger(ctx).WarnContext(
 				ctx, "No session found for route requiring access level",
 				"requiredAccessLevel", acConfig.RequiredAccessLevel,
@@ -43,21 +42,21 @@ func (mw AccessControlMiddleware) Handler(next framework.Handler, config framewo
 			return framework.HttpForbidden()
 		}
 
-		if session.User.AccessLevel < acConfig.RequiredAccessLevel {
+		if user.AccessLevel < acConfig.RequiredAccessLevel {
 			framework.GetLogger(ctx).InfoContext(
 				ctx, "Access control check failed",
-				"userID", session.UserID,
+				"userID", user.ID,
 				"requiredAccessLevel", acConfig.RequiredAccessLevel,
-				"accessLevel", session.User.AccessLevel,
+				"accessLevel", user.AccessLevel,
 			)
 			return framework.HttpForbidden()
 		}
 
 		framework.GetLogger(ctx).InfoContext(
 			ctx, "Access control check passed",
-			"userID", session.UserID,
+			"userID", user.ID,
 			"requiredAccessLevel", acConfig.RequiredAccessLevel,
-			"accessLevel", session.User.AccessLevel,
+			"accessLevel", user.AccessLevel,
 		)
 
 		return next(ctx, w, r)

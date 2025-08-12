@@ -48,8 +48,8 @@ func applyFixtures(db *gorm.DB) {
 		create(db, &ep)
 	}
 
-	create(db, userFixture(123, "unittest", "unittestpw"))
-	create(db, userFixture(456, "unittest2", "unittestpw2"))
+	create(db, userFixture(123, "unittest", "unittestpw", users.AccessLevelAdmin))
+	create(db, userFixture(456, "unittest2", "unittestpw2", users.AccessLevelAdmin))
 	create(db, sessionFixture(
 		"validSession1",
 		123,
@@ -93,15 +93,16 @@ func podFixture(feedURL string) (podcasts.Podcast, []podcasts.Episode) {
 	return pod, eps
 }
 
-func userFixture(id uint, username, password string) *users.User {
+func userFixture(id uint, username, password string, accessLevel users.AccessLevel) *users.User {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
 		panic(err)
 	}
 	return &users.User{
-		Model:    gorm.Model{ID: id},
-		Username: username,
-		Password: string(passwordHash),
+		Model:       gorm.Model{ID: id},
+		Username:    username,
+		Password:    string(passwordHash),
+		AccessLevel: accessLevel,
 	}
 }
 

@@ -45,13 +45,13 @@ func (mw AuthenticationMiddleware) Handler(next framework.Handler, config framew
 			framework.GetLogger(ctx).WarnContext(ctx, "failed to update session last_seen_time")
 		}
 
-		sessionCtx := sessions.CtxWithSession(ctx, s)
+		userCtx := users.CtxWithUser(ctx, s.User)
 		framework.GetLogger(ctx).InfoContext(
 			ctx, "successfully authenticated user",
 			"userID", s.UserID,
 		)
 
-		return next(sessionCtx, w, r)
+		return next(userCtx, w, r)
 	}
 }
 
@@ -91,12 +91,13 @@ func handleHTTPBasicAuth(db *gorm.DB, next framework.Handler, ctx context.Contex
 		return framework.HttpUnauthorized()
 	}
 
+	userCtx := users.CtxWithUser(ctx, user)
 	framework.GetLogger(ctx).InfoContext(
 		ctx, "successfully authenticated user via HTTP Basic Auth",
 		"userID", user.ID,
 	)
 
-	return next(ctx, w, r)
+	return next(userCtx, w, r)
 }
 
 func NewGetLoginHandler() framework.Handler {

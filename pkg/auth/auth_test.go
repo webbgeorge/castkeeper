@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/webbgeorge/castkeeper/pkg/auth"
 	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
+	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 )
@@ -31,10 +32,10 @@ func TestAuthenticationMiddleware_ValidSessionIsPassedThrough(t *testing.T) {
 	var userID uint
 	var username string
 	nextFn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		s := sessions.GetSessionFromCtx(ctx)
-		if s != nil {
-			userID = s.UserID
-			username = s.User.Username
+		u := users.GetUserFromCtx(ctx)
+		if u != nil {
+			userID = u.ID
+			username = u.Username
 		}
 		return nil
 	}
@@ -153,9 +154,9 @@ func TestAuthenticationMiddleware_SkipAuth(t *testing.T) {
 
 	var nextWasRun bool
 	nextFn := func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		s := sessions.GetSessionFromCtx(ctx)
-		if s != nil {
-			assert.Fail(t, "unexpected session in unauthed request")
+		u := users.GetUserFromCtx(ctx)
+		if u != nil {
+			assert.Fail(t, "unexpected user in unauthed request")
 		}
 		nextWasRun = true
 		return nil

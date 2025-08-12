@@ -514,6 +514,7 @@ func TestCreateUserPage(t *testing.T) {
 			"input[name=username]",
 			"input[name=password]",
 			"input[name=repeatPassword]",
+			"select[name=accessLevel]",
 		)).
 		Assert(selector.ContainsTextValue("button[type=submit]", "Submit")).
 		End()
@@ -529,7 +530,7 @@ func TestCreateUserSubmit_Success(t *testing.T) {
 		WithContext(ctx).
 		Cookie("Session-Id", "validSession1"). // from fixtures
 		Header("Content-Type", "application/x-www-form-urlencoded").
-		Body("username=mytestuser&password=GoodPasswordForTesting&repeatPassword=GoodPasswordForTesting").
+		Body("username=mytestuser&password=GoodPasswordForTesting&repeatPassword=GoodPasswordForTesting&accessLevel=1").
 		Expect(t).
 		Status(http.StatusFound).
 		Header("Location", "/users").
@@ -575,7 +576,7 @@ func TestCreateUserSubmit_PasswordsDoNotMatch(t *testing.T) {
 		WithContext(ctx).
 		Cookie("Session-Id", "validSession1"). // from fixtures
 		Header("Content-Type", "application/x-www-form-urlencoded").
-		Body("username=mytestuser&password=GoodPasswordForTesting&repeatPassword=OtherPassword").
+		Body("username=mytestuser&password=GoodPasswordForTesting&repeatPassword=OtherPassword&accessLevel=1").
 		Expect(t).
 		Status(http.StatusOK).
 		Assert(selector.TextExists("Passwords must match")).
@@ -596,7 +597,7 @@ func TestCreateUserSubmit_PasswordTooWeak(t *testing.T) {
 		WithContext(ctx).
 		Cookie("Session-Id", "validSession1"). // from fixtures
 		Header("Content-Type", "application/x-www-form-urlencoded").
-		Body("username=mytestuser&password=password123&repeatPassword=password123").
+		Body("username=mytestuser&password=password123&repeatPassword=password123&accessLevel=1").
 		Expect(t).
 		Status(http.StatusOK).
 		Assert(selector.TextExists("password is too easy to guess")).
@@ -618,7 +619,7 @@ func TestCreateUserSubmit_DuplicateUsername(t *testing.T) {
 		Cookie("Session-Id", "validSession1"). // from fixtures
 		Header("Content-Type", "application/x-www-form-urlencoded").
 		// username from fixtures
-		Body("username=unittest&password=GoodPasswordForTesting&repeatPassword=GoodPasswordForTesting").
+		Body("username=unittest&password=GoodPasswordForTesting&repeatPassword=GoodPasswordForTesting&accessLevel=1").
 		Expect(t).
 		Status(http.StatusOK).
 		Assert(selector.TextExists("A user with this username already exists")).

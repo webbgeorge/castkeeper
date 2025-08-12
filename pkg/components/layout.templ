@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/webbgeorge/castkeeper"
-	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"strings"
 	"time"
@@ -19,11 +18,7 @@ func cssURL() string {
 }
 
 func user(ctx context.Context) *users.User {
-	session := sessions.GetSessionFromCtx(ctx)
-	if session == nil {
-		return nil
-	}
-	return &session.User
+	return users.GetUserFromCtx(ctx)
 }
 
 func avatarText(ctx context.Context) string {

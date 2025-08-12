@@ -14,7 +14,6 @@ import (
 	en_translations "github.com/go-playground/validator/v10/translations/en"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
-	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
 	"github.com/webbgeorge/castkeeper/pkg/components/partials"
@@ -240,7 +239,7 @@ func NewManageUsersHandler(db *gorm.DB) framework.Handler {
 
 func NewDeleteUserHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		currentUser := sessions.GetSessionFromCtx(ctx).User
+		currentUser := users.GetUserFromCtx(ctx)
 
 		userID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
 		if err != nil || userID == 0 {
