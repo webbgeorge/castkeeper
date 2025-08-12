@@ -35,7 +35,7 @@ func NewWebserver(
 	mw = append(
 		mw,
 		auth.AuthenticationMiddleware{DB: db},
-		auth.AccessControlMiddleware{DB: db},
+		auth.AccessControlMiddleware{},
 	)
 
 	skipAuth := auth.AuthenticationMiddlewareConfig{Skip: true}

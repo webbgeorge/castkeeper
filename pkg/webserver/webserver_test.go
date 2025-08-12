@@ -479,6 +479,20 @@ func TestGetFeed_NotFound(t *testing.T) {
 		End()
 }
 
+func TestForbiddenWhenAccessLevelTooLow(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get("/users").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSessionReadOnly"). // from fixtures
+		Expect(t).
+		Status(http.StatusForbidden).
+		End()
+}
+
 func TestManageUserPage(t *testing.T) {
 	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()

@@ -45,6 +45,10 @@ func (u *User) CheckPassword(password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 }
 
+func (u *User) CheckAccessLevel(requiredAccessLevel AccessLevel) bool {
+	return u.AccessLevel >= requiredAccessLevel
+}
+
 type AccessLevel int
 
 func (al AccessLevel) String() string {

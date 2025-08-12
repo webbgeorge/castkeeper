@@ -6,16 +6,13 @@ import (
 
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
-	"gorm.io/gorm"
 )
 
 type AccessControlMiddlewareConfig struct {
 	RequiredAccessLevel users.AccessLevel
 }
 
-type AccessControlMiddleware struct {
-	DB *gorm.DB
-}
+type AccessControlMiddleware struct{}
 
 func (mw AccessControlMiddleware) Handler(next framework.Handler, config framework.MiddlewareConfig) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
@@ -42,7 +39,7 @@ func (mw AccessControlMiddleware) Handler(next framework.Handler, config framewo
 			return framework.HttpForbidden()
 		}
 
-		if user.AccessLevel < acConfig.RequiredAccessLevel {
+		if !user.CheckAccessLevel(acConfig.RequiredAccessLevel) {
 			framework.GetLogger(ctx).InfoContext(
 				ctx, "Access control check failed",
 				"userID", user.ID,

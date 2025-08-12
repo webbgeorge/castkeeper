@@ -50,6 +50,7 @@ func applyFixtures(db *gorm.DB) {
 
 	create(db, userFixture(123, "unittest", "unittestpw", users.AccessLevelAdmin))
 	create(db, userFixture(456, "unittest2", "unittestpw2", users.AccessLevelAdmin))
+	create(db, userFixture(789, "readonly1", "unittestpw3", users.AccessLevelReadOnly))
 	create(db, sessionFixture(
 		"validSession1",
 		123,
@@ -72,6 +73,12 @@ func applyFixtures(db *gorm.DB) {
 		123,
 		aTimeInThePast,
 		aTimeInThePast,
+	))
+	create(db, sessionFixture(
+		"validSessionReadOnly",
+		789,
+		time.Now(),
+		time.Now(),
 	))
 }
 
