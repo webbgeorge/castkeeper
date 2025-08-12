@@ -15,6 +15,11 @@ import (
 var commonPasswordsFS embed.FS
 
 const (
+	AccessLevelNone           AccessLevel = -1
+	AccessLevelReadOnly       AccessLevel = 1
+	AccessLevelManagePodcasts AccessLevel = 2
+	AccessLevelAdmin          AccessLevel = 3
+
 	commonPasswordsFile = "ncsc_common_passwords_8_chars_up.txt"
 	passwordHashCost    = 10
 )
@@ -23,8 +28,9 @@ var userValidate = validator.New(validator.WithRequiredStructEnabled())
 
 type User struct {
 	gorm.Model
-	Username string `gorm:"uniqueIndex" validate:"required,gte=1,lte=50"`
-	Password string `validate:"required,gte=1"`
+	Username    string      `gorm:"uniqueIndex" validate:"required,gte=1,lte=50"`
+	Password    string      `validate:"required,gte=1"`
+	AccessLevel AccessLevel `validate:"required,gte=1,lte=3"`
 }
 
 func (u *User) BeforeSave(tx *gorm.DB) error {
@@ -37,6 +43,29 @@ func (u *User) BeforeSave(tx *gorm.DB) error {
 
 func (u *User) CheckPassword(password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+}
+
+type AccessLevel int
+
+func (al AccessLevel) String() string {
+	for _, listAL := range AccessLevels {
+		if listAL.AccessLevel == al {
+			return listAL.Name
+		}
+	}
+	if al <= 0 {
+		return "None"
+	}
+	return fmt.Sprintf("Unknown (level %d)", int(al))
+}
+
+var AccessLevels = []struct {
+	AccessLevel AccessLevel
+	Name        string
+}{
+	{AccessLevel: AccessLevelReadOnly, Name: "Read only"},
+	{AccessLevel: AccessLevelManagePodcasts, Name: "Manage podcasts"},
+	{AccessLevel: AccessLevelAdmin, Name: "Admin"},
 }
 
 func GetUserByUsername(ctx context.Context, db *gorm.DB, username string) (User, error) {
@@ -68,7 +97,13 @@ func ListUsers(ctx context.Context, db *gorm.DB) ([]User, error) {
 	return users, nil
 }
 
-func CreateUser(ctx context.Context, db *gorm.DB, username string, password string) error {
+func CreateUser(
+	ctx context.Context,
+	db *gorm.DB,
+	username string,
+	password string,
+	accessLevel AccessLevel,
+) error {
 	if err := validatePasswordStrength(password); err != nil {
 		return err
 	}
@@ -79,8 +114,9 @@ func CreateUser(ctx context.Context, db *gorm.DB, username string, password stri
 	}
 
 	user := User{
-		Username: username,
-		Password: string(passwordHash),
+		Username:    username,
+		Password:    string(passwordHash),
+		AccessLevel: accessLevel,
 	}
 	if err = db.Create(&user).Error; err != nil {
 		return err

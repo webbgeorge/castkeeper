@@ -15,18 +15,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type AuthMiddlewareConfig struct {
+type AuthenticationMiddlewareConfig struct {
 	Skip             bool
 	UseHTTPBasicAuth bool
 }
 
-type AuthMiddleware struct {
+type AuthenticationMiddleware struct {
 	DB *gorm.DB
 }
 
-func (mw AuthMiddleware) Handler(next framework.Handler, config framework.MiddlewareConfig) framework.Handler {
+func (mw AuthenticationMiddleware) Handler(next framework.Handler, config framework.MiddlewareConfig) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		authConfig, ok := config.(AuthMiddlewareConfig)
+		authConfig, ok := config.(AuthenticationMiddlewareConfig)
 		if ok && authConfig.Skip {
 			return next(ctx, w, r)
 		}
@@ -55,8 +55,8 @@ func (mw AuthMiddleware) Handler(next framework.Handler, config framework.Middle
 	}
 }
 
-func (mw AuthMiddleware) Match(config framework.MiddlewareConfig) bool {
-	_, ok := config.(AuthMiddlewareConfig)
+func (mw AuthenticationMiddleware) Match(config framework.MiddlewareConfig) bool {
+	_, ok := config.(AuthenticationMiddlewareConfig)
 	return ok
 }
 

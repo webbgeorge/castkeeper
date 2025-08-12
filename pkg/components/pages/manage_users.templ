@@ -28,6 +28,7 @@ templ ManageUsers(csrfToken string, users []users.User) {
 						<thead>
 							<tr>
 								<th>Username</th>
+								<th>Access Level</th>
 								<th>Created</th>
 								<th>Edit</th>
 								<th>Delete</th>
@@ -37,6 +38,7 @@ templ ManageUsers(csrfToken string, users []users.User) {
 							for _, user := range users {
 								<tr class="hover user-list-item">
 									<td>{ user.Username }</td>
+									<td>{ user.AccessLevel }</td>
 									<td>{ user.CreatedAt.Format(time.DateOnly) }</td>
 									<td>
 										<a class="link" href={ templ.URL(fmt.Sprintf("/users/%d/edit", user.ID)) }>Edit</a>

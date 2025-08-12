@@ -39,7 +39,7 @@ func TestAuthenticationMiddleware_ValidSessionIsPassedThrough(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.AuthMiddleware{db}
+	mw := auth.AuthenticationMiddleware{db}
 	err := mw.Handler(nextFn, nil)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
@@ -60,7 +60,7 @@ func TestAuthenticationMiddleware_RedirectsWhenNoCookie(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.AuthMiddleware{db}
+	mw := auth.AuthenticationMiddleware{db}
 	err := mw.Handler(nextFn, nil)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
@@ -82,7 +82,7 @@ func TestAuthenticationMiddleware_RedirectsWhenInvalidCookie(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.AuthMiddleware{db}
+	mw := auth.AuthenticationMiddleware{db}
 	err := mw.Handler(nextFn, nil)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
@@ -107,7 +107,7 @@ func TestAuthenticationMiddleware_Returns401ForHTMXRequests(t *testing.T) {
 	// this header is sent by HTMX
 	req.Header.Add("HX-Request", "true")
 
-	mw := auth.AuthMiddleware{db}
+	mw := auth.AuthenticationMiddleware{db}
 	err := mw.Handler(nextFn, nil)(context.Background(), resRec, req)
 
 	assert.Equal(t, framework.HttpUnauthorized(), err)
@@ -131,7 +131,7 @@ func TestAuthenticationMiddleware_ValidSessionUpdatesLastSeen(t *testing.T) {
 		return nil
 	}
 
-	mw := auth.AuthMiddleware{db}
+	mw := auth.AuthenticationMiddleware{db}
 	err := mw.Handler(nextFn, nil)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
@@ -162,9 +162,9 @@ func TestAuthenticationMiddleware_SkipAuth(t *testing.T) {
 	}
 
 	// tells MW to skip auth
-	cfg := auth.AuthMiddlewareConfig{Skip: true}
+	cfg := auth.AuthenticationMiddlewareConfig{Skip: true}
 
-	mw := auth.AuthMiddleware{db}
+	mw := auth.AuthenticationMiddleware{db}
 	err := mw.Handler(nextFn, cfg)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
@@ -186,9 +186,9 @@ func TestAuthenticationMiddleware_HTTPBasicAuth_ValidCredentials(t *testing.T) {
 	}
 
 	// signifies HTTP basic auth should be used - i.e. for CK feeds
-	cfg := auth.AuthMiddlewareConfig{UseHTTPBasicAuth: true}
+	cfg := auth.AuthenticationMiddlewareConfig{UseHTTPBasicAuth: true}
 
-	mw := auth.AuthMiddleware{db}
+	mw := auth.AuthenticationMiddleware{db}
 	err := mw.Handler(nextFn, cfg)(context.Background(), resRec, req)
 
 	assert.Nil(t, err)
@@ -209,9 +209,9 @@ func TestAuthenticationMiddleware_HTTPBasicAuth_NoCredentials(t *testing.T) {
 	}
 
 	// signifies HTTP basic auth should be used - i.e. for CK feeds
-	cfg := auth.AuthMiddlewareConfig{UseHTTPBasicAuth: true}
+	cfg := auth.AuthenticationMiddlewareConfig{UseHTTPBasicAuth: true}
 
-	mw := auth.AuthMiddleware{db}
+	mw := auth.AuthenticationMiddleware{db}
 	err := mw.Handler(nextFn, cfg)(context.Background(), resRec, req)
 
 	assert.Equal(t, framework.HttpUnauthorized(), err)
@@ -232,9 +232,9 @@ func TestAuthenticationMiddleware_HTTPBasicAuth_InvalidUsername(t *testing.T) {
 	}
 
 	// signifies HTTP basic auth should be used - i.e. for CK feeds
-	cfg := auth.AuthMiddlewareConfig{UseHTTPBasicAuth: true}
+	cfg := auth.AuthenticationMiddlewareConfig{UseHTTPBasicAuth: true}
 
-	mw := auth.AuthMiddleware{db}
+	mw := auth.AuthenticationMiddleware{db}
 	err := mw.Handler(nextFn, cfg)(context.Background(), resRec, req)
 
 	assert.Equal(t, framework.HttpUnauthorized(), err)
@@ -255,9 +255,9 @@ func TestAuthenticationMiddleware_HTTPBasicAuth_InvalidPassword(t *testing.T) {
 	}
 
 	// signifies HTTP basic auth should be used - i.e. for CK feeds
-	cfg := auth.AuthMiddlewareConfig{UseHTTPBasicAuth: true}
+	cfg := auth.AuthenticationMiddlewareConfig{UseHTTPBasicAuth: true}
 
-	mw := auth.AuthMiddleware{db}
+	mw := auth.AuthenticationMiddleware{db}
 	err := mw.Handler(nextFn, cfg)(context.Background(), resRec, req)
 
 	assert.Equal(t, framework.HttpUnauthorized(), err)

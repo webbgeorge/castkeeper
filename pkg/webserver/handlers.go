@@ -310,7 +310,13 @@ func NewCreateUserPostHandler(db *gorm.DB) framework.Handler {
 			return renderPage(formData, "Passwords must match")
 		}
 
-		err = users.CreateUser(ctx, db, formData.Username, formData.Password)
+		err = users.CreateUser(
+			ctx,
+			db,
+			formData.Username,
+			formData.Password,
+			formData.AccessLevel,
+		)
 		if err != nil {
 			if pErr, ok := err.(users.PasswordStrengthError); ok {
 				return renderPage(formData, pErr.Error())

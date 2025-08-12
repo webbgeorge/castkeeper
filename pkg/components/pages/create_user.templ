@@ -1,6 +1,9 @@
 package pages
 
-import "github.com/webbgeorge/castkeeper/pkg/components"
+import (
+	"github.com/webbgeorge/castkeeper/pkg/auth/users"
+	"github.com/webbgeorge/castkeeper/pkg/components"
+)
 
 type CreateUserViewModel struct {
 	CSRFToken string
@@ -9,9 +12,10 @@ type CreateUserViewModel struct {
 }
 
 type CreateUserFormData struct {
-	Username       string `schema:"username" validate:"required,gte=1,lte=50"`
-	Password       string `schema:"password" validate:"required,gte=8,lte=64"`
-	RepeatPassword string `schema:"repeatPassword" validate:"required,gte=8,lte=64"`
+	Username       string            `schema:"username" validate:"required,gte=1,lte=50"`
+	Password       string            `schema:"password" validate:"required,gte=8,lte=64"`
+	RepeatPassword string            `schema:"repeatPassword" validate:"required,gte=8,lte=64"`
+	AccessLevel    users.AccessLevel `schema:"accessLevel" validate:"required,gte=1,lte=3"`
 }
 
 templ CreateUser(vm CreateUserViewModel) {
@@ -66,6 +70,23 @@ templ CreateUser(vm CreateUserViewModel) {
 							placeholder="Repeat Password"
 							class="input w-full"
 						/>
+					</fieldset>
+					<fieldset class="fieldset">
+						<legend class="fieldset-legend">Access Level</legend>
+						<select
+							id="accessLevelInput"
+							name="accessLevel"
+							class="select w-full"
+						>
+							for _, al := range users.AccessLevels {
+								<option
+									value={ al.AccessLevel }
+									selected?={ al.AccessLevel == vm.FormData.AccessLevel }
+								>
+									{ al.Name }
+								</option>
+							}
+						</select>
 					</fieldset>
 					<div class="flex justify-end mt-6">
 						<button type="submit" class="btn btn-primary">Submit</button>
