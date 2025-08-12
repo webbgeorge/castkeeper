@@ -91,7 +91,7 @@ func TestInvalidSessionRedirectsToLogin(t *testing.T) {
 		End()
 }
 
-func TestInvalidSessionOnPartialReturns401InsteadOfRedirectToLogin(t *testing.T) {
+func TestInvalidSessionOnHTMXRequestReturns401InsteadOfRedirectToLogin(t *testing.T) {
 	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
@@ -100,9 +100,11 @@ func TestInvalidSessionOnPartialReturns401InsteadOfRedirectToLogin(t *testing.T)
 		Post("/podcasts/search"). // this is a partials route
 		WithContext(ctx).
 		Cookie("Session-Id", "notASession").
+		Header("HX-Request", "true").
 		Expect(t).
 		Status(http.StatusUnauthorized).
 		HeaderNotPresent("Location").
+		Header("HX-Refresh", "true").
 		Body("").
 		End()
 }
