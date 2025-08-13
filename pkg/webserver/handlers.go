@@ -14,7 +14,6 @@ import (
 	en_translations "github.com/go-playground/validator/v10/translations/en"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
-	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
 	"github.com/webbgeorge/castkeeper/pkg/components/partials"
@@ -240,7 +239,7 @@ func NewManageUsersHandler(db *gorm.DB) framework.Handler {
 
 func NewDeleteUserHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		currentUser := sessions.GetSessionFromCtx(ctx).User
+		currentUser := users.GetUserFromCtx(ctx)
 
 		userID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
 		if err != nil || userID == 0 {
@@ -310,7 +309,13 @@ func NewCreateUserPostHandler(db *gorm.DB) framework.Handler {
 			return renderPage(formData, "Passwords must match")
 		}
 
-		err = users.CreateUser(ctx, db, formData.Username, formData.Password)
+		err = users.CreateUser(
+			ctx,
+			db,
+			formData.Username,
+			formData.Password,
+			formData.AccessLevel,
+		)
 		if err != nil {
 			if pErr, ok := err.(users.PasswordStrengthError); ok {
 				return renderPage(formData, pErr.Error())
@@ -343,11 +348,12 @@ func NewEditUserGetHandler(db *gorm.DB) framework.Handler {
 		}
 
 		return framework.Render(ctx, w, 200, pages.EditUser(pages.EditUserViewModel{
-			UpdateUsernameFormVM: partials.UpdateUsernameFormViewModel{
+			UpdateUserFormVM: partials.UpdateUserFormViewModel{
 				CSRFToken: csrf.Token(r),
 				UserID:    uint(userID),
-				FormData: partials.UpdateUsernameFormData{
-					Username: user.Username,
+				FormData: partials.UpdateUserFormData{
+					Username:    user.Username,
+					AccessLevel: user.AccessLevel,
 				},
 			},
 			UpdatePasswordFormVM: partials.UpdatePasswordFormViewModel{
@@ -358,16 +364,16 @@ func NewEditUserGetHandler(db *gorm.DB) framework.Handler {
 	}
 }
 
-func NewUpdateUsernameHandler(db *gorm.DB) framework.Handler {
+func NewUpdateUserHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		userID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
 		if err != nil {
 			return framework.HttpBadRequest("Invalid request URL")
 		}
 
-		renderPage := func(formData partials.UpdateUsernameFormData, errorText string, isSuccess bool) error {
-			return framework.Render(ctx, w, 200, partials.UpdateUsernameForm(
-				partials.UpdateUsernameFormViewModel{
+		renderPage := func(formData partials.UpdateUserFormData, errorText string, isSuccess bool) error {
+			return framework.Render(ctx, w, 200, partials.UpdateUserForm(
+				partials.UpdateUserFormViewModel{
 					CSRFToken: csrf.Token(r),
 					ErrorText: errorText,
 					IsSuccess: isSuccess,
@@ -377,7 +383,7 @@ func NewUpdateUsernameHandler(db *gorm.DB) framework.Handler {
 			))
 		}
 
-		var formData partials.UpdateUsernameFormData
+		var formData partials.UpdateUserFormData
 		err = parseFormData(r, &formData)
 		if err != nil {
 			return renderPage(formData, "Invalid request", false)
@@ -391,21 +397,27 @@ func NewUpdateUsernameHandler(db *gorm.DB) framework.Handler {
 			return renderPage(formData, "Invalid request", false)
 		}
 
-		err = users.UpdateUsername(ctx, db, uint(userID), formData.Username)
+		if uint(userID) == users.GetUserFromCtx(ctx).ID &&
+			formData.AccessLevel < users.AccessLevelAdmin {
+			return renderPage(formData, "To prevent lockout, you cannot change the current user access level to below Admin", false)
+		}
+
+		err = users.UpdateUser(ctx, db, uint(userID), formData.Username, formData.AccessLevel)
 		if err != nil {
 			if errors.Is(err, gorm.ErrDuplicatedKey) {
 				return renderPage(formData, "A user with this username already exists", false)
 			}
 			framework.GetLogger(ctx).Error(fmt.Sprintf(
-				"failed to update username for user '%d': %s",
+				"failed to update user '%d': %s",
 				userID,
 				err.Error(),
 			))
-			return renderPage(formData, "Failed to update username", false)
+			return renderPage(formData, "Failed to update user", false)
 		}
 
-		return renderPage(partials.UpdateUsernameFormData{
-			Username: formData.Username,
+		return renderPage(partials.UpdateUserFormData{
+			Username:    formData.Username,
+			AccessLevel: formData.AccessLevel,
 		}, "", true)
 	}
 }

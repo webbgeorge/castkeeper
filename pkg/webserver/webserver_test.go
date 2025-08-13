@@ -479,6 +479,20 @@ func TestGetFeed_NotFound(t *testing.T) {
 		End()
 }
 
+func TestForbiddenWhenAccessLevelTooLow(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get("/users").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSessionReadOnly"). // from fixtures
+		Expect(t).
+		Status(http.StatusForbidden).
+		End()
+}
+
 func TestManageUserPage(t *testing.T) {
 	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
@@ -514,6 +528,7 @@ func TestCreateUserPage(t *testing.T) {
 			"input[name=username]",
 			"input[name=password]",
 			"input[name=repeatPassword]",
+			"select[name=accessLevel]",
 		)).
 		Assert(selector.ContainsTextValue("button[type=submit]", "Submit")).
 		End()
@@ -529,7 +544,7 @@ func TestCreateUserSubmit_Success(t *testing.T) {
 		WithContext(ctx).
 		Cookie("Session-Id", "validSession1"). // from fixtures
 		Header("Content-Type", "application/x-www-form-urlencoded").
-		Body("username=mytestuser&password=GoodPasswordForTesting&repeatPassword=GoodPasswordForTesting").
+		Body("username=mytestuser&password=GoodPasswordForTesting&repeatPassword=GoodPasswordForTesting&accessLevel=1").
 		Expect(t).
 		Status(http.StatusFound).
 		Header("Location", "/users").
@@ -575,7 +590,7 @@ func TestCreateUserSubmit_PasswordsDoNotMatch(t *testing.T) {
 		WithContext(ctx).
 		Cookie("Session-Id", "validSession1"). // from fixtures
 		Header("Content-Type", "application/x-www-form-urlencoded").
-		Body("username=mytestuser&password=GoodPasswordForTesting&repeatPassword=OtherPassword").
+		Body("username=mytestuser&password=GoodPasswordForTesting&repeatPassword=OtherPassword&accessLevel=1").
 		Expect(t).
 		Status(http.StatusOK).
 		Assert(selector.TextExists("Passwords must match")).
@@ -596,7 +611,7 @@ func TestCreateUserSubmit_PasswordTooWeak(t *testing.T) {
 		WithContext(ctx).
 		Cookie("Session-Id", "validSession1"). // from fixtures
 		Header("Content-Type", "application/x-www-form-urlencoded").
-		Body("username=mytestuser&password=password123&repeatPassword=password123").
+		Body("username=mytestuser&password=password123&repeatPassword=password123&accessLevel=1").
 		Expect(t).
 		Status(http.StatusOK).
 		Assert(selector.TextExists("password is too easy to guess")).
@@ -618,7 +633,7 @@ func TestCreateUserSubmit_DuplicateUsername(t *testing.T) {
 		Cookie("Session-Id", "validSession1"). // from fixtures
 		Header("Content-Type", "application/x-www-form-urlencoded").
 		// username from fixtures
-		Body("username=unittest&password=GoodPasswordForTesting&repeatPassword=GoodPasswordForTesting").
+		Body("username=unittest&password=GoodPasswordForTesting&repeatPassword=GoodPasswordForTesting&accessLevel=1").
 		Expect(t).
 		Status(http.StatusOK).
 		Assert(selector.TextExists("A user with this username already exists")).
@@ -637,27 +652,28 @@ func TestEditUserPage(t *testing.T) {
 		Expect(t).
 		Status(http.StatusOK).
 		Assert(selector.TextExists("Edit User")).
-		Assert(selector.TextExists("Update Username")).
+		Assert(selector.TextExists("Update User Details")).
 		Assert(selector.Exists("input[name=username][value=unittest]")).
+		Assert(selector.Exists(`select[name=accessLevel] > option[value="3"][selected]`)).
 		Assert(selector.TextExists("Update Password")).
 		Assert(selector.Exists("input[name=password]", "input[name=repeatPassword]")).
 		End()
 }
 
-func TestUpdateUsernameSubmit_Success(t *testing.T) {
+func TestUpdateUserSubmit_Success(t *testing.T) {
 	ctx, server, db, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
 		HandlerFunc(server.Mux.ServeHTTP).
-		Put("/users/456/username"). // user 'unittest2' from fixtures
+		Put("/users/456"). // user 'unittest2' from fixtures
 		WithContext(ctx).
 		Cookie("Session-Id", "validSession1"). // from fixtures (user 'unittest')
 		Header("Content-Type", "application/x-www-form-urlencoded").
-		Body("username=unittestnew").
+		Body("username=unittestnew&accessLevel=2").
 		Expect(t).
 		Status(http.StatusOK).
-		Assert(selector.TextExists("Username was updated successfully")).
+		Assert(selector.TextExists("User was updated successfully")).
 		End()
 
 	// verify old username not in DB
@@ -670,56 +686,75 @@ func TestUpdateUsernameSubmit_Success(t *testing.T) {
 		panic(err)
 	}
 	assert.NotEmpty(t, user.ID)
+	assert.Equal(t, users.AccessLevelManagePodcasts, user.AccessLevel)
 }
 
-func TestUpdateUsernameSubmit_UserNotFound(t *testing.T) {
+func TestUpdateUserSubmit_UserNotFound(t *testing.T) {
 	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
 		HandlerFunc(server.Mux.ServeHTTP).
-		Put("/users/999/username"). // user doesn't exist in fixtures
+		Put("/users/999"). // user doesn't exist in fixtures
 		WithContext(ctx).
 		Cookie("Session-Id", "validSession1"). // from fixtures (user 'unittest')
 		Header("Content-Type", "application/x-www-form-urlencoded").
-		Body("username=unittestnew").
+		Body("username=unittestnew&accessLevel=1").
 		Expect(t).
 		Status(http.StatusOK).
-		Assert(selector.TextExists("Failed to update username")).
+		Assert(selector.TextExists("Failed to update user")).
 		End()
 }
 
-func TestUpdateUsernameSubmit_InvalidUsername(t *testing.T) {
+func TestUpdateUserSubmit_InvalidData(t *testing.T) {
 	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
 		HandlerFunc(server.Mux.ServeHTTP).
-		Put("/users/456/username"). // user 'unittest2' from fixtures
+		Put("/users/456"). // user 'unittest2' from fixtures
 		WithContext(ctx).
 		Cookie("Session-Id", "validSession1"). // from fixtures (user 'unittest')
 		Header("Content-Type", "application/x-www-form-urlencoded").
-		Body("username=").
+		Body("username=&accessLevel=").
 		Expect(t).
 		Status(http.StatusOK).
 		Assert(selector.TextExists("Username is a required field")).
+		Assert(selector.TextExists("AccessLevel is a required field")).
 		End()
 }
 
-func TestUpdateUsernameSubmit_UsernameExists(t *testing.T) {
+func TestUpdateUserSubmit_UsernameExists(t *testing.T) {
 	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
 
 	apitest.New().
 		HandlerFunc(server.Mux.ServeHTTP).
-		Put("/users/456/username"). // user 'unittest2' from fixtures
+		Put("/users/456"). // user 'unittest2' from fixtures
 		WithContext(ctx).
 		Cookie("Session-Id", "validSession1"). // from fixtures (user 'unittest')
 		Header("Content-Type", "application/x-www-form-urlencoded").
-		Body("username=unittest"). // username already exists in fixtures
+		Body("username=unittest&accessLevel=1"). // username already exists in fixtures
 		Expect(t).
 		Status(http.StatusOK).
 		Assert(selector.TextExists("A user with this username already exists")).
+		End()
+}
+
+func TestUpdateUserSubmit_CannotReduceCurrentUserPermissionsBelowAdmin(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Put("/users/123"). // user 'unittest' from fixtures
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures (user 'unittest')
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("username=unittest&accessLevel=2"). // setting level below admin
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("To prevent lockout, you cannot change the current user access level to below Admin")).
 		End()
 }
 

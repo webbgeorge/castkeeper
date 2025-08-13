@@ -4,7 +4,7 @@ import "github.com/webbgeorge/castkeeper/pkg/components"
 import "github.com/webbgeorge/castkeeper/pkg/components/partials"
 
 type EditUserViewModel struct {
-	UpdateUsernameFormVM partials.UpdateUsernameFormViewModel
+	UpdateUserFormVM     partials.UpdateUserFormViewModel
 	UpdatePasswordFormVM partials.UpdatePasswordFormViewModel
 }
 
@@ -21,7 +21,7 @@ templ EditUser(vm EditUserViewModel) {
 			<div class="card-body">
 				<h1 class="card-title">Edit User</h1>
 				<div class="mt-2">
-					@partials.UpdateUsernameForm(vm.UpdateUsernameFormVM)
+					@partials.UpdateUserForm(vm.UpdateUserFormVM)
 				</div>
 				<div class="divider"></div>
 				<div>

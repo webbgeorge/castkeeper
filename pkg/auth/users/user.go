@@ -23,8 +23,9 @@ var userValidate = validator.New(validator.WithRequiredStructEnabled())
 
 type User struct {
 	gorm.Model
-	Username string `gorm:"uniqueIndex" validate:"required,gte=1,lte=50"`
-	Password string `validate:"required,gte=1"`
+	Username    string      `gorm:"uniqueIndex" validate:"required,gte=1,lte=50"`
+	Password    string      `validate:"required,gte=1"`
+	AccessLevel AccessLevel `validate:"required,gte=1,lte=3"`
 }
 
 func (u *User) BeforeSave(tx *gorm.DB) error {
@@ -37,6 +38,42 @@ func (u *User) BeforeSave(tx *gorm.DB) error {
 
 func (u *User) CheckPassword(password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+}
+
+func (u *User) CheckAccessLevel(requiredAccessLevel AccessLevel) bool {
+	return u.AccessLevel >= requiredAccessLevel
+}
+
+type AccessLevel int
+
+const (
+	AccessLevelNone           AccessLevel = -1
+	AccessLevelReadOnly       AccessLevel = 1
+	AccessLevelManagePodcasts AccessLevel = 2
+	AccessLevelAdmin          AccessLevel = 3
+)
+
+var AccessLevels = []AccessLevel{
+	AccessLevelReadOnly,
+	AccessLevelManagePodcasts,
+	AccessLevelAdmin,
+}
+
+var alMap = map[AccessLevel]string{
+	AccessLevelReadOnly:       "Read only",
+	AccessLevelManagePodcasts: "Manage podcasts",
+	AccessLevelAdmin:          "Admin",
+}
+
+func (al AccessLevel) Format() string {
+	name, ok := alMap[al]
+	if ok {
+		return name
+	}
+	if al <= 0 {
+		return "None"
+	}
+	return fmt.Sprintf("Unknown (level %d)", int(al))
 }
 
 func GetUserByUsername(ctx context.Context, db *gorm.DB, username string) (User, error) {
@@ -68,7 +105,13 @@ func ListUsers(ctx context.Context, db *gorm.DB) ([]User, error) {
 	return users, nil
 }
 
-func CreateUser(ctx context.Context, db *gorm.DB, username string, password string) error {
+func CreateUser(
+	ctx context.Context,
+	db *gorm.DB,
+	username string,
+	password string,
+	accessLevel AccessLevel,
+) error {
 	if err := validatePasswordStrength(password); err != nil {
 		return err
 	}
@@ -79,8 +122,9 @@ func CreateUser(ctx context.Context, db *gorm.DB, username string, password stri
 	}
 
 	user := User{
-		Username: username,
-		Password: string(passwordHash),
+		Username:    username,
+		Password:    string(passwordHash),
+		AccessLevel: accessLevel,
 	}
 	if err = db.Create(&user).Error; err != nil {
 		return err
@@ -89,13 +133,20 @@ func CreateUser(ctx context.Context, db *gorm.DB, username string, password stri
 	return nil
 }
 
-func UpdateUsername(ctx context.Context, db *gorm.DB, id uint, newUsername string) error {
+func UpdateUser(
+	ctx context.Context,
+	db *gorm.DB,
+	id uint,
+	newUsername string,
+	newAccessLevel AccessLevel,
+) error {
 	user, err := GetUserByID(ctx, db, id)
 	if err != nil {
 		return fmt.Errorf("failed to GetUserByID: %w", err)
 	}
 
 	user.Username = newUsername
+	user.AccessLevel = newAccessLevel
 	if err = db.Save(&user).Error; err != nil {
 		return err
 	}

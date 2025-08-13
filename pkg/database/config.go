@@ -6,11 +6,7 @@ import (
 	"path"
 
 	slogGorm "github.com/orandin/slog-gorm"
-	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
-	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/config"
-	"github.com/webbgeorge/castkeeper/pkg/framework"
-	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -36,22 +32,7 @@ func ConfigureDatabase(cfg config.Config, logger *slog.Logger, inMemory bool) (*
 		return nil, err
 	}
 
-	if err := db.AutoMigrate(&podcasts.Podcast{}); err != nil {
-		return nil, err
-	}
-	if err := db.AutoMigrate(&podcasts.Episode{}); err != nil {
-		return nil, err
-	}
-	if err := db.AutoMigrate(&users.User{}); err != nil {
-		return nil, err
-	}
-	if err := db.AutoMigrate(&sessions.Session{}); err != nil {
-		return nil, err
-	}
-	if err := db.AutoMigrate(&framework.QueueTask{}); err != nil {
-		return nil, err
-	}
-	if err := db.AutoMigrate(&framework.ScheduledTaskState{}); err != nil {
+	if err := migrate(db, logger); err != nil {
 		return nil, err
 	}
 

@@ -15,18 +15,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type AuthMiddlewareConfig struct {
+type AuthenticationMiddlewareConfig struct {
 	Skip             bool
 	UseHTTPBasicAuth bool
 }
 
-type AuthMiddleware struct {
+type AuthenticationMiddleware struct {
 	DB *gorm.DB
 }
 
-func (mw AuthMiddleware) Handler(next framework.Handler, config framework.MiddlewareConfig) framework.Handler {
+func (mw AuthenticationMiddleware) Handler(next framework.Handler, config framework.MiddlewareConfig) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		authConfig, ok := config.(AuthMiddlewareConfig)
+		authConfig, ok := config.(AuthenticationMiddlewareConfig)
 		if ok && authConfig.Skip {
 			return next(ctx, w, r)
 		}
@@ -45,18 +45,18 @@ func (mw AuthMiddleware) Handler(next framework.Handler, config framework.Middle
 			framework.GetLogger(ctx).WarnContext(ctx, "failed to update session last_seen_time")
 		}
 
-		sessionCtx := sessions.CtxWithSession(ctx, s)
+		userCtx := users.CtxWithUser(ctx, s.User)
 		framework.GetLogger(ctx).InfoContext(
 			ctx, "successfully authenticated user",
 			"userID", s.UserID,
 		)
 
-		return next(sessionCtx, w, r)
+		return next(userCtx, w, r)
 	}
 }
 
-func (mw AuthMiddleware) Match(config framework.MiddlewareConfig) bool {
-	_, ok := config.(AuthMiddlewareConfig)
+func (mw AuthenticationMiddleware) Match(config framework.MiddlewareConfig) bool {
+	_, ok := config.(AuthenticationMiddlewareConfig)
 	return ok
 }
 
@@ -91,12 +91,13 @@ func handleHTTPBasicAuth(db *gorm.DB, next framework.Handler, ctx context.Contex
 		return framework.HttpUnauthorized()
 	}
 
+	userCtx := users.CtxWithUser(ctx, user)
 	framework.GetLogger(ctx).InfoContext(
 		ctx, "successfully authenticated user via HTTP Basic Auth",
 		"userID", user.ID,
 	)
 
-	return next(ctx, w, r)
+	return next(userCtx, w, r)
 }
 
 func NewGetLoginHandler() framework.Handler {

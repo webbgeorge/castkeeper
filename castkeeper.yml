@@ -1,7 +1,7 @@
 # config file for local development only
 
 EnvName: local
-LogLevel: info
+LogLevel: debug
 BaseURL: http://localhost:8080
 DataPath: ./data/local
 
