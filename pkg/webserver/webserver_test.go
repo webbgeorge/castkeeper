@@ -547,7 +547,7 @@ func TestCreateUserSubmit_Success(t *testing.T) {
 		Body("username=mytestuser&password=GoodPasswordForTesting&repeatPassword=GoodPasswordForTesting&accessLevel=1").
 		Expect(t).
 		Status(http.StatusFound).
-		Header("Location", "/users").
+		Header("Location", "/users?createUserSuccess=true").
 		End()
 
 	// verify added to DB
@@ -847,7 +847,7 @@ func TestDeleteUser_Success(t *testing.T) {
 		Body("").
 		Expect(t).
 		Status(http.StatusOK).
-		HeaderNotPresent("HX-Trigger").
+		Header("HX-Trigger", `{"showMessage":{"level":"success","message":"User deleted successfully"}}`).
 		End()
 
 	// verify deleted in DB
@@ -868,7 +868,7 @@ func TestDeleteUser_InvalidUserID(t *testing.T) {
 		Body("").
 		Expect(t).
 		Status(http.StatusOK).
-		Header("HX-Trigger", `{"showMessage":"Invalid user ID in request"}`).
+		Header("HX-Trigger", `{"showMessage":{"level":"error","message":"Invalid user ID in request"}}`).
 		End()
 }
 
@@ -885,7 +885,7 @@ func TestDeleteUser_CannotDeleteCurrentUser(t *testing.T) {
 		Body("").
 		Expect(t).
 		Status(http.StatusOK).
-		Header("HX-Trigger", `{"showMessage":"Cannot delete the current user"}`).
+		Header("HX-Trigger", `{"showMessage":{"level":"error","message":"Cannot delete the current user"}}`).
 		End()
 
 	// verify not deleted in DB

@@ -230,10 +230,12 @@ func NewManageUsersHandler(db *gorm.DB) framework.Handler {
 		if err != nil {
 			return err
 		}
-		return framework.Render(ctx, w, 200, pages.ManageUsers(
-			csrf.Token(r),
-			users,
-		))
+		createUserSuccess := r.URL.Query().Get("createUserSuccess") == "true"
+		return framework.Render(ctx, w, 200, pages.ManageUsers(pages.ManageUsersViewModel{
+			CSRFToken:         csrf.Token(r),
+			Users:             users,
+			CreateUserSuccess: createUserSuccess,
+		}))
 	}
 }
 
@@ -330,8 +332,7 @@ func NewCreateUserPostHandler(db *gorm.DB) framework.Handler {
 			return renderPage(formData, "Failed to create user")
 		}
 
-		// TODO success message
-		http.Redirect(w, r, "/users", http.StatusFound)
+		http.Redirect(w, r, "/users?createUserSuccess=true", http.StatusFound)
 		return nil
 	}
 }
