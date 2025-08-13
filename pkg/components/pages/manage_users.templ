@@ -7,7 +7,13 @@ import (
 	"time"
 )
 
-templ ManageUsers(csrfToken string, users []users.User) {
+type ManageUsersViewModel struct {
+	CSRFToken         string
+	Users             []users.User
+	CreateUserSuccess bool
+}
+
+templ ManageUsers(vm ManageUsersViewModel) {
 	@components.Layout("Manage Users") {
 		<div class="breadcrumbs text-sm my-4">
 			<ul>
@@ -19,7 +25,12 @@ templ ManageUsers(csrfToken string, users []users.User) {
 			<h1 class="text-xl">Manage Users</h1>
 			<a href="/users/create" class="btn btn-primary">Create a new user</a>
 		</div>
-		if len(users) == 0 {
+		if vm.CreateUserSuccess {
+			<div role="alert" class="alert alert-success mb-6">
+				User was successfully created
+			</div>
+		}
+		if len(vm.Users) == 0 {
 			<h2 class="text-3xl font-bold">No users yet</h2>
 		} else {
 			<div class="card card-compact bg-base-100 shadow-xl">
@@ -35,7 +46,7 @@ templ ManageUsers(csrfToken string, users []users.User) {
 							</tr>
 						</thead>
 						<tbody>
-							for _, user := range users {
+							for _, user := range vm.Users {
 								<tr class="hover user-list-item">
 									<td>{ user.Username }</td>
 									<td>{ user.AccessLevel.Format() }</td>
@@ -48,7 +59,7 @@ templ ManageUsers(csrfToken string, users []users.User) {
 											class="link"
 											type="button"
 											hx-post={ string(templ.URL(fmt.Sprintf("/users/%d/delete", user.ID))) }
-											hx-vals={ fmt.Sprintf("{\"%s\": \"%s\"}", components.CSRFTokenInputName, csrfToken) }
+											hx-vals={ fmt.Sprintf("{\"%s\": \"%s\"}", components.CSRFTokenInputName, vm.CSRFToken) }
 											hx-confirm="Are you sure you want to delete this user?"
 											hx-target="closest .user-list-item"
 											hx-swap="outerHTML"

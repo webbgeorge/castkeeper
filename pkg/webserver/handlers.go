@@ -230,10 +230,12 @@ func NewManageUsersHandler(db *gorm.DB) framework.Handler {
 		if err != nil {
 			return err
 		}
-		return framework.Render(ctx, w, 200, pages.ManageUsers(
-			csrf.Token(r),
-			users,
-		))
+		createUserSuccess := r.URL.Query().Get("createUserSuccess") == "true"
+		return framework.Render(ctx, w, 200, pages.ManageUsers(pages.ManageUsersViewModel{
+			CSRFToken:         csrf.Token(r),
+			Users:             users,
+			CreateUserSuccess: createUserSuccess,
+		}))
 	}
 }
 
@@ -244,7 +246,7 @@ func NewDeleteUserHandler(db *gorm.DB) framework.Handler {
 		userID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
 		if err != nil || userID == 0 {
 			framework.GetLogger(ctx).Info("cannot delete user: invalid user ID in request")
-			w.Header().Add("HX-Trigger", `{"showMessage":"Invalid user ID in request"}`)
+			setShowMessageHeader(w, "Invalid user ID in request", "error")
 			w.Header().Add("HX-Reswap", "none")
 			w.WriteHeader(http.StatusOK)
 			return nil
@@ -252,7 +254,7 @@ func NewDeleteUserHandler(db *gorm.DB) framework.Handler {
 
 		if uint(userID) == currentUser.ID {
 			framework.GetLogger(ctx).Info("cannot delete the current user")
-			w.Header().Add("HX-Trigger", `{"showMessage":"Cannot delete the current user"}`)
+			setShowMessageHeader(w, "Cannot delete the current user", "error")
 			w.Header().Add("HX-Reswap", "none")
 			w.WriteHeader(http.StatusOK)
 			return nil
@@ -265,6 +267,7 @@ func NewDeleteUserHandler(db *gorm.DB) framework.Handler {
 			return err
 		}
 
+		setShowMessageHeader(w, "User deleted successfully", "success")
 		w.WriteHeader(http.StatusOK)
 
 		return nil
@@ -329,8 +332,7 @@ func NewCreateUserPostHandler(db *gorm.DB) framework.Handler {
 			return renderPage(formData, "Failed to create user")
 		}
 
-		// TODO success message
-		http.Redirect(w, r, "/users", http.StatusFound)
+		http.Redirect(w, r, "/users?createUserSuccess=true", http.StatusFound)
 		return nil
 	}
 }
@@ -505,4 +507,15 @@ func translateValidationErrs(err error) (string, bool) {
 		return "", false
 	}
 	return strings.Join(errorTexts, ", "), true
+}
+
+func setShowMessageHeader(w http.ResponseWriter, message, level string) {
+	w.Header().Set(
+		"HX-Trigger",
+		fmt.Sprintf(
+			`{"showMessage":{"level":"%s","message":"%s"}}`,
+			level,
+			message,
+		),
+	)
 }
