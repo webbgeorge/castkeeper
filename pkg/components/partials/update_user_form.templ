@@ -1,0 +1,74 @@
+package partials
+
+import (
+	"fmt"
+	"github.com/webbgeorge/castkeeper/pkg/auth/users"
+	"github.com/webbgeorge/castkeeper/pkg/components"
+)
+
+type UpdateUserFormViewModel struct {
+	CSRFToken string
+	ErrorText string
+	IsSuccess bool
+	UserID    uint
+	FormData  UpdateUserFormData
+}
+
+type UpdateUserFormData struct {
+	Username    string            `schema:"username" validate:"required,gte=1,lte=50"`
+	AccessLevel users.AccessLevel `schema:"accessLevel" validate:"required,gte=1,lte=3"`
+}
+
+templ UpdateUserForm(vm UpdateUserFormViewModel) {
+	<div id="update-user-form-partial">
+		<h2 class="text-lg">Update User Details</h2>
+		if vm.ErrorText != "" {
+			<div role="alert" class="alert alert-error mt-2">
+				{ vm.ErrorText }
+			</div>
+		}
+		if vm.IsSuccess {
+			<div role="alert" class="alert alert-success mt-2">
+				User was updated successfully
+			</div>
+		}
+		<form
+			hx-put={ templ.URL(fmt.Sprintf("/users/%d", vm.UserID)) }
+			hx-target="#update-user-form-partial"
+			hx-swap="outerHTML"
+		>
+			@components.CSRFInput(vm.CSRFToken)
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">Username</legend>
+				<input
+					id="usernameInput"
+					name="username"
+					type="text"
+					placeholder="Username"
+					class="input w-full"
+					value={ vm.FormData.Username }
+				/>
+			</fieldset>
+			<fieldset class="fieldset">
+				<legend class="fieldset-legend">Access Level</legend>
+				<select
+					id="accessLevelInput"
+					name="accessLevel"
+					class="select w-full"
+				>
+					for _, al := range users.AccessLevels {
+						<option
+							value={ al }
+							selected?={ al == vm.FormData.AccessLevel }
+						>
+							{ al.Format() }
+						</option>
+					}
+				</select>
+			</fieldset>
+			<div class="flex justify-end mt-6">
+				<button type="submit" class="btn btn-primary">Save</button>
+			</div>
+		</form>
+	</div>
+}

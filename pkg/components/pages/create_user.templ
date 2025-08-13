@@ -80,10 +80,10 @@ templ CreateUser(vm CreateUserViewModel) {
 						>
 							for _, al := range users.AccessLevels {
 								<option
-									value={ al.AccessLevel }
-									selected?={ al.AccessLevel == vm.FormData.AccessLevel }
+									value={ al }
+									selected?={ al == vm.FormData.AccessLevel }
 								>
-									{ al.Name }
+									{ al.Format() }
 								</option>
 							}
 						</select>

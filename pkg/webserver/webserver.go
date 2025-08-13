@@ -56,7 +56,7 @@ func NewWebserver(
 		AddRoute("GET /users/create", NewCreateUserGetHandler(db), requireAdmin).
 		AddRoute("POST /users/create", NewCreateUserPostHandler(db), requireAdmin).
 		AddRoute("GET /users/{id}/edit", NewEditUserGetHandler(db), requireAdmin).
-		AddRoute("PUT /users/{id}/username", NewUpdateUsernameHandler(db), requireAdmin).
+		AddRoute("PUT /users/{id}", NewUpdateUserHandler(db), requireAdmin).
 		AddRoute("PUT /users/{id}/password", NewUpdatePasswordHandler(db), requireAdmin).
 		AddRoute("POST /users/{id}/delete", NewDeleteUserHandler(db), requireAdmin).
 		AddRoute("GET /podcasts/{guid}", NewViewPodcastHandler(cfg.BaseURL, db), requireReadOnly).

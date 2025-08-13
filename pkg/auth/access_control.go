@@ -34,7 +34,7 @@ func (mw AccessControlMiddleware) Handler(next framework.Handler, config framewo
 		if user == nil {
 			framework.GetLogger(ctx).WarnContext(
 				ctx, "No session found for route requiring access level",
-				"requiredAccessLevel", acConfig.RequiredAccessLevel,
+				"requiredAccessLevel", acConfig.RequiredAccessLevel.Format(),
 			)
 			return framework.HttpForbidden()
 		}
@@ -43,8 +43,8 @@ func (mw AccessControlMiddleware) Handler(next framework.Handler, config framewo
 			framework.GetLogger(ctx).InfoContext(
 				ctx, "Access control check failed",
 				"userID", user.ID,
-				"requiredAccessLevel", acConfig.RequiredAccessLevel,
-				"accessLevel", user.AccessLevel,
+				"requiredAccessLevel", acConfig.RequiredAccessLevel.Format(),
+				"accessLevel", user.AccessLevel.Format(),
 			)
 			return framework.HttpForbidden()
 		}
@@ -52,8 +52,8 @@ func (mw AccessControlMiddleware) Handler(next framework.Handler, config framewo
 		framework.GetLogger(ctx).InfoContext(
 			ctx, "Access control check passed",
 			"userID", user.ID,
-			"requiredAccessLevel", acConfig.RequiredAccessLevel,
-			"accessLevel", user.AccessLevel,
+			"requiredAccessLevel", acConfig.RequiredAccessLevel.Format(),
+			"accessLevel", user.AccessLevel.Format(),
 		)
 
 		return next(ctx, w, r)

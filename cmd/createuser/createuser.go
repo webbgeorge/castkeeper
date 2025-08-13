@@ -35,7 +35,7 @@ var (
 func init() {
 	hints := make([]string, 0)
 	for _, al := range users.AccessLevels {
-		hints = append(hints, fmt.Sprintf("%d = %s", al.AccessLevel, al.Name))
+		hints = append(hints, fmt.Sprintf("%d = %s", al, al.Format()))
 	}
 	accessLevelHint = strings.Join(hints, ", ")
 

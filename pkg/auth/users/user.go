@@ -15,11 +15,6 @@ import (
 var commonPasswordsFS embed.FS
 
 const (
-	AccessLevelNone           AccessLevel = -1
-	AccessLevelReadOnly       AccessLevel = 1
-	AccessLevelManagePodcasts AccessLevel = 2
-	AccessLevelAdmin          AccessLevel = 3
-
 	commonPasswordsFile = "ncsc_common_passwords_8_chars_up.txt"
 	passwordHashCost    = 10
 )
@@ -51,25 +46,34 @@ func (u *User) CheckAccessLevel(requiredAccessLevel AccessLevel) bool {
 
 type AccessLevel int
 
-func (al AccessLevel) String() string {
-	for _, listAL := range AccessLevels {
-		if listAL.AccessLevel == al {
-			return listAL.Name
-		}
+const (
+	AccessLevelNone           AccessLevel = -1
+	AccessLevelReadOnly       AccessLevel = 1
+	AccessLevelManagePodcasts AccessLevel = 2
+	AccessLevelAdmin          AccessLevel = 3
+)
+
+var AccessLevels = []AccessLevel{
+	AccessLevelReadOnly,
+	AccessLevelManagePodcasts,
+	AccessLevelAdmin,
+}
+
+var alMap = map[AccessLevel]string{
+	AccessLevelReadOnly:       "Read only",
+	AccessLevelManagePodcasts: "Manage podcasts",
+	AccessLevelAdmin:          "Admin",
+}
+
+func (al AccessLevel) Format() string {
+	name, ok := alMap[al]
+	if ok {
+		return name
 	}
 	if al <= 0 {
 		return "None"
 	}
 	return fmt.Sprintf("Unknown (level %d)", int(al))
-}
-
-var AccessLevels = []struct {
-	AccessLevel AccessLevel
-	Name        string
-}{
-	{AccessLevel: AccessLevelReadOnly, Name: "Read only"},
-	{AccessLevel: AccessLevelManagePodcasts, Name: "Manage podcasts"},
-	{AccessLevel: AccessLevelAdmin, Name: "Admin"},
 }
 
 func GetUserByUsername(ctx context.Context, db *gorm.DB, username string) (User, error) {
@@ -129,13 +133,20 @@ func CreateUser(
 	return nil
 }
 
-func UpdateUsername(ctx context.Context, db *gorm.DB, id uint, newUsername string) error {
+func UpdateUser(
+	ctx context.Context,
+	db *gorm.DB,
+	id uint,
+	newUsername string,
+	newAccessLevel AccessLevel,
+) error {
 	user, err := GetUserByID(ctx, db, id)
 	if err != nil {
 		return fmt.Errorf("failed to GetUserByID: %w", err)
 	}
 
 	user.Username = newUsername
+	user.AccessLevel = newAccessLevel
 	if err = db.Save(&user).Error; err != nil {
 		return err
 	}
