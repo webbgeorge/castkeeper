@@ -47,7 +47,7 @@ run_alt_config:
 	AWS_ENDPOINT_URL=http://localhost:4566 AWS_REGION=us-east-1 AWS_ACCESS_KEY_ID=000000 AWS_SECRET_ACCESS_KEY=000000 go run -ldflags="$(FLAGS)" cmd/main.go serve --config ./castkeeper.alt.yml
 
 create_user:
-	go run cmd/main.go user create
+	go run cmd/main.go users create --username $(USERNAME) --access-level 3
 
 create_user_alt_config:
-	go run cmd/main.go user create --config ./castkeeper.alt.yml
+	go run cmd/main.go users create --config ./castkeeper.alt.yml --username $(USERNAME) --access-level 3

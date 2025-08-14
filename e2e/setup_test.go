@@ -96,11 +96,11 @@ func createGoRunCmd(configProfile, cmdName string, arg ...string) (*exec.Cmd, *b
 func createTestUser(configProfile string) error {
 	cmd, logBuf := createGoRunCmd(
 		configProfile,
-		"user",
+		"users",
 		"create",
 		"--username", e2eUsername,
 		"--password", e2ePassword,
-		"--accessLevel", "3",
+		"--access-level", "3",
 	)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to create user in e2e tests '%s', cmd logs: %s", err.Error(), logBuf.String())

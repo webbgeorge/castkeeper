@@ -1,19 +1,14 @@
 package createuser
 
 import (
-	"bufio"
-	"context"
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
-	"github.com/webbgeorge/castkeeper/pkg/config"
-	"github.com/webbgeorge/castkeeper/pkg/database"
-	"github.com/webbgeorge/castkeeper/pkg/framework"
+	"github.com/webbgeorge/castkeeper/pkg/config/cli"
 	"golang.org/x/term"
 )
 
@@ -25,44 +20,35 @@ var CreateUserCmd = &cobra.Command{
 }
 
 var (
-	cfgFile         string
-	username        string
-	password        string
-	accessLevel     int
-	accessLevelHint string
+	username    string
+	password    string
+	accessLevel int
 )
 
 func init() {
+	cli.InitGlobalFlags(CreateUserCmd)
+
 	hints := make([]string, 0)
 	for _, al := range users.AccessLevels {
 		hints = append(hints, fmt.Sprintf("%d = %s", al, al.Format()))
 	}
-	accessLevelHint = strings.Join(hints, ", ")
+	accessLevelUsage := fmt.Sprintf("access level for the user to create (%s)", strings.Join(hints, ", "))
 
-	accessLevelUsage := fmt.Sprintf("access level for the user to create (otherwise entered interactively): %s", accessLevelHint)
-
-	CreateUserCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (otherwise uses default locations)")
-	CreateUserCmd.Flags().StringVar(&username, "username", "", "username for the user to create (otherwise entered interactively)")
+	CreateUserCmd.Flags().StringVar(&username, "username", "", "username for the user to create")
 	CreateUserCmd.Flags().StringVar(&password, "password", "", "password for the user to create (otherwise entered interactively)")
-	CreateUserCmd.Flags().IntVar(&accessLevel, "accessLevel", 0, accessLevelUsage)
+	CreateUserCmd.Flags().IntVar(&accessLevel, "access-level", 0, accessLevelUsage)
+	if err := CreateUserCmd.MarkFlagRequired("username"); err != nil {
+		panic(err)
+	}
+	if err := CreateUserCmd.MarkFlagRequired("access-level"); err != nil {
+		panic(err)
+	}
 }
 
 func run(cmd *cobra.Command, args []string) {
-	cfg, logger, err := config.LoadConfig(cfgFile)
+	ctx, _, db, err := cli.ConfigureCLI()
 	if err != nil {
-		log.Fatalf("failed to read config: %v", err)
-	}
-
-	ctx := framework.ContextWithLogger(context.Background(), logger)
-
-	db, err := database.ConfigureDatabase(cfg, logger, false)
-	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
-	}
-
-	username, err := readUsername()
-	if err != nil {
-		log.Fatalf("failed to read username: %v", err)
+		log.Fatal(err)
 	}
 
 	password, err := readPassword()
@@ -70,31 +56,12 @@ func run(cmd *cobra.Command, args []string) {
 		log.Fatalf("failed to read password: %v", err)
 	}
 
-	accessLevel, err := readAccessLevel()
-	if err != nil {
-		log.Fatalf("failed to read access level: %v", err)
-	}
-
-	err = users.CreateUser(ctx, db, username, password, accessLevel)
+	err = users.CreateUser(ctx, db, username, password, users.AccessLevel(accessLevel))
 	if err != nil {
 		log.Fatalf("failed to create user: %v", err)
 	}
 
 	log.Printf("successfully created user '%s'", username)
-}
-
-func readUsername() (string, error) {
-	argUsername := username
-	if argUsername != "" {
-		return argUsername, nil
-	}
-
-	fmt.Print("Enter username: ")
-	username, err := bufio.NewReader(os.Stdin).ReadString('\n')
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(username), nil
 }
 
 func readPassword() (string, error) {
@@ -109,25 +76,4 @@ func readPassword() (string, error) {
 		return "", err
 	}
 	return string(pwBytes), nil
-}
-
-func readAccessLevel() (users.AccessLevel, error) {
-	argAccessLevel := accessLevel
-	if argAccessLevel != 0 {
-		return users.AccessLevel(argAccessLevel), nil
-	}
-
-	fmt.Printf("Enter access level (%s): ", accessLevelHint)
-	accessLevelStr, err := bufio.NewReader(os.Stdin).ReadString('\n')
-	if err != nil {
-		return 0, err
-	}
-	accessLevelStr = strings.TrimSpace(accessLevelStr)
-
-	alInt, err := strconv.ParseInt(accessLevelStr, 10, 0)
-	if err != nil {
-		return 0, err
-	}
-
-	return users.AccessLevel(alInt), nil
 }
