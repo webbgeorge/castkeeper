@@ -2,6 +2,7 @@ package pages
 
 import (
 	"fmt"
+	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/components"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 )
@@ -10,17 +11,21 @@ templ Home(pods []podcasts.Podcast) {
 	@components.Layout("") {
 		<div class="flex justify-between items-center my-6">
 			<h1 class="text-xl">Your Podcasts</h1>
-			<a href="/podcasts/search" class="btn btn-primary">Add a podcast</a>
+			@components.MinAccessLevel(users.AccessLevelManagePodcasts) {
+				<a href="/podcasts/search" class="btn btn-primary">Add a podcast</a>
+			}
 		</div>
 		if len(pods) == 0 {
 			<div class="hero bg-base-200 py-12">
 				<div class="hero-content text-center">
 					<div class="max-w-md">
 						<h1 class="text-3xl font-bold">No podcasts yet</h1>
-						<p class="py-6">
-							Add some podcasts to get started.
-						</p>
-						<a href="/podcasts/search" class="btn btn-primary">Add a podcast</a>
+						@components.MinAccessLevel(users.AccessLevelManagePodcasts) {
+							<p class="py-6">
+								Add some podcasts to get started.
+							</p>
+							<a href="/podcasts/search" class="btn btn-primary">Add a podcast</a>
+						}
 					</div>
 				</div>
 			</div>
