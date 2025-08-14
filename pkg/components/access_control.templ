@@ -1,0 +1,11 @@
+package components
+
+import "github.com/webbgeorge/castkeeper/pkg/auth/users"
+
+// only render if user is at or above given access level
+templ MinAccessLevel(minLevel users.AccessLevel) {
+	{{ user := users.GetUserFromCtx(ctx) }}
+	if user != nil && user.AccessLevel >= minLevel {
+		{ children... }
+	}
+}

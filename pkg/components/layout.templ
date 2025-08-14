@@ -17,15 +17,6 @@ func cssURL() string {
 	return fmt.Sprintf("/static/bundle.css?cb=%s", castkeeper.Version)
 }
 
-func user(ctx context.Context) *users.User {
-	return users.GetUserFromCtx(ctx)
-}
-
-func avatarText(ctx context.Context) string {
-	firstChar := string([]rune(user(ctx).Username)[0])
-	return strings.ToUpper(firstChar)
-}
-
 templ Layout(title string) {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -41,7 +32,7 @@ templ Layout(title string) {
 				<div class="flex-1">
 					<h2 class="text-lg"><a href="/">CastKeeper</a></h2>
 				</div>
-				if user(ctx) != nil {
+				if users.GetUserFromCtx(ctx) != nil {
 					<div class="flex-none">
 						<div class="dropdown dropdown-end">
 							<div tabindex="0" role="button" class="btn btn-ghost btn-circle w-8 h-8 avatar avatar-placeholder">
@@ -55,18 +46,20 @@ templ Layout(title string) {
 							>
 								<li class="menu-title">
 									<div class="w-42 truncate">
-										Logged in as { user(ctx).Username }
+										Logged in as { users.GetUserFromCtx(ctx).Username }
 									</div>
 								</li>
 								<li>
 									<a href="/auth/logout">Logout</a>
 								</li>
-								<li class="menu-title">
-									<div class="divider my-0"></div>
-								</li>
-								<li>
-									<a href="/users">Manage users</a>
-								</li>
+								@MinAccessLevel(users.AccessLevelAdmin) {
+									<li class="menu-title">
+										<div class="divider my-0"></div>
+									</li>
+									<li>
+										<a href="/users">Manage users</a>
+									</li>
+								}
 							</ul>
 						</div>
 					</div>
@@ -108,4 +101,10 @@ func pageTitle(title string) string {
 		title = title[:30] + "..."
 	}
 	return fmt.Sprintf("%s | CastKeeper", title)
+}
+
+func avatarText(ctx context.Context) string {
+	user := users.GetUserFromCtx(ctx)
+	firstChar := string([]rune(user.Username)[0])
+	return strings.ToUpper(firstChar)
 }
