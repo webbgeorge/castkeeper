@@ -63,7 +63,7 @@ storage:
 
 ```shell
 # Create a user to log in with (first time only)
-make create_user
+make create_user USERNAME=testuser
 
 # Run server
 make run
@@ -83,7 +83,7 @@ To run locally with the alt configuration, using S3 (localstack):
 docker compose up -d
 
 # Create a user to log in with (first time only)
-make create_user_alt_config
+make create_user_alt_config USERNAME=testuser
 
 # Run server
 make run_alt_config
