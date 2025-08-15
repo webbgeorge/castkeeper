@@ -224,6 +224,73 @@ func NewFeedHandler(baseURL string, db *gorm.DB) framework.Handler {
 	}
 }
 
+func NewCurrentUserUpdatePasswordGetHandler(db *gorm.DB) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		return framework.Render(ctx, w, 200, pages.ProfileUpdatePassword(
+			pages.ProfileUpdatePasswordViewModel{
+				CSRFToken: csrf.Token(r),
+			},
+		))
+	}
+}
+
+func NewCurrentUserUpdatePasswordPostHandler(db *gorm.DB) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		renderPage := func(errorText string, isSuccess bool) error {
+			return framework.Render(ctx, w, 200, pages.ProfileUpdatePassword(
+				pages.ProfileUpdatePasswordViewModel{
+					CSRFToken: csrf.Token(r),
+					ErrorText: errorText,
+					IsSuccess: isSuccess,
+					FormData:  pages.ProfileUpdatePasswordFormData{}, // always empty as it contains passwords
+				},
+			))
+		}
+
+		var formData pages.ProfileUpdatePasswordFormData
+		err := parseFormData(r, &formData)
+		if err != nil {
+			return renderPage("Invalid request", false)
+		}
+
+		err = validate.Struct(formData)
+		if err != nil {
+			if errorText, ok := translateValidationErrs(err); ok {
+				return renderPage(errorText, false)
+			}
+			return renderPage("Invalid request", false)
+		}
+
+		user := users.GetUserFromCtx(ctx)
+		if user == nil {
+			return errors.New("failed to fetch user from session")
+		}
+
+		if err := user.CheckPassword(formData.CurrentPassword); err != nil {
+			return renderPage("Current password was incorrect", false)
+		}
+
+		if formData.Password != formData.RepeatPassword {
+			return renderPage("New passwords must match", false)
+		}
+
+		err = users.UpdatePassword(ctx, db, user.ID, formData.Password)
+		if err != nil {
+			if pErr, ok := err.(users.PasswordStrengthError); ok {
+				return renderPage(pErr.Error(), false)
+			}
+			framework.GetLogger(ctx).Error(fmt.Sprintf(
+				"failed to update password for current user '%d': %s",
+				user.ID,
+				err.Error(),
+			))
+			return renderPage("Failed to update password", false)
+		}
+
+		return renderPage("", true)
+	}
+}
+
 func NewManageUsersHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		users, err := users.ListUsers(ctx, db)
@@ -431,14 +498,14 @@ func NewUpdatePasswordHandler(db *gorm.DB) framework.Handler {
 			return framework.HttpBadRequest("Invalid request URL")
 		}
 
-		renderPage := func(formData partials.UpdatePasswordFormData, errorText string, isSuccess bool) error {
+		renderPage := func(errorText string, isSuccess bool) error {
 			return framework.Render(ctx, w, 200, partials.UpdatePasswordForm(
 				partials.UpdatePasswordFormViewModel{
 					CSRFToken: csrf.Token(r),
 					ErrorText: errorText,
 					IsSuccess: isSuccess,
 					UserID:    uint(userID),
-					FormData:  formData,
+					FormData:  partials.UpdatePasswordFormData{}, // always empty as we dont want to return passwords in HTML
 				},
 			))
 		}
@@ -446,35 +513,35 @@ func NewUpdatePasswordHandler(db *gorm.DB) framework.Handler {
 		var formData partials.UpdatePasswordFormData
 		err = parseFormData(r, &formData)
 		if err != nil {
-			return renderPage(formData, "Invalid request", false)
+			return renderPage("Invalid request", false)
 		}
 
 		err = validate.Struct(formData)
 		if err != nil {
 			if errorText, ok := translateValidationErrs(err); ok {
-				return renderPage(formData, errorText, false)
+				return renderPage(errorText, false)
 			}
-			return renderPage(formData, "Invalid request", false)
+			return renderPage("Invalid request", false)
 		}
 
 		if formData.Password != formData.RepeatPassword {
-			return renderPage(formData, "Passwords must match", false)
+			return renderPage("Passwords must match", false)
 		}
 
 		err = users.UpdatePassword(ctx, db, uint(userID), formData.Password)
 		if err != nil {
 			if pErr, ok := err.(users.PasswordStrengthError); ok {
-				return renderPage(formData, pErr.Error(), false)
+				return renderPage(pErr.Error(), false)
 			}
 			framework.GetLogger(ctx).Error(fmt.Sprintf(
 				"failed to update password for user '%d': %s",
 				userID,
 				err.Error(),
 			))
-			return renderPage(formData, "Failed to update password", false)
+			return renderPage("Failed to update password", false)
 		}
 
-		return renderPage(partials.UpdatePasswordFormData{}, "", true)
+		return renderPage("", true)
 	}
 }
 
