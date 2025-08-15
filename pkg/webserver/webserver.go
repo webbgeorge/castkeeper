@@ -52,6 +52,8 @@ func NewWebserver(
 		AddRoute("GET /auth/login", auth.NewGetLoginHandler(), skipAuth, requireNone).
 		AddRoute("POST /auth/login", auth.NewPostLoginHandler(cfg.BaseURL, db), skipAuth, requireNone).
 		AddRoute("GET /auth/logout", auth.NewLogoutHandler(cfg.BaseURL, db), skipAuth, requireNone).
+		AddRoute("GET /profile/password", NewCurrentUserUpdatePasswordGetHandler(db), requireReadOnly).
+		AddRoute("POST /profile/password", NewCurrentUserUpdatePasswordPostHandler(db), requireReadOnly).
 		AddRoute("GET /users", NewManageUsersHandler(db), requireAdmin).
 		AddRoute("GET /users/create", NewCreateUserGetHandler(db), requireAdmin).
 		AddRoute("POST /users/create", NewCreateUserPostHandler(db), requireAdmin).
