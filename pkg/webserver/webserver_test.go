@@ -479,6 +479,119 @@ func TestGetFeed_NotFound(t *testing.T) {
 		End()
 }
 
+func TestUpdateCurrentUserPasswordPage(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get("/profile/password").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Update Password")).
+		Assert(selector.Exists(
+			"input[name=currentPassword]",
+			"input[name=password]",
+			"input[name=repeatPassword]",
+		)).
+		End()
+}
+
+func TestUpdateCurrentUserPasswordSubmit_Success(t *testing.T) {
+	ctx, server, db, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/profile/password").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("currentPassword=unittestpw&password=GoodPasswordForTesting&repeatPassword=GoodPasswordForTesting").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Password was updated successfully")).
+		End()
+
+	// verify changed in DB
+	user, err := users.GetUserByUsername(ctx, db, "unittest") // from fixtures
+	if err != nil {
+		panic(err)
+	}
+	assert.NotEmpty(t, user.ID)
+	assert.Nil(t, user.CheckPassword("GoodPasswordForTesting"))
+}
+
+func TestUpdateCurrentUserPasswordSubmit_InvalidRequest(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/profile/password").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("currentPassword=&").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("CurrentPassword is a required field, Password is a required field, RepeatPassword is a required field")).
+		End()
+}
+
+func TestUpdateCurrentUserPasswordSubmit_CurrentPasswordIncorrect(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/profile/password").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("currentPassword=INCORRECT&password=GoodPasswordForTesting&repeatPassword=GoodPasswordForTesting").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Current password was incorrect")).
+		End()
+}
+
+func TestUpdateCurrentUserPasswordSubmit_NewPasswordsDoNotMatch(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/profile/password").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("currentPassword=unittestpw&password=GoodPasswordForTesting&repeatPassword=NOT_THE_SAME").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("New passwords must match")).
+		End()
+}
+
+func TestUpdateCurrentUserPasswordSubmit_PasswordTooWeak(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/profile/password").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body("currentPassword=unittestpw&password=password123&repeatPassword=password123").
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("password is too easy to guess")).
+		End()
+}
+
 func TestForbiddenWhenAccessLevelTooLow(t *testing.T) {
 	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
