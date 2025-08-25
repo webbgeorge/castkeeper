@@ -33,7 +33,7 @@ desired - as I want to make sure your time isn't wasted.
 
 #### Prerequisites
 
-- Go 1.24
+- Go 1.25
 - Node.js 22
 - Docker and Docker Compose (or equivalent)
 
