@@ -12,7 +12,7 @@ import (
 
 var userHTMLPolicy = bluemonday.StrictPolicy()
 
-templ ViewPodcast(csrfToken string, baseURL string, pod podcasts.Podcast, eps []podcasts.Episode) {
+templ ViewPodcast(baseURL string, pod podcasts.Podcast, eps []podcasts.Episode) {
 	@components.Layout(pod.Title) {
 		<div class="breadcrumbs text-sm my-4">
 			<ul>
@@ -84,7 +84,7 @@ templ ViewPodcast(csrfToken string, baseURL string, pod podcasts.Podcast, eps []
 						</thead>
 						<tbody>
 							for _, ep := range eps {
-								@partials.EpisodeListItem(csrfToken, ep)
+								@partials.EpisodeListItem(ep)
 							}
 						</tbody>
 					</table>

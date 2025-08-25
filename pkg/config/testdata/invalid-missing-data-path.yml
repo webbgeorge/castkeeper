@@ -4,8 +4,6 @@ BaseURL: http://www.example.com
 
 WebServer:
   Port: 80
-  CSRFSecretKey: testValueDoNotUseInProd
-  CSRFSecureCookie: true
 
 ObjectStorage:
   Driver: local

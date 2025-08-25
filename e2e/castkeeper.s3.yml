@@ -7,8 +7,6 @@ DataPath: ../data/e2e-s3
 
 WebServer:
   Port: 8083
-  CSRFSecretKey: testValueDoNotUseInProd
-  CSRFSecureCookie: false
 
 ObjectStorage:
   Driver: awss3

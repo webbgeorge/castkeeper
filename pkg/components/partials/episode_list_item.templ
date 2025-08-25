@@ -2,12 +2,11 @@ package partials
 
 import (
 	"fmt"
-	"github.com/webbgeorge/castkeeper/pkg/components"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"time"
 )
 
-templ EpisodeListItem(csrfToken string, ep podcasts.Episode) {
+templ EpisodeListItem(ep podcasts.Episode) {
 	<tr class="hover episode-list-item">
 		<td>{ ep.Title }</td>
 		<td>
@@ -33,7 +32,6 @@ templ EpisodeListItem(csrfToken string, ep podcasts.Episode) {
 					class="link"
 					type="button"
 					hx-post={ string(templ.URL(fmt.Sprintf("/episodes/%s/requeue-download", ep.GUID))) }
-					hx-vals={ fmt.Sprintf("{\"%s\": \"%s\"}", components.CSRFTokenInputName, csrfToken) }
 					hx-target="closest .episode-list-item"
 					hx-swap="outerHTML"
 				>

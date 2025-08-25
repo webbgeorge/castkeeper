@@ -17,9 +17,7 @@ func TestLoadConfig_ValidLocal(t *testing.T) {
 		BaseURL:  "http://www.example.com",
 		DataPath: "./data",
 		WebServer: config.WebServerConfig{
-			Port:             80,
-			CSRFSecretKey:    "testValueDoNotUseInProd",
-			CSRFSecureCookie: true,
+			Port: 80,
 		},
 		ObjectStorage: config.ObjectStorageConfig{
 			Driver: "local",
@@ -36,9 +34,7 @@ func TestLoadConfig_ValidS3(t *testing.T) {
 		BaseURL:  "http://www.example.com",
 		DataPath: "./data",
 		WebServer: config.WebServerConfig{
-			Port:             80,
-			CSRFSecretKey:    "testValueDoNotUseInProd",
-			CSRFSecureCookie: true,
+			Port: 80,
 		},
 		ObjectStorage: config.ObjectStorageConfig{
 			Driver:   "awss3",
@@ -54,8 +50,6 @@ func TestLoadConfig_EnvVarsOnly(t *testing.T) {
 	os.Setenv("CASTKEEPER_BASEURL", "http://www.example.com")
 	os.Setenv("CASTKEEPER_DATAPATH", "./data")
 	os.Setenv("CASTKEEPER_WEBSERVER_PORT", "80")
-	os.Setenv("CASTKEEPER_WEBSERVER_CSRFSECRETKEY", "testValueDoNotUseInProd")
-	os.Setenv("CASTKEEPER_WEBSERVER_CSRFSECURECOOKIE", "true")
 	os.Setenv("CASTKEEPER_OBJECTSTORAGE_DRIVER", "awss3")
 	os.Setenv("CASTKEEPER_OBJECTSTORAGE_S3BUCKET", "my-bucket")
 	os.Setenv("CASTKEEPER_OBJECTSTORAGE_S3PREFIX", "some-prefix")
@@ -65,8 +59,6 @@ func TestLoadConfig_EnvVarsOnly(t *testing.T) {
 		os.Unsetenv("CASTKEEPER_BASEURL")
 		os.Unsetenv("CASTKEEPER_DATAPATH")
 		os.Unsetenv("CASTKEEPER_WEBSERVER_PORT")
-		os.Unsetenv("CASTKEEPER_WEBSERVER_CSRFSECRETKEY")
-		os.Unsetenv("CASTKEEPER_WEBSERVER_CSRFSECURECOOKIE")
 		os.Unsetenv("CASTKEEPER_OBJECTSTORAGE_DRIVER")
 		os.Unsetenv("CASTKEEPER_OBJECTSTORAGE_S3BUCKET")
 		os.Unsetenv("CASTKEEPER_OBJECTSTORAGE_S3PREFIX")
@@ -80,9 +72,7 @@ func TestLoadConfig_EnvVarsOnly(t *testing.T) {
 		BaseURL:  "http://www.example.com",
 		DataPath: "./data",
 		WebServer: config.WebServerConfig{
-			Port:             80,
-			CSRFSecretKey:    "testValueDoNotUseInProd",
-			CSRFSecureCookie: true,
+			Port: 80,
 		},
 		ObjectStorage: config.ObjectStorageConfig{
 			Driver:   "awss3",
@@ -106,9 +96,7 @@ func TestLoadConfig_EnvVarOverride(t *testing.T) {
 		BaseURL:  "http://www.example.com",
 		DataPath: "./data",
 		WebServer: config.WebServerConfig{
-			Port:             80,
-			CSRFSecretKey:    "testValueDoNotUseInProd",
-			CSRFSecureCookie: true,
+			Port: 80,
 		},
 		ObjectStorage: config.ObjectStorageConfig{
 			Driver: "local",

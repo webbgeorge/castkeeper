@@ -5,8 +5,6 @@ DataPath: ./data
 
 WebServer:
   Port: 99999999
-  CSRFSecretKey: testValueDoNotUseInProd
-  CSRFSecureCookie: true
 
 ObjectStorage:
   Driver: local

@@ -5,7 +5,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/components/partials"
 )
 
-templ SearchPodcasts(csrfToken string) {
+templ SearchPodcasts() {
 	@components.Layout("Search Podcasts") {
 		<div class="breadcrumbs text-sm my-4">
 			<ul>
@@ -29,12 +29,11 @@ templ SearchPodcasts(csrfToken string) {
 						placeholder="Search"
 						class="input join-item grow"
 					/>
-					@components.CSRFInput(csrfToken)
 					<button type="submit" class="btn btn-primary join-item">Search</button>
 				</form>
 				<div class="flex justify-end items-center gap-4 mt-4">
 					<div>OR</div>
-					@partials.AddFeedUrlModal(csrfToken)
+					@partials.AddFeedUrlModal()
 				</div>
 			</div>
 		</div>

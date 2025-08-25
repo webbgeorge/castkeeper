@@ -7,8 +7,6 @@ DataPath: ../data/e2e-local
 
 WebServer:
   Port: 8082
-  CSRFSecretKey: testValueDoNotUseInProd
-  CSRFSecureCookie: false
 
 ObjectStorage:
   Driver: local

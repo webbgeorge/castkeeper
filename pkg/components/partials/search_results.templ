@@ -2,12 +2,11 @@ package partials
 
 import (
 	"fmt"
-	"github.com/webbgeorge/castkeeper/pkg/components"
 	"github.com/webbgeorge/castkeeper/pkg/itunes"
 	"strconv"
 )
 
-templ SearchResults(csrfToken string, results []itunes.SearchResult, errText string) {
+templ SearchResults(results []itunes.SearchResult, errText string) {
 	if errText != "" {
 		<div role="alert" class="alert alert-error">
 			{ errText }
@@ -47,7 +46,7 @@ templ SearchResults(csrfToken string, results []itunes.SearchResult, errText str
 								<button
 									class="btn btn-primary"
 									hx-post="/podcasts/add"
-									hx-vals={ fmt.Sprintf("{\"feedUrl\": \"%s\", \"%s\": \"%s\"}", res.FeedURL, components.CSRFTokenInputName, csrfToken) }
+									hx-vals={ fmt.Sprintf("{\"feedUrl\": \"%s\"}", res.FeedURL) }
 									hx-target="previous .addPodcastResult"
 									hx-swap="innerHTML"
 									hx-disabled-elt="this"

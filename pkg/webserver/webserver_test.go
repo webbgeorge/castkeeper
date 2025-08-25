@@ -124,24 +124,6 @@ func TestNotFound(t *testing.T) {
 		End()
 }
 
-func TestCSRFFailure(t *testing.T) {
-	_, server, _, _, reset := setupServerForTest()
-	defer reset()
-
-	ctx := context.Background() // ctx without the csrf skip value
-
-	apitest.New().
-		HandlerFunc(server.Mux.ServeHTTP).
-		Post("/podcasts/search").
-		WithContext(ctx).
-		Header("Content-Type", "application/x-www-form-urlencoded").
-		Body("query=testPods").                // from fixtures
-		Cookie("Session-Id", "validSession1"). // from fixtures
-		Expect(t).
-		Status(http.StatusForbidden).
-		End()
-}
-
 func TestSearchPodcastsPage(t *testing.T) {
 	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
@@ -1027,9 +1009,7 @@ func setupServerForTest() (context.Context, *framework.Server, *gorm.DB, *os.Roo
 	cfg := config.Config{
 		BaseURL: "http://example.com",
 		WebServer: config.WebServerConfig{
-			Port:             8000,
-			CSRFSecretKey:    "testValueDoNotUseInProd",
-			CSRFSecureCookie: false,
+			Port: 8000,
 		},
 	}
 	logger := slog.New(slog.DiscardHandler)
@@ -1046,7 +1026,7 @@ func setupServerForTest() (context.Context, *framework.Server, *gorm.DB, *os.Roo
 	}
 
 	server := webserver.NewWebserver(cfg, logger, feedService, db, os, itunesAPI)
-	ctx := context.WithValue(context.Background(), "gorilla.csrf.Skip", true)
+	ctx := context.Background()
 
 	return ctx, server, db, root, func() {
 		resetFS()

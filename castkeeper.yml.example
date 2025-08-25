@@ -5,7 +5,6 @@ DataPath: /app/data
 
 WebServer:
   Port: 8080
-  CSRFSecretKey: testValueDoNotUseInProd
 
 ObjectStorage:
   Driver: awss3

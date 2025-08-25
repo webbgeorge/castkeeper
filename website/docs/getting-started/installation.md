@@ -54,7 +54,6 @@ DataPath: /data
 
 WebServer:
   Port: 8080
-  CSRFSecretKey: <REPLACE_THIS_VALUE>
 
 ObjectStorage:
   Driver: local

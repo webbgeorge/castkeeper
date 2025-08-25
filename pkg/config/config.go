@@ -34,9 +34,7 @@ type Config struct {
 }
 
 type WebServerConfig struct {
-	Port             int    `validate:"required,gt=0,lte=65535"`
-	CSRFSecretKey    string `validate:"required,lte=250" secret:"true"`
-	CSRFSecureCookie bool
+	Port int `validate:"required,gt=0,lte=65535"`
 }
 
 type ObjectStorageConfig struct {
@@ -62,7 +60,6 @@ func loadConfig(v *viper.Viper, configFilePath string) (Config, *slog.Logger, er
 	v.SetDefault("LogLevel", LogLevelInfo)
 	v.SetDefault("EnvName", "unknown")
 	v.SetDefault("WebServer.Port", 8080)
-	v.SetDefault("WebServer.CSRFSecureCookie", true)
 
 	// allow config to optionally be set using environment variables
 	// e.g. CASTKEEPER_WEBSERVER_PORT

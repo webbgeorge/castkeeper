@@ -29,7 +29,6 @@ DataPath: /app/data
 
 WebServer:
   Port: 8080
-  CSRFSecretKey: testValueDoNotUseInProd
 
 ObjectStorage:
   Driver: awss3
@@ -58,8 +57,6 @@ See the reference table below for the full list of environment variables.
 | BaseURL                        | CASTKEEPER_BASEURL                        | The URL that CastKeeper is hosted at, e.g. `https://ck.example.com`. Required. |
 | DataPath                        | CASTKEEPER_DATAPATH                        | The path to the directory that CastKeeper uses to store its data, e.g. `/app/data`. Required. |
 | WebServer.Port                 | CASTKEEPER_WEBSERVER_PORT                 | The port the web server should listen to. Default value: `8080`. |
-| WebServer.CSRFSecretKey        | CASTKEEPER_WEBSERVER_CSRFSECRETKEY        | Unique secret key used to create CSRF tokens. It is very important that this value remains secret. To avoid this key being stored in plain text in the config file, it is recommended that it is provided as an environment variable. Required. |
-| WebServer.CSRFSecureCookie     | CASTKEEPER_WEBSERVER_CSRFSECURECOOKIE     | Boolean value - if true, the CSRF cookie has the secure attribute. Should be true in production if CastKeeper is on HTTPS. Default value: `true`. |
 | ObjectStorage.Driver           | CASTKEEPER_OBJECTSTORAGE_DRIVER           | The object storage provider to use. Allowed values: `local`, `awss3`. Required. |
 | ObjectStorage.S3Bucket         | CASTKEEPER_OBJECTSTORAGE_S3BUCKET         | The S3 bucket to use for file storage when using the `awss3` provider. Required when `Driver` is `awss3`. |
 | ObjectStorage.S3Prefix         | CASTKEEPER_OBJECTSTORAGE_S3PREFIX         | Optional prefix for files when using the `awss3` provider. |
