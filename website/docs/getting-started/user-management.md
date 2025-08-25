@@ -4,16 +4,18 @@ sidebar_position: 6
 
 # User Management
 
-CastKeeper uses username and password authentication to let users log in.
+When setting up CastKeeper, you'll first need to create an user so you can log
+in. This initial user needs to be created using the CastKeeper CLI. It is
+recommended that an **admin** user is created, so any future user management
+can be done via the CastKeeper web UI - see [Managing Users](/usage/managing-users)
+for more information.
 
-## Creating users
+## Creating your first user
 
-Currently, there is no GUI implemented to manage users. This is on the roadmap
-to be implemented soon - however there is a command line interface to allow
-user creation.
+The initial user needs to be created using the CastKeeper CLI.
 
 ```shell
-castkeeper user create
+castkeeper users create --username bob --access-level 3
 ```
 
 This command needs to be run in the same environment where `castkeeper serve`
@@ -24,32 +26,38 @@ It takes a few flags:
 - `--config <path_to_config>`. OPTIONAL. The same config file used for the
   CastKeeper server. By default uses the standard config file paths
   (see [Configuration](/getting-started/configuration)).
-- `--username <username>`. OPTIONAL. The username to create. If not provided
-  it will provide an interactive prompt.
+- `--username <username>`. REQUIRED. The username to create.
+- `--access-level <level>`. REQUIRED. The access level to assign the
+  user - 3 is admin.
 - `--password <password>`. OPTIONAL. The user's password. If not provided
-  it will provide an interactive prompt.
+  it will provide an interactive prompt so the password can be entered securely.
 
-E.g. with optional flags:
+E.g. with specified config file:
 
 ```shell
-castkeeper user create --config /my/config.yml --username user1
+castkeeper users create --config /my/config.yml --username user1 --access-level 3
 # As --password is not provided, the command will prompt the user for it 
 # securely.
 ```
 
-## Modifying and deleting users
+### Creating a new user inside a Docker container
 
-No facility is currently provided for modifying or deleting users. This is on
-the roadmap for the near future, until then users can be deleted manually from
-the database and then recreated.
+To create a user for an instance of CastKeeper running inside a Docker
+container, the above command needs to be run inside of that container. This can
+be done in several ways, depending on your Docker setup.
 
-## User permissions
+```shell
+# Docker (container is called `mycontainer`, cli is located at `/castkeeper`)
+docker exec -d mycontainer /castkeeper users create --username myuser --access-level 3
 
-There is currently no user permission system implemented. This is on the
-roadmap for the near future.
+# Docker compose (service is called `castkeeper`, cli is located at `/castkeeper`)
+docker compose exec castkeeper /castkeeper users create --username myuser --access-level 3
 
-## Alternative authentication methods
+# Kubernetes (pod is called `mypod`, cli is located at `/castkeeper`)
+kubectl exec mypod -- /castkeeper users create --username myuser --access-level 3
+```
 
-CastKeeper currently does not support other authentication methods, however
-there are plans to support auth proxies (such as CloudFlare Access, TailScale
-serve or oauth2-proxy) in the near future.
+## Modifying, deleting and adding additional users
+
+Users can be managed using either the web UI, or using the CastKeeper CLI. This
+is documented on the [Managing Users](/usage/managing-users) page.
