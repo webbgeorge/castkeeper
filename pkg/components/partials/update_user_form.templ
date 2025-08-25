@@ -3,11 +3,9 @@ package partials
 import (
 	"fmt"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
-	"github.com/webbgeorge/castkeeper/pkg/components"
 )
 
 type UpdateUserFormViewModel struct {
-	CSRFToken string
 	ErrorText string
 	IsSuccess bool
 	UserID    uint
@@ -37,7 +35,6 @@ templ UpdateUserForm(vm UpdateUserFormViewModel) {
 			hx-target="#update-user-form-partial"
 			hx-swap="outerHTML"
 		>
-			@components.CSRFInput(vm.CSRFToken)
 			<fieldset class="fieldset">
 				<legend class="fieldset-legend">Username</legend>
 				<input

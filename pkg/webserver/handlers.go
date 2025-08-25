@@ -12,7 +12,6 @@ import (
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
 	en_translations "github.com/go-playground/validator/v10/translations/en"
-	"github.com/gorilla/csrf"
 	"github.com/gorilla/schema"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
@@ -56,7 +55,7 @@ func NewHomeHandler(db *gorm.DB) framework.Handler {
 
 func NewSearchPodcastsHandler() framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return framework.Render(ctx, w, 200, pages.SearchPodcasts(csrf.Token(r)))
+		return framework.Render(ctx, w, 200, pages.SearchPodcasts())
 	}
 }
 
@@ -64,18 +63,18 @@ func NewSearchResultsHandler(itunesAPI *itunes.ItunesAPI) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		q := r.PostFormValue("query")
 		if len(q) == 0 {
-			return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), nil, "Search query cannot be empty"))
+			return framework.Render(ctx, w, 200, partials.SearchResults(nil, "Search query cannot be empty"))
 		}
 		if len(q) >= 250 {
-			return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), nil, "Search query must be less than 250 characters"))
+			return framework.Render(ctx, w, 200, partials.SearchResults(nil, "Search query must be less than 250 characters"))
 		}
 
 		results, err := itunesAPI.Search(ctx, q)
 		if err != nil {
 			framework.GetLogger(ctx).ErrorContext(ctx, "itunes search failed", "error", err)
-			return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), nil, "There was an unexpected error"))
+			return framework.Render(ctx, w, 200, partials.SearchResults(nil, "There was an unexpected error"))
 		}
-		return framework.Render(ctx, w, 200, partials.SearchResults(csrf.Token(r), results, ""))
+		return framework.Render(ctx, w, 200, partials.SearchResults(results, ""))
 	}
 }
 
@@ -130,7 +129,7 @@ func NewViewPodcastHandler(baseURL string, db *gorm.DB) framework.Handler {
 			return err
 		}
 
-		return framework.Render(ctx, w, 200, pages.ViewPodcast(csrf.Token(r), baseURL, pod, eps))
+		return framework.Render(ctx, w, 200, pages.ViewPodcast(baseURL, pod, eps))
 	}
 }
 
@@ -186,7 +185,7 @@ func NewRequeueDownloadHandler(db *gorm.DB) framework.Handler {
 		}
 
 		ep.Status = podcasts.EpisodeStatusPending
-		return framework.Render(ctx, w, 200, partials.EpisodeListItem(csrf.Token(r), ep))
+		return framework.Render(ctx, w, 200, partials.EpisodeListItem(ep))
 	}
 }
 
@@ -227,9 +226,7 @@ func NewFeedHandler(baseURL string, db *gorm.DB) framework.Handler {
 func NewCurrentUserUpdatePasswordGetHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return framework.Render(ctx, w, 200, pages.ProfileUpdatePassword(
-			pages.ProfileUpdatePasswordViewModel{
-				CSRFToken: csrf.Token(r),
-			},
+			pages.ProfileUpdatePasswordViewModel{},
 		))
 	}
 }
@@ -239,7 +236,6 @@ func NewCurrentUserUpdatePasswordPostHandler(db *gorm.DB) framework.Handler {
 		renderPage := func(errorText string, isSuccess bool) error {
 			return framework.Render(ctx, w, 200, pages.ProfileUpdatePassword(
 				pages.ProfileUpdatePasswordViewModel{
-					CSRFToken: csrf.Token(r),
 					ErrorText: errorText,
 					IsSuccess: isSuccess,
 					FormData:  pages.ProfileUpdatePasswordFormData{}, // always empty as it contains passwords
@@ -299,7 +295,6 @@ func NewManageUsersHandler(db *gorm.DB) framework.Handler {
 		}
 		createUserSuccess := r.URL.Query().Get("createUserSuccess") == "true"
 		return framework.Render(ctx, w, 200, pages.ManageUsers(pages.ManageUsersViewModel{
-			CSRFToken:         csrf.Token(r),
 			Users:             users,
 			CreateUserSuccess: createUserSuccess,
 		}))
@@ -343,9 +338,7 @@ func NewDeleteUserHandler(db *gorm.DB) framework.Handler {
 
 func NewCreateUserGetHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return framework.Render(ctx, w, 200, pages.CreateUser(pages.CreateUserViewModel{
-			CSRFToken: csrf.Token(r),
-		}))
+		return framework.Render(ctx, w, 200, pages.CreateUser(pages.CreateUserViewModel{}))
 	}
 }
 
@@ -354,7 +347,6 @@ func NewCreateUserPostHandler(db *gorm.DB) framework.Handler {
 		renderPage := func(formData pages.CreateUserFormData, errorText string) error {
 			return framework.Render(ctx, w, 200, pages.CreateUser(
 				pages.CreateUserViewModel{
-					CSRFToken: csrf.Token(r),
 					ErrorText: errorText,
 					FormData:  formData,
 				},
@@ -418,16 +410,14 @@ func NewEditUserGetHandler(db *gorm.DB) framework.Handler {
 
 		return framework.Render(ctx, w, 200, pages.EditUser(pages.EditUserViewModel{
 			UpdateUserFormVM: partials.UpdateUserFormViewModel{
-				CSRFToken: csrf.Token(r),
-				UserID:    uint(userID),
+				UserID: uint(userID),
 				FormData: partials.UpdateUserFormData{
 					Username:    user.Username,
 					AccessLevel: user.AccessLevel,
 				},
 			},
 			UpdatePasswordFormVM: partials.UpdatePasswordFormViewModel{
-				CSRFToken: csrf.Token(r),
-				UserID:    uint(userID),
+				UserID: uint(userID),
 			},
 		}))
 	}
@@ -443,7 +433,6 @@ func NewUpdateUserHandler(db *gorm.DB) framework.Handler {
 		renderPage := func(formData partials.UpdateUserFormData, errorText string, isSuccess bool) error {
 			return framework.Render(ctx, w, 200, partials.UpdateUserForm(
 				partials.UpdateUserFormViewModel{
-					CSRFToken: csrf.Token(r),
 					ErrorText: errorText,
 					IsSuccess: isSuccess,
 					UserID:    uint(userID),
@@ -501,7 +490,6 @@ func NewUpdatePasswordHandler(db *gorm.DB) framework.Handler {
 		renderPage := func(errorText string, isSuccess bool) error {
 			return framework.Render(ctx, w, 200, partials.UpdatePasswordForm(
 				partials.UpdatePasswordFormViewModel{
-					CSRFToken: csrf.Token(r),
 					ErrorText: errorText,
 					IsSuccess: isSuccess,
 					UserID:    uint(userID),

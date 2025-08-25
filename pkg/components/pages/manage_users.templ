@@ -8,7 +8,6 @@ import (
 )
 
 type ManageUsersViewModel struct {
-	CSRFToken         string
 	Users             []users.User
 	CreateUserSuccess bool
 }
@@ -59,7 +58,6 @@ templ ManageUsers(vm ManageUsersViewModel) {
 											class="link"
 											type="button"
 											hx-post={ string(templ.URL(fmt.Sprintf("/users/%d/delete", user.ID))) }
-											hx-vals={ fmt.Sprintf("{\"%s\": \"%s\"}", components.CSRFTokenInputName, vm.CSRFToken) }
 											hx-confirm="Are you sure you want to delete this user?"
 											hx-target="closest .user-list-item"
 											hx-swap="outerHTML"

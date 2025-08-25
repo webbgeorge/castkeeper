@@ -8,8 +8,6 @@ DataPath: ./data/local-alt
 
 WebServer:
   Port: 8081
-  CSRFSecretKey: testValueDoNotUseInProd
-  CSRFSecureCookie: false
 
 ObjectStorage:
   Driver: awss3

@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/gorilla/csrf"
 	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
@@ -174,7 +173,6 @@ func renderLoginPage(
 	isLogout := r.URL.Query().Get("logout") == "true"
 
 	return framework.Render(ctx, w, 200, pages.Login(
-		csrf.Token(r),
 		redirectPathFromReq(r), // pass from GET to be rendered into a hidden input
 		errText,
 		isLogout,

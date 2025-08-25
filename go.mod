@@ -1,6 +1,6 @@
 module github.com/webbgeorge/castkeeper
 
-go 1.24.2
+go 1.25.0
 
 require (
 	github.com/a-h/templ v0.3.943
@@ -14,7 +14,6 @@ require (
 	github.com/go-rod/rod v0.116.2
 	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/csrf v1.7.2
 	github.com/gorilla/schema v1.4.1
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/orandin/slog-gorm v1.4.0
@@ -55,7 +54,6 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
-	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect

@@ -28,10 +28,7 @@ func NewWebserver(
 	port := fmt.Sprintf(":%d", cfg.WebServer.Port)
 	server := framework.NewServer(port, logger)
 
-	mw := middleware.DefaultMiddlewareStack(
-		cfg.WebServer.CSRFSecretKey,
-		cfg.WebServer.CSRFSecureCookie,
-	)
+	mw := middleware.DefaultMiddlewareStack()
 	mw = append(
 		mw,
 		auth.AuthenticationMiddleware{DB: db},

@@ -7,8 +7,6 @@ DataPath: ./data/local
 
 WebServer:
   Port: 8080
-  CSRFSecretKey: testValueDoNotUseInProd
-  CSRFSecureCookie: false
 
 ObjectStorage:
   Driver: local

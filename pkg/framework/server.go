@@ -77,7 +77,7 @@ func (s *Server) AddFileServer(path string, fileServer http.Handler, configs ...
 func (s *Server) Start(ctx context.Context) error {
 	httpServer := &http.Server{
 		Addr:         s.addr,
-		Handler:      s.Mux,
+		Handler:      http.NewCrossOriginProtection().Handler(s.Mux),
 		ReadTimeout:  time.Second * 5,
 		WriteTimeout: time.Minute * 2,
 		BaseContext:  func(_ net.Listener) context.Context { return ctx },

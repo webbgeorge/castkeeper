@@ -6,7 +6,6 @@ import (
 )
 
 type CreateUserViewModel struct {
-	CSRFToken string
 	ErrorText string
 	FormData  CreateUserFormData
 }
@@ -39,7 +38,6 @@ templ CreateUser(vm CreateUserViewModel) {
 					method="post"
 					action="/users/create"
 				>
-					@components.CSRFInput(vm.CSRFToken)
 					<fieldset class="fieldset">
 						<legend class="fieldset-legend">Username</legend>
 						<input

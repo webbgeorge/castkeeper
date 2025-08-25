@@ -1,8 +1,6 @@
 package partials
 
-import "github.com/webbgeorge/castkeeper/pkg/components"
-
-templ AddFeedUrlModal(csrfToken string) {
+templ AddFeedUrlModal() {
 	<div>
 		<button class="btn btn-neutral" onclick="addFeedUrlModal.showModal()">Add Feed URL</button>
 		<dialog id="addFeedUrlModal" class="modal">
@@ -20,7 +18,6 @@ templ AddFeedUrlModal(csrfToken string) {
 					hx-swap="innerHTML"
 					hx-disabled-elt="find button"
 				>
-					@components.CSRFInput(csrfToken)
 					<fieldset class="fieldset">
 						<legend class="fieldset-legend">Feed URL</legend>
 						<input
