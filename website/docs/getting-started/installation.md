@@ -64,8 +64,8 @@ ObjectStorage:
 # Start the docker compose example
 docker compose up -d
 
-# Create a user (interactive prompt, required on first run only)
-docker compose exec castkeeper /castkeeper user create
+# Create an admin user (required on first run only, password set via interactive prompt)
+docker compose exec castkeeper /castkeeper users create --username myuser --access-level 3
 
 # View the logs
 docker compose logs castkeeper -f
