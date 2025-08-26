@@ -201,6 +201,9 @@ func sanitiseRedirectPath(redirectPath string) string {
 	if !strings.HasPrefix(redirectPath, "/") {
 		return "/"
 	}
+	if strings.HasPrefix(redirectPath, "//") {
+		return "/"
+	}
 	if strings.HasPrefix(redirectPath, "/auth") {
 		return "/"
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -305,7 +306,7 @@ func NewDeleteUserHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		currentUser := users.GetUserFromCtx(ctx)
 
-		userID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+		userID, err := parseUint(r.PathValue("id"))
 		if err != nil || userID == 0 {
 			framework.GetLogger(ctx).Info("cannot delete user: invalid user ID in request")
 			setShowMessageHeader(w, "Invalid user ID in request", "error")
@@ -398,7 +399,7 @@ func NewCreateUserPostHandler(db *gorm.DB) framework.Handler {
 
 func NewEditUserGetHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		userID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+		userID, err := parseUint(r.PathValue("id"))
 		if err != nil {
 			return framework.HttpBadRequest("Invalid request URL")
 		}
@@ -425,7 +426,7 @@ func NewEditUserGetHandler(db *gorm.DB) framework.Handler {
 
 func NewUpdateUserHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		userID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+		userID, err := parseUint(r.PathValue("id"))
 		if err != nil {
 			return framework.HttpBadRequest("Invalid request URL")
 		}
@@ -482,7 +483,7 @@ func NewUpdateUserHandler(db *gorm.DB) framework.Handler {
 
 func NewUpdatePasswordHandler(db *gorm.DB) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		userID, err := strconv.ParseUint(r.PathValue("id"), 10, 64)
+		userID, err := parseUint(r.PathValue("id"))
 		if err != nil {
 			return framework.HttpBadRequest("Invalid request URL")
 		}
@@ -573,4 +574,15 @@ func setShowMessageHeader(w http.ResponseWriter, message, level string) {
 			message,
 		),
 	)
+}
+
+func parseUint(str string) (uint, error) {
+	u, err := strconv.ParseUint(str, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	if u < 0 || u > math.MaxUint {
+		return 0, errors.New("parseUint: out of bounds")
+	}
+	return uint(u), nil
 }
