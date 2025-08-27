@@ -1,0 +1,67 @@
+package pages
+
+import (
+	"fmt"
+	"github.com/webbgeorge/castkeeper/pkg/components"
+	"github.com/webbgeorge/castkeeper/pkg/podcasts"
+	"time"
+)
+
+templ ViewEpisode(episode podcasts.Episode) {
+	@components.Layout(episode.Title) {
+		<div class="breadcrumbs text-sm my-4">
+			<ul>
+				<li><a href="/">Home</a></li>
+				<li>
+					<a href={ fmt.Sprintf("/podcasts/%s", episode.PodcastGUID) }>
+						{ episode.Podcast.Title }
+					</a>
+				</li>
+				<li>{ episode.Title }</li>
+			</ul>
+		</div>
+		<div>
+			<h1 class="text-xl mb-6">{ episode.Title }</h1>
+			<div>
+				{ episode.Status }
+			</div>
+			<td>
+				if episode.DurationSecs == 0 {
+					<span>-</span>
+				} else {
+					{ fmt.Sprintf("%s", time.Duration(episode.DurationSecs) * time.Second) }
+				}
+			</td>
+			<div hx-disable>
+				@templ.Raw(userHTMLPolicy.Sanitize(episode.Description))
+			</div>
+			<div>
+				if episode.Status == podcasts.EpisodeStatusSuccess {
+					<a
+						class="link"
+						href={ templ.URL(fmt.Sprintf("/episodes/%s/download", episode.GUID)) }
+					>
+						Download
+					</a>
+				} else if episode.Status == podcasts.EpisodeStatusFailed {
+					<button
+						class="link"
+						type="button"
+						hx-post={ string(templ.URL(fmt.Sprintf("/episodes/%s/requeue-download", episode.GUID))) }
+						hx-target="closest .episode-list-item"
+						hx-swap="outerHTML"
+					>
+						Retry
+					</button>
+				} else {
+					-
+				}
+			</div>
+			<div>
+				if episode.Status == podcasts.EpisodeStatusSuccess {
+					<audio controls src={ fmt.Sprintf("/episodes/%s/download", episode.GUID) }></audio>
+				}
+			</div>
+		</div>
+	}
+}
