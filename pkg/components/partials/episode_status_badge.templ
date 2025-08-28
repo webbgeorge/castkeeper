@@ -1,0 +1,16 @@
+package partials
+
+import "github.com/webbgeorge/castkeeper/pkg/podcasts"
+
+templ EpisodeStatusBadge(status string) {
+	switch status {
+		case podcasts.EpisodeStatusPending:
+			<div class="badge badge-warning font-normal">{ status }</div>
+		case podcasts.EpisodeStatusSuccess:
+			<div class="badge badge-success font-normal">{ status }</div>
+		case podcasts.EpisodeStatusFailed:
+			<div class="badge badge-error font-normal">{ status }</div>
+		default:
+			<div class="badge badge-neutral font-normal">{ status }</div>
+	}
+}

@@ -18,7 +18,7 @@ func (mw ResponseHeaderMiddleware) Handler(next framework.Handler, _ framework.M
 		w.Header().Set("Cross-Origin-Embedder-Policy", "credentialless")
 		w.Header().Set("Cross-Origin-Resource-Policy", "same-site")
 		w.Header().Set("Permissions-Policy", "geolocation=(), camera=(), microphone=()")
-		w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' *.mzstatic.com; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action 'self';")
+		w.Header().Set("Content-Security-Policy", "default-src 'none'; script-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' *.mzstatic.com; style-src 'self' 'unsafe-inline'; media-src 'self'; frame-ancestors 'none'; form-action 'self';")
 		return next(ctx, w, r)
 	}
 }

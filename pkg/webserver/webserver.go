@@ -63,6 +63,7 @@ func NewWebserver(
 		AddRoute("POST /podcasts/search", NewSearchResultsHandler(itunesAPI), requireManagePods).
 		AddRoute("POST /podcasts/add", NewAddPodcastHandler(feedService, db, os), requireManagePods).
 		AddRoute("GET /podcasts/{guid}/image", NewDownloadImageHandler(db, os), requireReadOnly).
+		AddRoute("GET /episodes/{guid}", NewViewEpisodeHandler(db), requireReadOnly).
 		AddRoute("GET /episodes/{guid}/download", NewDownloadEpisodeHandler(db, os), requireReadOnly).
 		AddRoute("POST /episodes/{guid}/requeue-download", NewRequeueDownloadHandler(db), requireManagePods).
 		AddRoute("GET /feeds/{guid}", NewFeedHandler(cfg.BaseURL, db), useBasicAuth, requireReadOnly)

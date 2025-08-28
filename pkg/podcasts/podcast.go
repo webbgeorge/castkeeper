@@ -115,7 +115,7 @@ func GetPodcast(ctx context.Context, db *gorm.DB, guid string) (Podcast, error) 
 
 func GetEpisode(ctx context.Context, db *gorm.DB, guid string) (Episode, error) {
 	var episode Episode
-	result := db.First(&episode, "guid = ?", guid)
+	result := db.Preload("Podcast").First(&episode, "guid = ?", guid)
 	if result.Error != nil {
 		return episode, result.Error
 	}

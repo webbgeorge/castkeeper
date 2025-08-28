@@ -3,3 +3,19 @@
 @plugin "daisyui" {
   themes: dim --default, dim --prefersdark;
 }
+
+.ugc a:link {
+  text-decoration: underline;
+}
+.ugc p {
+  margin-bottom: var(--spacing);
+}
+.ugc h1, .ugc h2, .ugc h3, .ugc h4, .ugc h5, .ugc h6 {
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--spacing);
+}
+.ugc h1 {font-size: 1.2rem}
+.ugc h2 {font-size: 1.1rem}
+.ugc h3 {font-size: 1rem}
+.ugc h4 {font-size: 0.9rem}
+.ugc h5 {font-size: 0.8rem}
