@@ -10,7 +10,7 @@ import (
 	"strconv"
 )
 
-var userHTMLPolicy = bluemonday.StrictPolicy()
+var userHTMLPolicy = bluemonday.UGCPolicy()
 
 templ ViewPodcast(baseURL string, pod podcasts.Podcast, eps []podcasts.Episode) {
 	@components.Layout(pod.Title) {
