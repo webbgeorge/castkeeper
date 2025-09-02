@@ -21,7 +21,7 @@ templ ViewEpisode(episode podcasts.Episode) {
 				<li>{ episode.Title }</li>
 			</ul>
 		</div>
-		<div class="flex flex-col md:flex-row gap-6">
+		<div class="flex flex-col md:flex-row gap-3 md:gap-6">
 			<div class="self-center md:self-auto max-w-96 md:max-w-48 lg:max-w-96">
 				<div class="card card-compact lg:card-normal bg-base-100 shadow-xl mb-4">
 					<figure class="aspect-square">
@@ -69,19 +69,19 @@ templ ViewEpisode(episode podcasts.Episode) {
 					</div>
 				</div>
 			</div>
-			<div class="grow card card-compact bg-base-100 shadow-xl">
-				<div class="card-body overflow-x-auto">
-					<div class="mb-3">
-						if episode.Status == podcasts.EpisodeStatusSuccess {
-							<audio
-								controls
-								src={ fmt.Sprintf("/episodes/%s/download", episode.GUID) }
-								class="w-full rounded-lg"
-							></audio>
-						}
-					</div>
-					<div hx-disable class="ugc">
-						@templ.Raw(userHTMLPolicy.Sanitize(episode.Description))
+			<div class="grow">
+				if episode.Status == podcasts.EpisodeStatusSuccess {
+					<audio
+						controls
+						src={ fmt.Sprintf("/episodes/%s/download", episode.GUID) }
+						class="w-full rounded-lg shadow-xl mb-6"
+					></audio>
+				}
+				<div class="card card-compact bg-base-100 shadow-xl">
+					<div class="card-body overflow-x-auto">
+						<div hx-disable class="ugc">
+							@templ.Raw(userHTMLPolicy.Sanitize(episode.Description))
+						</div>
 					</div>
 				</div>
 			</div>
