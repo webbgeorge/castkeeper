@@ -8,9 +8,16 @@ import (
 
 templ EpisodeListItem(ep podcasts.Episode) {
 	<tr class="hover episode-list-item">
-		<td>{ ep.Title }</td>
 		<td>
-			@badge(ep.Status)
+			<a
+				class="link link-hover"
+				href={ templ.URL(fmt.Sprintf("/episodes/%s", ep.GUID)) }
+			>
+				{ ep.Title }
+			</a>
+		</td>
+		<td>
+			@EpisodeStatusBadge(ep.Status)
 		</td>
 		<td>
 			if ep.DurationSecs == 0 {
@@ -42,17 +49,4 @@ templ EpisodeListItem(ep podcasts.Episode) {
 			}
 		</td>
 	</tr>
-}
-
-templ badge(status string) {
-	switch status {
-		case podcasts.EpisodeStatusPending:
-			<div class="badge badge-warning">{ status }</div>
-		case podcasts.EpisodeStatusSuccess:
-			<div class="badge badge-success">{ status }</div>
-		case podcasts.EpisodeStatusFailed:
-			<div class="badge badge-error">{ status }</div>
-		default:
-			<div class="badge badge-neutral">{ status }</div>
-	}
 }

@@ -134,6 +134,20 @@ func NewViewPodcastHandler(baseURL string, db *gorm.DB) framework.Handler {
 	}
 }
 
+func NewViewEpisodeHandler(db *gorm.DB) framework.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		episode, err := podcasts.GetEpisode(ctx, db, r.PathValue("guid"))
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return framework.HttpNotFound()
+			}
+			return err
+		}
+
+		return framework.Render(ctx, w, 200, pages.ViewEpisode(episode))
+	}
+}
+
 func NewDownloadEpisodeHandler(db *gorm.DB, os objectstorage.ObjectStorage) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		ep, err := podcasts.GetEpisode(ctx, db, r.PathValue("guid"))

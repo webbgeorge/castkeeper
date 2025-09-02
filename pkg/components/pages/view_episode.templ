@@ -1,0 +1,90 @@
+package pages
+
+import (
+	"fmt"
+	"github.com/webbgeorge/castkeeper/pkg/components"
+	"github.com/webbgeorge/castkeeper/pkg/components/partials"
+	"github.com/webbgeorge/castkeeper/pkg/podcasts"
+	"time"
+)
+
+templ ViewEpisode(episode podcasts.Episode) {
+	@components.Layout(episode.Title) {
+		<div class="breadcrumbs text-sm my-4">
+			<ul>
+				<li><a href="/">Home</a></li>
+				<li>
+					<a href={ fmt.Sprintf("/podcasts/%s", episode.PodcastGUID) }>
+						{ episode.Podcast.Title }
+					</a>
+				</li>
+				<li>{ episode.Title }</li>
+			</ul>
+		</div>
+		<div class="flex flex-col md:flex-row gap-3 md:gap-6">
+			<div class="self-center md:self-auto max-w-96 md:max-w-48 lg:max-w-96">
+				<div class="card card-compact lg:card-normal bg-base-100 shadow-xl mb-4">
+					<figure class="aspect-square">
+						<img
+							class="object-cover"
+							src={ fmt.Sprintf("/podcasts/%s/image", episode.PodcastGUID) }
+							alt={ episode.Title }
+						/>
+					</figure>
+					<div class="card-body">
+						<h2 class="card-title">
+							{ episode.Title }
+							@partials.EpisodeStatusBadge(episode.Status)
+						</h2>
+						<h3 class="card-subtitle">
+							<a href={ fmt.Sprintf("/podcasts/%s", episode.PodcastGUID) }>
+								{ episode.Podcast.Title }
+							</a>
+						</h3>
+						if episode.DurationSecs > 0 {
+							<p>
+								{ fmt.Sprintf("%s", time.Duration(episode.DurationSecs) * time.Second) }
+							</p>
+						}
+						<p>
+							if episode.Status == podcasts.EpisodeStatusSuccess {
+								<a
+									class="link"
+									href={ templ.URL(fmt.Sprintf("/episodes/%s/download", episode.GUID)) }
+								>
+									Download
+								</a>
+							} else if episode.Status == podcasts.EpisodeStatusFailed {
+								<button
+									class="link"
+									type="button"
+									hx-post={ string(templ.URL(fmt.Sprintf("/episodes/%s/requeue-download", episode.GUID))) }
+									hx-target="closest .episode-list-item"
+									hx-swap="outerHTML"
+								>
+									Retry
+								</button>
+							}
+						</p>
+					</div>
+				</div>
+			</div>
+			<div class="grow">
+				if episode.Status == podcasts.EpisodeStatusSuccess {
+					<audio
+						controls
+						src={ fmt.Sprintf("/episodes/%s/download", episode.GUID) }
+						class="w-full rounded-lg shadow-xl mb-6"
+					></audio>
+				}
+				<div class="card card-compact bg-base-100 shadow-xl">
+					<div class="card-body overflow-x-auto">
+						<div hx-disable class="ugc">
+							@templ.Raw(userHTMLPolicy.Sanitize(episode.Description))
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+}
