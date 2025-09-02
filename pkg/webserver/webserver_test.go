@@ -324,6 +324,46 @@ func TestViewPodcast_NotFound(t *testing.T) {
 		End()
 }
 
+func TestViewEpisode(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get(fmt.Sprintf("/episodes/%s", genGUID("ep-1"))). // from fixtures
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Test podcast 916ed63b-7e5e-5541-af78-e214a0c14d95")).
+		Assert(selector.TextExists("Test episode c8998fa5-8083-56a6-8d3c-7b98d031b3d8")).
+		Assert(selector.TextExists("Episode test description")).
+		Assert(selector.TextExists("success")).
+		Assert(selector.ContainsTextValue(
+			"a[href='/episodes/c8998fa5-8083-56a6-8d3c-7b98d031b3d8/download']",
+			"Download",
+		)).
+		Assert(selector.Exists(
+			"audio[src='/episodes/c8998fa5-8083-56a6-8d3c-7b98d031b3d8/download']",
+		)).
+		End()
+}
+
+func TestViewEpisode_NotFound(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get("/episodes/not-a-pod").
+		WithContext(ctx).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusNotFound).
+		Assert(selector.TextExists("404 Not Found")).
+		End()
+}
+
 func TestDownloadImage(t *testing.T) {
 	ctx, server, _, _, reset := setupServerForTest()
 	defer reset()
