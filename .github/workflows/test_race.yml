@@ -1,0 +1,32 @@
+name: Test Race
+
+on:
+  schedule:
+    - cron: 0 6 * * SAT # Every saturday at 6am
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.25.0
+      - name: Set up node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test
+        run: |
+          make install
+          make pre_build
+          go vet ./...
+          gosec ./...
+          go test -race -short ./...
