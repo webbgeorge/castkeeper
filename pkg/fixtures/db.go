@@ -93,7 +93,7 @@ func podFixture(feedURL string) (podcasts.Podcast, []podcasts.Episode) {
 	feedService := podcasts.FeedService{
 		HTTPClient: TestDataHTTPClient,
 	}
-	pod, eps, err := feedService.ParseFeed(context.Background(), feedURL)
+	pod, eps, err := feedService.ParseFeed(context.Background(), feedURL, nil)
 	if err != nil {
 		panic(err)
 	}

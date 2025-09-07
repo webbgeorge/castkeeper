@@ -17,6 +17,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/components/pages"
 	"github.com/webbgeorge/castkeeper/pkg/components/partials"
+	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/feedworker"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
@@ -79,24 +80,33 @@ func NewSearchResultsHandler(itunesAPI *itunes.ItunesAPI) framework.Handler {
 	}
 }
 
-func NewAddPodcastHandler(feedService *podcasts.FeedService, db *gorm.DB, os objectstorage.ObjectStorage) framework.Handler {
+func NewAddPodcastHandler(
+	feedService *podcasts.FeedService,
+	db *gorm.DB,
+	os objectstorage.ObjectStorage,
+	encService *encryption.EncryptedValueService,
+) framework.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		feedURL := r.PostFormValue("feedUrl")
-		podcast, _, err := feedService.ParseFeed(ctx, feedURL)
+		var formData partials.AddPodcastFormData
+		err := parseFormData(r, &formData)
 		if err != nil {
-			if !errors.Is(err, podcasts.ParseErrors{}) {
-				framework.GetLogger(ctx).ErrorContext(ctx, "error parsing feed", "error", err)
-				return framework.Render(ctx, w, 200, partials.AddPodcast("Invalid feed"))
-			}
-			framework.GetLogger(ctx).WarnContext(ctx, fmt.Sprintf("some episodes of podcast '%s' had parsing errors: %s", podcast.GUID, err.Error()))
-			// continue even with some episode parse failures...
+			return framework.Render(ctx, w, 200, partials.AddPodcast("Invalid request"))
 		}
 
-		if err = db.Create(&podcast).Error; err != nil {
+		var creds *podcasts.PodcastCredentials
+		if formData.FeedUsername != "" && formData.FeedPassword != "" {
+			creds = &podcasts.PodcastCredentials{
+				Username: formData.FeedUsername,
+				Password: formData.FeedPassword,
+			}
+		}
+
+		podcast, err := podcasts.AddPodcast(ctx, db, feedService, encService, formData.FeedURL, creds)
+		if err != nil {
 			if errors.Is(err, gorm.ErrDuplicatedKey) {
 				return framework.Render(ctx, w, 200, partials.AddPodcast("This podcast is already added"))
 			}
-			return err
+			return framework.Render(ctx, w, 200, partials.AddPodcast("Invalid feed"))
 		}
 
 		// TODO detect filetype

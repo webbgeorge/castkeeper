@@ -5,13 +5,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
-	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 )
 
 func TestEncryptDecrypt_Success(t *testing.T) {
-	db := fixtures.ConfigureDBForTestWithFixtures()
 	evs := encryption.NewEncryptedValueService(
-		db,
 		[]byte("test_key_1"),
 		1,
 	)
@@ -19,14 +16,9 @@ func TestEncryptDecrypt_Success(t *testing.T) {
 	testData := []byte("test_data")
 	testAD := []byte("test_ad")
 
-	ev, err := evs.EncryptAndSave(
-		"test_table", "test_id", "test_col_1", testData, testAD,
-	)
+	ev, err := evs.Encrypt(testData, testAD)
 
 	assert.Nil(t, err)
-	assert.Equal(t, "test_table", ev.ParentTable)
-	assert.Equal(t, "test_id", ev.ParentID)
-	assert.Equal(t, "test_col_1", ev.ParentColumn)
 	assert.Len(t, ev.Salt, 32)
 	assert.NotEqual(t, testData, ev.EncryptedData)
 
@@ -37,10 +29,7 @@ func TestEncryptDecrypt_Success(t *testing.T) {
 }
 
 func TestEncryptDecrypt_WrongMasterKey(t *testing.T) {
-	db := fixtures.ConfigureDBForTestWithFixtures()
-
 	evsKey1 := encryption.NewEncryptedValueService(
-		db,
 		[]byte("test_key_1"),
 		1,
 	)
@@ -48,13 +37,10 @@ func TestEncryptDecrypt_WrongMasterKey(t *testing.T) {
 	testData := []byte("test_data")
 	testAD := []byte("test_ad")
 
-	ev, err := evsKey1.EncryptAndSave(
-		"test_table", "test_id", "test_col_1", testData, testAD,
-	)
+	ev, err := evsKey1.Encrypt(testData, testAD)
 	assert.Nil(t, err)
 
 	evsKey2 := encryption.NewEncryptedValueService(
-		db,
 		[]byte("test_key_2"),
 		1,
 	)
@@ -66,9 +52,7 @@ func TestEncryptDecrypt_WrongMasterKey(t *testing.T) {
 }
 
 func TestEncryptDecrypt_ModifiedAdditionalData(t *testing.T) {
-	db := fixtures.ConfigureDBForTestWithFixtures()
 	evs := encryption.NewEncryptedValueService(
-		db,
 		[]byte("test_key_1"),
 		1,
 	)
@@ -76,8 +60,8 @@ func TestEncryptDecrypt_ModifiedAdditionalData(t *testing.T) {
 	testData := []byte("test_data")
 	testAD := []byte("test_ad")
 
-	ev, err := evs.EncryptAndSave(
-		"test_table", "test_id", "test_col_1", testData, testAD,
+	ev, err := evs.Encrypt(
+		testData, testAD,
 	)
 	assert.Nil(t, err)
 

@@ -2,10 +2,14 @@ package podcasts
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
+	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"gorm.io/gorm"
 )
 
@@ -28,6 +32,7 @@ type Podcast struct {
 	FeedURL       string `validate:"required,http_url,lte=1000"`
 	LastCheckedAt *time.Time
 	LastEpisodeAt *time.Time
+	Credentials   *encryption.EncryptedValue `validate:"-" gorm:"embedded"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 	DeletedAt     gorm.DeletedAt `gorm:"index"`
@@ -36,6 +41,11 @@ type Podcast struct {
 type Category struct {
 	Name        string `validate:"required,gte=1,lte=100"`
 	SubCategory *Category
+}
+
+type PodcastCredentials struct {
+	Username string `validate:"lte=256"`
+	Password string `validate:"lte=256"`
 }
 
 type Episode struct {
@@ -71,6 +81,78 @@ func (e *Episode) BeforeSave(tx *gorm.DB) error {
 		return fmt.Errorf("episode not valid: %w", err)
 	}
 	return nil
+}
+
+func (pc PodcastCredentials) Validate() error {
+	err := validate.Struct(pc)
+	if err != nil {
+		return fmt.Errorf("podcast credentials not valid: %w", err)
+	}
+	return nil
+}
+
+func AddPodcast(
+	ctx context.Context,
+	db *gorm.DB,
+	feedService *FeedService,
+	encService *encryption.EncryptedValueService,
+	feedURL string,
+	creds *PodcastCredentials,
+) (Podcast, error) {
+	podcast, _, err := feedService.ParseFeed(ctx, feedURL, creds)
+	if err != nil {
+		if !errors.Is(err, ParseErrors{}) {
+			framework.GetLogger(ctx).ErrorContext(ctx, "error parsing feed", "error", err)
+			return podcast, err
+		}
+		framework.GetLogger(ctx).WarnContext(ctx, fmt.Sprintf("some episodes of podcast '%s' had parsing errors: %s", podcast.GUID, err.Error()))
+		// continue even with some episode parse failures...
+	}
+
+	if creds != nil {
+		if err := creds.Validate(); err != nil {
+			return podcast, err
+		}
+
+		credsData, err := json.Marshal(creds)
+		if err != nil {
+			return podcast, err
+		}
+
+		ev, err := encService.Encrypt(
+			credsData,
+			[]byte(podcast.FeedURL),
+		)
+		if err != nil {
+			return podcast, err
+		}
+		podcast.Credentials = &ev
+	}
+
+	if err = db.Create(&podcast).Error; err != nil {
+		return podcast, err
+	}
+
+	return podcast, nil
+}
+
+func GetCredentials(encService *encryption.EncryptedValueService, podcast Podcast) (*PodcastCredentials, error) {
+	if podcast.Credentials == nil {
+		return nil, nil
+	}
+
+	data, err := encService.Decrypt(*podcast.Credentials, []byte(podcast.FeedURL))
+	if err != nil {
+		return nil, err
+	}
+
+	var creds PodcastCredentials
+	err = json.Unmarshal(data, &creds)
+	if err != nil {
+		return nil, err
+	}
+
+	return &creds, nil
 }
 
 func ListPodcasts(ctx context.Context, db *gorm.DB) ([]Podcast, error) {
