@@ -13,6 +13,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/auth/sessions"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/database"
+	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/feedworker"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
@@ -60,12 +61,16 @@ func run(cmd *cobra.Command, args []string) {
 	itunesAPI := &itunes.ItunesAPI{
 		HTTPClient: framework.NewHTTPClient(time.Second * 5),
 	}
+	encService := encryption.NewEncryptedValueService(
+		[]byte("my_test_key"), // TODO
+		1,
+	)
 
 	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
 		return webserver.
-			NewWebserver(cfg, logger, feedService, db, objstore, itunesAPI).
+			NewWebserver(cfg, logger, feedService, db, objstore, itunesAPI, encService).
 			Start(ctx)
 	})
 
@@ -84,7 +89,7 @@ func run(cmd *cobra.Command, args []string) {
 		qw := framework.QueueWorker{
 			DB:        db,
 			QueueName: feedworker.FeedWorkerQueueName,
-			HandlerFn: feedworker.NewFeedWorkerQueueHandler(db, feedService),
+			HandlerFn: feedworker.NewFeedWorkerQueueHandler(db, feedService, encService),
 		}
 		return qw.Start(ctx)
 	})

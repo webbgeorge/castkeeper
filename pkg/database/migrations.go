@@ -18,7 +18,7 @@ type migration interface {
 // migrations are run in this order
 var allMigrations = []migration{
 	migrations.Migration001Init{},
-	migrations.Migration002AddEncryptedValue{},
+	migrations.Migration002AddPodcastCredentials{},
 }
 
 type appliedMigration struct {

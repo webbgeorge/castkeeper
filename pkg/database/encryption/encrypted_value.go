@@ -8,39 +8,30 @@ import (
 	"io"
 
 	"golang.org/x/crypto/hkdf"
-	"gorm.io/gorm"
 )
 
 type EncryptedValue struct {
-	gorm.Model
-	ParentTable   string
-	ParentID      string
-	ParentColumn  string
 	EncryptedData []byte
 	KeyVersion    uint
 	Salt          []byte
 }
 
 type EncryptedValueService struct {
-	db         *gorm.DB
 	masterKey  []byte
 	keyVersion uint
 }
 
 func NewEncryptedValueService(
-	db *gorm.DB,
 	masterKey []byte,
 	keyVersion uint,
 ) *EncryptedValueService {
 	return &EncryptedValueService{
-		db:         db,
 		masterKey:  masterKey,
 		keyVersion: keyVersion,
 	}
 }
 
-func (s *EncryptedValueService) EncryptAndSave(
-	parentTable, parentID, parentColumn string,
+func (s *EncryptedValueService) Encrypt(
 	plaintext []byte,
 	additionalData []byte,
 ) (EncryptedValue, error) {
@@ -49,37 +40,25 @@ func (s *EncryptedValueService) EncryptAndSave(
 		return EncryptedValue{}, err
 	}
 
-	aead, err := s.getAEAD(
-		salt, additionalData, parentTable, parentID, parentColumn,
-	)
+	aead, err := s.getAEAD(salt, additionalData)
 	if err != nil {
 		return EncryptedValue{}, err
 	}
 
 	ciphertext := aead.Seal(nil, nil, plaintext, additionalData)
 
-	ev := EncryptedValue{
-		ParentTable:   parentTable,
-		ParentID:      parentID,
-		ParentColumn:  parentColumn,
+	return EncryptedValue{
 		KeyVersion:    s.keyVersion,
 		Salt:          salt,
 		EncryptedData: ciphertext,
-	}
-	if err := s.db.Create(&ev).Error; err != nil {
-		return EncryptedValue{}, err
-	}
-
-	return ev, nil
+	}, nil
 }
 
 func (s *EncryptedValueService) Decrypt(
 	ev EncryptedValue,
 	additionalData []byte,
 ) ([]byte, error) {
-	aead, err := s.getAEAD(
-		ev.Salt, additionalData, ev.ParentTable, ev.ParentID, ev.ParentColumn,
-	)
+	aead, err := s.getAEAD(ev.Salt, additionalData)
 	if err != nil {
 		return nil, err
 	}
@@ -93,10 +72,8 @@ func (s *EncryptedValueService) Decrypt(
 
 func (s *EncryptedValueService) getAEAD(
 	salt, additionalData []byte,
-	parentTable, parentID, parentColumn string,
 ) (cipher.AEAD, error) {
-	rowKey, err := s.deriveRowKey(
-		salt, additionalData, parentTable, parentID, parentColumn)
+	rowKey, err := s.deriveRowKey(salt, additionalData)
 	if err != nil {
 		return nil, err
 	}
@@ -111,13 +88,12 @@ func (s *EncryptedValueService) getAEAD(
 
 func (s *EncryptedValueService) deriveRowKey(
 	salt, additionalData []byte,
-	parentTable, parentID, parentColumn string,
 ) ([]byte, error) {
 	h := hkdf.New(
 		sha256.New,
 		s.masterKey,
 		salt,
-		append([]byte(parentTable+parentID+parentColumn), additionalData...),
+		additionalData,
 	)
 	key := make([]byte, 32)
 	if _, err := io.ReadFull(h, key); err != nil {

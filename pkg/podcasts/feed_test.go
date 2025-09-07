@@ -95,7 +95,7 @@ func TestParseFeed(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			podcast, episodes, err := feedService.ParseFeed(context.Background(), tc.url)
+			podcast, episodes, err := feedService.ParseFeed(context.Background(), tc.url, nil)
 
 			if err == nil {
 				assert.Equal(t, tc.expectedPodcast, podcast)
@@ -116,6 +116,7 @@ func TestParseFeedTruncation(t *testing.T) {
 	podcast, episodes, err := feedService.ParseFeed(
 		context.Background(),
 		"http://testdata/feeds/very-long-pod-title.xml",
+		nil,
 	)
 
 	assert.Nil(t, err)
@@ -133,6 +134,7 @@ func TestParseFeedEpisodeGUIDFallback(t *testing.T) {
 	_, episodes, err := feedService.ParseFeed(
 		context.Background(),
 		"http://testdata/feeds/no-ep-guid.xml",
+		nil,
 	)
 
 	assert.Nil(t, err)
