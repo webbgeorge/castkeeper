@@ -34,26 +34,31 @@ templ AddFeedUrlModal() {
 							placeholder="Feed URL"
 						/>
 					</fieldset>
-					<fieldset class="fieldset">
-						<legend class="fieldset-legend">Username</legend>
-						<input
-							name="feedUsername"
-							id="feedUsernameInput"
-							type="text"
-							class="input w-full"
-							placeholder="Username"
-						/>
-					</fieldset>
-					<fieldset class="fieldset">
-						<legend class="fieldset-legend">Password</legend>
-						<input
-							name="feedPassword"
-							id="feedPasswordInput"
-							type="password"
-							class="input w-full"
-							placeholder="Password"
-						/>
-					</fieldset>
+					<details>
+						<summary class="my-4 marker:content-none link">
+							Add username and password
+						</summary>
+						<fieldset class="fieldset">
+							<legend class="fieldset-legend">Username</legend>
+							<input
+								name="feedUsername"
+								id="feedUsernameInput"
+								type="text"
+								class="input w-full"
+								placeholder="Username"
+							/>
+						</fieldset>
+						<fieldset class="fieldset">
+							<legend class="fieldset-legend">Password</legend>
+							<input
+								name="feedPassword"
+								id="feedPasswordInput"
+								type="password"
+								class="input w-full"
+								placeholder="Password"
+							/>
+						</fieldset>
+					</details>
 					<div class="flex justify-end mt-4">
 						<button type="submit" class="btn btn-primary">Add Podcast</button>
 					</div>

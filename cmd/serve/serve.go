@@ -98,7 +98,7 @@ func run(cmd *cobra.Command, args []string) {
 		qw := framework.QueueWorker{
 			DB:        db,
 			QueueName: downloadworker.DownloadWorkerQueueName,
-			HandlerFn: downloadworker.NewDownloadWorkerQueueHandler(db, objstore),
+			HandlerFn: downloadworker.NewDownloadWorkerQueueHandler(db, objstore, encService),
 		}
 		return qw.Start(ctx)
 	})

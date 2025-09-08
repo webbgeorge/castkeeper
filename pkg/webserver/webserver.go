@@ -68,5 +68,7 @@ func NewWebserver(
 		AddRoute("GET /episodes/{guid}", NewViewEpisodeHandler(db), requireReadOnly).
 		AddRoute("GET /episodes/{guid}/download", NewDownloadEpisodeHandler(db, os), requireReadOnly).
 		AddRoute("POST /episodes/{guid}/requeue-download", NewRequeueDownloadHandler(db), requireManagePods).
-		AddRoute("GET /feeds/{guid}", NewFeedHandler(cfg.BaseURL, db), useBasicAuth, requireReadOnly)
+		AddRoute("GET /feeds/{guid}", NewFeedHandler(cfg.BaseURL, db), useBasicAuth, requireReadOnly).
+		AddRoute("GET /feeds/{guid}/image", NewDownloadImageHandler(db, os), useBasicAuth, requireReadOnly).
+		AddRoute("GET /feeds/episodes/{guid}/download", NewDownloadEpisodeHandler(db, os), useBasicAuth, requireReadOnly)
 }

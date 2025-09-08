@@ -137,7 +137,7 @@ func AddPodcast(
 }
 
 func GetCredentials(encService *encryption.EncryptedValueService, podcast Podcast) (*PodcastCredentials, error) {
-	if podcast.Credentials == nil {
+	if podcast.Credentials == nil || len(podcast.Credentials.EncryptedData) == 0 {
 		return nil, nil
 	}
 
