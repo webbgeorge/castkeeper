@@ -283,7 +283,7 @@ func feedFromPodcast(baseURL string, pod Podcast, eps []Episode) (*gopodcast.Pod
 		Language:       pod.Language,
 		ITunesCategory: categories,
 		ITunesExplicit: gopodcast.Bool(pod.IsExplicit),
-		ITunesImage:    gopodcast.ITunesImage{Href: fmt.Sprintf("%s/podcasts/%s/image", baseURL, pod.GUID)},
+		ITunesImage:    gopodcast.ITunesImage{Href: fmt.Sprintf("%s/feeds/%s/image", baseURL, pod.GUID)},
 	}
 
 	for _, ep := range eps {
@@ -298,7 +298,7 @@ func feedFromPodcast(baseURL string, pod Podcast, eps []Episode) (*gopodcast.Pod
 			Enclosure: gopodcast.Enclosure{
 				Length: ep.Bytes,
 				Type:   ep.MimeType,
-				URL:    fmt.Sprintf("%s/episodes/%s/download", baseURL, ep.GUID),
+				URL:    fmt.Sprintf("%s/feeds/episodes/%s/download", baseURL, ep.GUID),
 			},
 			GUID:    gopodcast.ItemGUID{Text: ep.GUID},
 			PubDate: &pubDate,

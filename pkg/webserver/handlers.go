@@ -109,9 +109,15 @@ func NewAddPodcastHandler(
 			return framework.Render(ctx, w, 200, partials.AddPodcast("Invalid feed"))
 		}
 
+		// TODO this needs to be refactored into the addpodcast function
+		osCreds := &objectstorage.Credentials{
+			Username: creds.Username,
+			Password: creds.Password,
+		}
+
 		// TODO detect filetype
 		fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(podcast.GUID), "jpg")
-		_, err = os.SaveRemoteFile(ctx, podcast.ImageURL, util.SanitiseGUID(podcast.GUID), fileName)
+		_, err = os.SaveRemoteFile(ctx, osCreds, podcast.ImageURL, util.SanitiseGUID(podcast.GUID), fileName)
 		if err != nil {
 			framework.GetLogger(ctx).WarnContext(ctx, "failed to download image, continuing without", "error", err)
 		}
