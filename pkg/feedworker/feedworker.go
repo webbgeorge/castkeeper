@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
@@ -17,7 +18,11 @@ const (
 	minCheckInterval    = time.Minute * 10
 )
 
-func NewFeedWorkerQueueHandler(db *gorm.DB, feedService *podcasts.FeedService) func(context.Context, any) error {
+func NewFeedWorkerQueueHandler(
+	db *gorm.DB,
+	feedService *podcasts.FeedService,
+	encService *encryption.EncryptedValueService,
+) func(context.Context, any) error {
 	return func(ctx context.Context, _ any) error {
 		pods, err := podcasts.ListPodcasts(ctx, db)
 		if err != nil {
@@ -32,7 +37,7 @@ func NewFeedWorkerQueueHandler(db *gorm.DB, feedService *podcasts.FeedService) f
 				framework.GetLogger(ctx).DebugContext(ctx, fmt.Sprintf("podcast '%s' checked too recently, skipping", pod.GUID))
 				continue
 			}
-			err := processPodcast(ctx, db, feedService, pod)
+			err := processPodcast(ctx, db, feedService, encService, pod)
 			if err != nil {
 				framework.GetLogger(ctx).ErrorContext(ctx, fmt.Sprintf("feedworker failed to process podcast '%s': %s", pod.GUID, err.Error()))
 				errs = append(errs, err)
@@ -47,8 +52,13 @@ func NewFeedWorkerQueueHandler(db *gorm.DB, feedService *podcasts.FeedService) f
 	}
 }
 
-func processPodcast(ctx context.Context, db *gorm.DB, feedService *podcasts.FeedService, podcast podcasts.Podcast) error {
-	_, episodes, err := feedService.ParseFeed(ctx, podcast.FeedURL)
+func processPodcast(ctx context.Context, db *gorm.DB, feedService *podcasts.FeedService, encService *encryption.EncryptedValueService, podcast podcasts.Podcast) error {
+	creds, err := podcasts.GetCredentials(encService, podcast)
+	if err != nil {
+		return err
+	}
+
+	_, episodes, err := feedService.ParseFeed(ctx, podcast.FeedURL, creds)
 	if err != nil {
 		if !errors.Is(err, podcasts.ParseErrors{}) {
 			return err

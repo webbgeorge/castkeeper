@@ -19,7 +19,7 @@ type S3ObjectStorage struct {
 	Prefix     string
 }
 
-func (s *S3ObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation, podcastGUID, fileName string) (int64, error) {
+func (s *S3ObjectStorage) SaveRemoteFile(ctx context.Context, creds *Credentials, remoteLocation, podcastGUID, fileName string) (int64, error) {
 	err := util.ValidateExtURL(remoteLocation)
 	if err != nil {
 		return -1, fmt.Errorf("invalid remoteLocation '%s': %w", remoteLocation, err)
@@ -32,6 +32,10 @@ func (s *S3ObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation, po
 		return -1, err
 	}
 	req = req.WithContext(ctx)
+
+	if creds != nil {
+		req.SetBasicAuth(creds.Username, creds.Password)
+	}
 
 	resp, err := s.HTTPClient.Do(req)
 	if err != nil {
