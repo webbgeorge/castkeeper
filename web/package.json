@@ -6,11 +6,11 @@
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.13",
     "@tailwindcss/typography": "^0.5.16",
-    "daisyui": "^5.1.7",
+    "daisyui": "^5.1.9",
     "esbuild": "^0.25.9",
     "tailwindcss": "^4.1.7"
   },
   "dependencies": {
-    "htmx.org": "^2.0.6"
+    "htmx.org": "^2.0.7"
   }
 }
