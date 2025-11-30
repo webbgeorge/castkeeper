@@ -4,13 +4,13 @@
     "buildjs": "esbuild src/main.js --bundle --minify --outfile=static/bundle.js"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.14",
+    "@tailwindcss/cli": "^4.1.16",
     "@tailwindcss/typography": "^0.5.19",
-    "daisyui": "^5.1.26",
-    "esbuild": "^0.25.10",
+    "daisyui": "^5.3.10",
+    "esbuild": "^0.25.11",
     "tailwindcss": "^4.1.7"
   },
   "dependencies": {
-    "htmx.org": "^2.0.7"
+    "htmx.org": "^2.0.8"
   }
 }
