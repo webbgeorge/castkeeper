@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"github.com/webbgeorge/castkeeper/pkg/util"
 )
 
@@ -19,7 +20,7 @@ type S3ObjectStorage struct {
 	Prefix     string
 }
 
-func (s *S3ObjectStorage) SaveRemoteFile(ctx context.Context, creds *Credentials, remoteLocation, podcastGUID, fileName string) (int64, error) {
+func (s *S3ObjectStorage) SaveRemoteFile(ctx context.Context, creds *podcasts.PodcastCredentials, remoteLocation, podcastGUID, fileName string) (int64, error) {
 	err := util.ValidateExtURL(remoteLocation)
 	if err != nil {
 		return -1, fmt.Errorf("invalid remoteLocation '%s': %w", remoteLocation, err)

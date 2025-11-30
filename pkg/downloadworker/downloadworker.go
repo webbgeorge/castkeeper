@@ -34,11 +34,10 @@ func NewDownloadWorkerQueueHandler(
 		if err != nil {
 			return fmt.Errorf("failed to get podcast: %w", err)
 		}
-		pCreds, err := podcasts.GetCredentials(encService, podcast)
+		creds, err := podcasts.GetCredentials(encService, podcast)
 		if err != nil {
 			return fmt.Errorf("failed to get podcast credentials: %w", err)
 		}
-		creds := &objectstorage.Credentials{Username: pCreds.Username, Password: pCreds.Password}
 
 		extension, err := podcasts.MIMETypeExtension(episode.MimeType)
 		if err != nil {
