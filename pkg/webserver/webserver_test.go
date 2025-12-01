@@ -1052,6 +1052,10 @@ func setupServerForTest() (context.Context, *framework.Server, *gorm.DB, *os.Roo
 		WebServer: config.WebServerConfig{
 			Port: 8000,
 		},
+		Encryption: config.EncryptionConfig{
+			Driver:                config.EncryptionDriverLocal,
+			LocalKeyEncryptionKey: "00000000000000000000000000000000",
+		},
 	}
 	logger := slog.New(slog.DiscardHandler)
 	feedService := &podcasts.FeedService{
@@ -1066,8 +1070,7 @@ func setupServerForTest() (context.Context, *framework.Server, *gorm.DB, *os.Roo
 		HTTPClient: fixtures.TestItunesHTTPClient,
 	}
 	encService := encryption.NewEncryptedValueService(
-		[]byte("my_test_key"),
-		1,
+		cfg.Encryption,
 	)
 
 	server := webserver.NewWebserver(cfg, logger, feedService, db, os, itunesAPI, encService)

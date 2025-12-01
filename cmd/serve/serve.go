@@ -62,8 +62,7 @@ func run(cmd *cobra.Command, args []string) {
 		HTTPClient: framework.NewHTTPClient(time.Second * 5),
 	}
 	encService := encryption.NewEncryptedValueService(
-		[]byte("my_test_key"), // TODO
-		1,
+		cfg.Encryption,
 	)
 
 	g, ctx := errgroup.WithContext(ctx)

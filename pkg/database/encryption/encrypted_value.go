@@ -5,8 +5,10 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"crypto/sha256"
+	"errors"
 	"io"
 
+	"github.com/webbgeorge/castkeeper/pkg/config"
 	"golang.org/x/crypto/hkdf"
 )
 
@@ -22,12 +24,14 @@ type EncryptedValueService struct {
 }
 
 func NewEncryptedValueService(
-	masterKey []byte,
-	keyVersion uint,
+	cfg config.EncryptionConfig,
 ) *EncryptedValueService {
+	if cfg.Driver != config.EncryptionDriverLocal {
+		return nil
+	}
 	return &EncryptedValueService{
-		masterKey:  masterKey,
-		keyVersion: keyVersion,
+		masterKey:  []byte(cfg.LocalKeyEncryptionKey),
+		keyVersion: 1, // TODO replace when key rotation is implemented
 	}
 }
 
@@ -35,6 +39,10 @@ func (s *EncryptedValueService) Encrypt(
 	plaintext []byte,
 	additionalData []byte,
 ) (EncryptedValue, error) {
+	if s == nil {
+		return EncryptedValue{}, errors.New("encryption is not configured")
+	}
+
 	salt, err := randBytes(32)
 	if err != nil {
 		return EncryptedValue{}, err
@@ -58,6 +66,10 @@ func (s *EncryptedValueService) Decrypt(
 	ev EncryptedValue,
 	additionalData []byte,
 ) ([]byte, error) {
+	if s == nil {
+		return nil, errors.New("encryption is not configured")
+	}
+
 	aead, err := s.getAEAD(ev.Salt, additionalData)
 	if err != nil {
 		return nil, err

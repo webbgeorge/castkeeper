@@ -18,6 +18,7 @@ const (
 	applicationName          = "castkeeper"
 	ObjectStorageDriverLocal = "local"
 	ObjectStorageDriverS3    = "awss3"
+	EncryptionDriverLocal    = "local"
 	LogLevelDebug            = "debug"
 	LogLevelInfo             = "info"
 	LogLevelWarn             = "warn"
@@ -31,6 +32,7 @@ type Config struct {
 	DataPath      string              `validate:"required"`
 	WebServer     WebServerConfig     `validate:"required"`
 	ObjectStorage ObjectStorageConfig `validate:"required"`
+	Encryption    EncryptionConfig    `validate:"omitempty"`
 }
 
 type WebServerConfig struct {
@@ -42,6 +44,11 @@ type ObjectStorageConfig struct {
 	S3Bucket         string `validate:"required_if=Driver awss3"`
 	S3Prefix         string `validate:"lte=250"`
 	S3ForcePathStyle bool   // used for localstack testing, unlikely to be ever used in prod
+}
+
+type EncryptionConfig struct {
+	Driver                string `validate:"omitempty,oneof=local"`
+	LocalKeyEncryptionKey string `validate:"omitempty,required_if=Driver local,len=32" secret:"true"`
 }
 
 func LoadConfig(configFilePath string) (Config, *slog.Logger, error) {
@@ -116,6 +123,7 @@ func debugConfig(cfg Config) string {
 	debugStruct(cfg, "", &debugVals)
 	debugStruct(cfg.WebServer, "WebServer.", &debugVals)
 	debugStruct(cfg.ObjectStorage, "ObjectStorage.", &debugVals)
+	debugStruct(cfg.Encryption, "Encryption.", &debugVals)
 	return strings.Join(debugVals, ", ")
 }
 
