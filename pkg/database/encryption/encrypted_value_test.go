@@ -4,13 +4,16 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 )
 
 func TestEncryptDecrypt_Success(t *testing.T) {
 	evs := encryption.NewEncryptedValueService(
-		[]byte("test_key_1"),
-		1,
+		config.EncryptionConfig{
+			Driver:                config.EncryptionDriverLocal,
+			LocalKeyEncryptionKey: "00000000000000000000000000000000",
+		},
 	)
 
 	testData := []byte("test_data")
@@ -30,8 +33,10 @@ func TestEncryptDecrypt_Success(t *testing.T) {
 
 func TestEncryptDecrypt_WrongMasterKey(t *testing.T) {
 	evsKey1 := encryption.NewEncryptedValueService(
-		[]byte("test_key_1"),
-		1,
+		config.EncryptionConfig{
+			Driver:                config.EncryptionDriverLocal,
+			LocalKeyEncryptionKey: "10000000000000000000000000000000",
+		},
 	)
 
 	testData := []byte("test_data")
@@ -41,8 +46,10 @@ func TestEncryptDecrypt_WrongMasterKey(t *testing.T) {
 	assert.Nil(t, err)
 
 	evsKey2 := encryption.NewEncryptedValueService(
-		[]byte("test_key_2"),
-		1,
+		config.EncryptionConfig{
+			Driver:                config.EncryptionDriverLocal,
+			LocalKeyEncryptionKey: "20000000000000000000000000000000",
+		},
 	)
 
 	decryptedPT, err := evsKey2.Decrypt(ev, testAD)
@@ -53,8 +60,10 @@ func TestEncryptDecrypt_WrongMasterKey(t *testing.T) {
 
 func TestEncryptDecrypt_ModifiedAdditionalData(t *testing.T) {
 	evs := encryption.NewEncryptedValueService(
-		[]byte("test_key_1"),
-		1,
+		config.EncryptionConfig{
+			Driver:                config.EncryptionDriverLocal,
+			LocalKeyEncryptionKey: "00000000000000000000000000000000",
+		},
 	)
 
 	testData := []byte("test_data")
