@@ -22,6 +22,10 @@ func TestLoadConfig_ValidLocal(t *testing.T) {
 		ObjectStorage: config.ObjectStorageConfig{
 			Driver: "local",
 		},
+		Encryption: config.EncryptionConfig{
+			Driver:                "local",
+			LocalKeyEncryptionKey: "11111111111111111111111111111111",
+		},
 	}, cfg)
 }
 
@@ -53,6 +57,8 @@ func TestLoadConfig_EnvVarsOnly(t *testing.T) {
 	os.Setenv("CASTKEEPER_OBJECTSTORAGE_DRIVER", "awss3")
 	os.Setenv("CASTKEEPER_OBJECTSTORAGE_S3BUCKET", "my-bucket")
 	os.Setenv("CASTKEEPER_OBJECTSTORAGE_S3PREFIX", "some-prefix")
+	os.Setenv("CASTKEEPER_ENCRYPTION_DRIVER", "local")
+	os.Setenv("CASTKEEPER_ENCRYPTION_LOCALKEYENCRYPTIONKEY", "00000000000000000000000000000000")
 	defer func() {
 		os.Unsetenv("CASTKEEPER_ENVNAME")
 		os.Unsetenv("CASTKEEPER_LOGLEVEL")
@@ -62,6 +68,8 @@ func TestLoadConfig_EnvVarsOnly(t *testing.T) {
 		os.Unsetenv("CASTKEEPER_OBJECTSTORAGE_DRIVER")
 		os.Unsetenv("CASTKEEPER_OBJECTSTORAGE_S3BUCKET")
 		os.Unsetenv("CASTKEEPER_OBJECTSTORAGE_S3PREFIX")
+		os.Unsetenv("CASTKEEPER_ENCRYPTION_DRIVER")
+		os.Unsetenv("CASTKEEPER_ENCRYPTION_LOCALKEYENCRYPTIONKEY")
 	}()
 
 	cfg, _, err := config.LoadConfig("")
@@ -78,6 +86,10 @@ func TestLoadConfig_EnvVarsOnly(t *testing.T) {
 			Driver:   "awss3",
 			S3Bucket: "my-bucket",
 			S3Prefix: "some-prefix",
+		},
+		Encryption: config.EncryptionConfig{
+			Driver:                "local",
+			LocalKeyEncryptionKey: "00000000000000000000000000000000",
 		},
 	}, cfg)
 }
@@ -100,6 +112,10 @@ func TestLoadConfig_EnvVarOverride(t *testing.T) {
 		},
 		ObjectStorage: config.ObjectStorageConfig{
 			Driver: "local",
+		},
+		Encryption: config.EncryptionConfig{
+			Driver:                "local",
+			LocalKeyEncryptionKey: "11111111111111111111111111111111",
 		},
 	}, cfg)
 }
@@ -128,6 +144,14 @@ func TestLoadConfig_ValidationErr(t *testing.T) {
 		"missingS3Bucket": {
 			configFile:  "testdata/invalid-s3-bucket.yml",
 			expectedErr: "Key: 'Config.ObjectStorage.S3Bucket' Error:Field validation for 'S3Bucket' failed on the 'required_if' tag",
+		},
+		"invalidEncryptionDriver": {
+			configFile:  "testdata/invalid-enc-driver.yml",
+			expectedErr: "Key: 'Config.Encryption.Driver' Error:Field validation for 'Driver' failed on the 'oneof' tag",
+		},
+		"invalidEncryptionKey": {
+			configFile:  "testdata/invalid-enc-key.yml",
+			expectedErr: "Key: 'Config.Encryption.LocalKeyEncryptionKey' Error:Field validation for 'LocalKeyEncryptionKey' failed on the 'len' tag",
 		},
 	}
 

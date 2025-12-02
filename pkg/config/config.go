@@ -52,7 +52,8 @@ type EncryptionConfig struct {
 }
 
 func LoadConfig(configFilePath string) (Config, *slog.Logger, error) {
-	return loadConfig(viper.GetViper(), configFilePath)
+	v := viper.NewWithOptions(viper.ExperimentalBindStruct())
+	return loadConfig(v, configFilePath)
 }
 
 func loadConfig(v *viper.Viper, configFilePath string) (Config, *slog.Logger, error) {
@@ -133,7 +134,7 @@ func debugStruct(s any, prefix string, debugVals *[]string) {
 	ignoreKinds := []reflect.Kind{reflect.Slice, reflect.Struct}
 	sv := reflect.ValueOf(s)
 	tv := reflect.TypeOf(s)
-	for i := 0; i < sv.NumField(); i++ {
+	for i := range sv.NumField() {
 		if slices.Contains(ignoreKinds, sv.Field(i).Kind()) {
 			continue
 		}
