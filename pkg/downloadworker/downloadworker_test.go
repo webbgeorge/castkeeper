@@ -24,7 +24,7 @@ func TestDownloadWorker(t *testing.T) {
 	dlWorker := downloadworker.NewDownloadWorkerQueueHandler(db, &objectstorage.LocalObjectStorage{
 		HTTPClient: fixtures.TestDataHTTPClient,
 		Root:       root,
-	})
+	}, nil)
 
 	// valid-eps-pending.xml fixture
 	epGUID := fixtures.PodEpGUID("pending-ep-1")
@@ -47,7 +47,7 @@ func TestDownloadWorker_InvalidQueueData(t *testing.T) {
 	dlWorker := downloadworker.NewDownloadWorkerQueueHandler(db, &objectstorage.LocalObjectStorage{
 		HTTPClient: fixtures.TestDataHTTPClient,
 		Root:       root,
-	})
+	}, nil)
 
 	err := dlWorker(context.Background(), nil)
 
@@ -62,7 +62,7 @@ func TestDownloadWorker_EpisodeNotFound(t *testing.T) {
 	dlWorker := downloadworker.NewDownloadWorkerQueueHandler(db, &objectstorage.LocalObjectStorage{
 		HTTPClient: fixtures.TestDataHTTPClient,
 		Root:       root,
-	})
+	}, nil)
 
 	err := dlWorker(context.Background(), "not-an-ep")
 
@@ -77,7 +77,7 @@ func TestDownloadWorker_FailedToDownload(t *testing.T) {
 	dlWorker := downloadworker.NewDownloadWorkerQueueHandler(db, &objectstorage.LocalObjectStorage{
 		HTTPClient: fixtures.TestDataHTTPClient,
 		Root:       root,
-	})
+	}, nil)
 
 	if err := db.Create(&podcasts.Episode{
 		GUID:        "test-download-failure",
