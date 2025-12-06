@@ -10,5 +10,4 @@ ObjectStorage:
   Driver: local
 
 Encryption:
-  Driver: local
-  LocalKeyEncryptionKey: "11111111111111111111111111111111"
+  Driver: notADriver

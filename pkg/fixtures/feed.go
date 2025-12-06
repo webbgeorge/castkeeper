@@ -6,10 +6,17 @@ import (
 	"path"
 	"runtime"
 	"strings"
+
+	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 )
 
 var TestDataHTTPClient *http.Client = &http.Client{
 	Transport: &testDataTransport{},
+}
+
+var AuthenticatedFeedCreds = podcasts.PodcastCredentials{
+	Username: "fixtureUser",
+	Password: "fixturePass",
 }
 
 type testDataTransport struct{}
@@ -24,6 +31,16 @@ func (t *testDataTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		return &http.Response{
 			StatusCode: http.StatusInternalServerError,
 		}, nil
+	}
+
+	if strings.HasPrefix(r.URL.Path, "/authenticated") {
+		u, p, _ := r.BasicAuth()
+		if u != AuthenticatedFeedCreds.Username ||
+			p != AuthenticatedFeedCreds.Password {
+			return &http.Response{
+				StatusCode: http.StatusUnauthorized,
+			}, nil
+		}
 	}
 
 	testDataRoot, err := os.OpenRoot(path.Join(fixtureDir(), "testdata"))

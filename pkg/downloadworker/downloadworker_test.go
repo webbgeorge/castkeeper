@@ -9,6 +9,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/webbgeorge/castkeeper/pkg/config"
+	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
@@ -24,7 +26,7 @@ func TestDownloadWorker(t *testing.T) {
 	dlWorker := downloadworker.NewDownloadWorkerQueueHandler(db, &objectstorage.LocalObjectStorage{
 		HTTPClient: fixtures.TestDataHTTPClient,
 		Root:       root,
-	})
+	}, nil)
 
 	// valid-eps-pending.xml fixture
 	epGUID := fixtures.PodEpGUID("pending-ep-1")
@@ -39,6 +41,33 @@ func TestDownloadWorker(t *testing.T) {
 	assertEpisodeContent(db, root, t, epGUID, "ep1 content")
 }
 
+func TestDownloadWorker_PasswordProtectedFeed(t *testing.T) {
+	db := fixtures.ConfigureDBForTestWithFixtures()
+	root, resetFS := fixtures.ConfigureFSForTestWithFixtures()
+	defer resetFS()
+	encService := encryption.NewEncryptedValueService(config.EncryptionConfig{
+		Driver:                config.EncryptionDriverLocal,
+		LocalKeyEncryptionKey: "00000000000000000000000000000000",
+	})
+
+	dlWorker := downloadworker.NewDownloadWorkerQueueHandler(db, &objectstorage.LocalObjectStorage{
+		HTTPClient: fixtures.TestDataHTTPClient,
+		Root:       root,
+	}, encService)
+
+	// from authenticated/feeds/valid.xml fixture
+	epGUID := fixtures.PodEpGUID("authenticated-ep-1")
+
+	assertEpisodeStatus(db, t, epGUID, "pending")
+
+	err := dlWorker(context.Background(), epGUID)
+
+	assert.Nil(t, err)
+
+	assertEpisodeStatus(db, t, epGUID, "success")
+	assertEpisodeContent(db, root, t, epGUID, "authed ep1 content")
+}
+
 func TestDownloadWorker_InvalidQueueData(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 	root, resetFS := fixtures.ConfigureFSForTestWithFixtures()
@@ -47,7 +76,7 @@ func TestDownloadWorker_InvalidQueueData(t *testing.T) {
 	dlWorker := downloadworker.NewDownloadWorkerQueueHandler(db, &objectstorage.LocalObjectStorage{
 		HTTPClient: fixtures.TestDataHTTPClient,
 		Root:       root,
-	})
+	}, nil)
 
 	err := dlWorker(context.Background(), nil)
 
@@ -62,7 +91,7 @@ func TestDownloadWorker_EpisodeNotFound(t *testing.T) {
 	dlWorker := downloadworker.NewDownloadWorkerQueueHandler(db, &objectstorage.LocalObjectStorage{
 		HTTPClient: fixtures.TestDataHTTPClient,
 		Root:       root,
-	})
+	}, nil)
 
 	err := dlWorker(context.Background(), "not-an-ep")
 
@@ -77,11 +106,11 @@ func TestDownloadWorker_FailedToDownload(t *testing.T) {
 	dlWorker := downloadworker.NewDownloadWorkerQueueHandler(db, &objectstorage.LocalObjectStorage{
 		HTTPClient: fixtures.TestDataHTTPClient,
 		Root:       root,
-	})
+	}, nil)
 
 	if err := db.Create(&podcasts.Episode{
 		GUID:        "test-download-failure",
-		PodcastGUID: "pod-guid-eg",
+		PodcastGUID: "916ed63b-7e5e-5541-af78-e214a0c14d95", // references a fixture
 		Title:       "Test",
 		DownloadURL: "http://testdata/error",
 		MimeType:    "audio/mpeg",
