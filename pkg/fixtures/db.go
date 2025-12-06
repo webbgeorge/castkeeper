@@ -45,8 +45,8 @@ func applyFixtures(db *gorm.DB, evs *encryption.EncryptedValueService) {
 
 	// authenticated pod
 	podFixture(db, evs, "http://testdata/authenticated/feeds/valid.xml", &podcasts.PodcastCredentials{
-		Username: authenticatedFeedUsername,
-		Password: authenticatedFeedPassword,
+		Username: AuthenticatedFeedCreds.Username,
+		Password: AuthenticatedFeedCreds.Password,
 	}, podcasts.EpisodeStatusPending)
 
 	userFixture(db, 123, "unittest", "unittestpw", users.AccessLevelAdmin)
