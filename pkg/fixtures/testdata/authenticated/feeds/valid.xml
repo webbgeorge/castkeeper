@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:podcast="https://podcastindex.org/namespace/1.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
+  <channel>
+    <atom:link href="http://www.example.com/authed-feed" rel="self" type="application/rss+xml"/>
+    <title>Test authenticated podcast</title>
+    <link>http://www.example.com/authed-podcast-site</link>
+    <language>en</language>
+    <description>Test podcast description goes here</description>
+    <itunes:explicit>true</itunes:explicit>
+    <itunes:image href="http://www.example.com/image.jpg"/>
+    <itunes:category text="Comedy"/>
+    <podcast:guid>authenticated-pod-1</podcast:guid>
+    <itunes:author>Dr Tester</itunes:author>
+    <item>
+      <title>Test authenticated episode</title>
+      <enclosure url="http://testdata/authenticated/audio/ep1.mp3" length="1001" type="audio/mpeg"/>
+      <guid>authenticated-ep-1</guid>
+      <link>http://www.example.com/ep-link</link>
+      <pubDate>Thu, 26 Dec 2024 11:12:13 UTC</pubDate>
+      <description>Episode test description</description>
+      <itunes:duration>1234</itunes:duration>
+      <itunes:image href="http://www.example.com/ep-image.png"/>
+    </item>
+  </channel>
+</rss>

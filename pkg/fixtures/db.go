@@ -14,6 +14,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/database"
+	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -25,61 +26,42 @@ func ConfigureDBForTestWithFixtures() *gorm.DB {
 	if err != nil {
 		panic(err)
 	}
+	evs := encryption.NewEncryptedValueService(config.EncryptionConfig{
+		Driver:                config.EncryptionDriverLocal,
+		LocalKeyEncryptionKey: "00000000000000000000000000000000",
+	})
 
-	applyFixtures(db)
+	applyFixtures(db, evs)
 
 	return db
 }
 
-func applyFixtures(db *gorm.DB) {
+func applyFixtures(db *gorm.DB, evs *encryption.EncryptedValueService) {
 	// pod with eps success
-	pod, eps := podFixture("http://testdata/feeds/valid.xml")
-	create(db, &pod)
-	for _, ep := range eps {
-		ep.Status = podcasts.EpisodeStatusSuccess
-		create(db, &ep)
-	}
+	podFixture(db, evs, "http://testdata/feeds/valid.xml", nil, podcasts.EpisodeStatusSuccess)
 
 	// pod with eps pending
-	pod, eps = podFixture("http://testdata/feeds/valid-eps-pending.xml")
-	create(db, &pod)
-	for _, ep := range eps {
-		ep.Status = podcasts.EpisodeStatusPending
-		create(db, &ep)
-	}
+	podFixture(db, evs, "http://testdata/feeds/valid-eps-pending.xml", nil, podcasts.EpisodeStatusPending)
 
-	create(db, userFixture(123, "unittest", "unittestpw", users.AccessLevelAdmin))
-	create(db, userFixture(456, "unittest2", "unittestpw2", users.AccessLevelAdmin))
-	create(db, userFixture(789, "readonly1", "unittestpw3", users.AccessLevelReadOnly))
-	create(db, sessionFixture(
-		"validSession1",
-		123,
-		time.Now(),
-		time.Now(),
-	))
+	// authenticated pod
+	podFixture(db, evs, "http://testdata/authenticated/feeds/valid.xml", &podcasts.PodcastCredentials{
+		Username: authenticatedFeedUsername,
+		Password: authenticatedFeedPassword,
+	}, podcasts.EpisodeStatusPending)
+
+	userFixture(db, 123, "unittest", "unittestpw", users.AccessLevelAdmin)
+	userFixture(db, 456, "unittest2", "unittestpw2", users.AccessLevelAdmin)
+	userFixture(db, 789, "readonly1", "unittestpw3", users.AccessLevelReadOnly)
+
+	sessionFixture(db, "validSession1", 123, time.Now(), time.Now())
 	thirtyMinsAgo := time.Now().Add(-1 * time.Minute * 30)
-	create(db, sessionFixture(
-		"validSession30MinsOld",
-		123,
-		thirtyMinsAgo,
-		thirtyMinsAgo,
-	))
+	sessionFixture(db, "validSession30MinsOld", 123, thirtyMinsAgo, thirtyMinsAgo)
 	aTimeInThePast, err := time.Parse(time.RFC3339, "2024-12-25T12:00:00Z")
 	if err != nil {
 		panic(err)
 	}
-	create(db, sessionFixture(
-		"expiredSession1",
-		123,
-		aTimeInThePast,
-		aTimeInThePast,
-	))
-	create(db, sessionFixture(
-		"validSessionReadOnly",
-		789,
-		time.Now(),
-		time.Now(),
-	))
+	sessionFixture(db, "expiredSession1", 123, aTimeInThePast, aTimeInThePast)
+	sessionFixture(db, "validSessionReadOnly", 789, time.Now(), time.Now())
 }
 
 func create(db *gorm.DB, value any) {
@@ -88,41 +70,54 @@ func create(db *gorm.DB, value any) {
 	}
 }
 
-func podFixture(feedURL string) (podcasts.Podcast, []podcasts.Episode) {
-	// use the testdata feed service to get fixture podcast for convenience
-	feedService := podcasts.FeedService{
+func podFixture(
+	db *gorm.DB,
+	evs *encryption.EncryptedValueService,
+	feedURL string,
+	creds *podcasts.PodcastCredentials,
+	epStatus string,
+) {
+	feedService := &podcasts.FeedService{
 		HTTPClient: TestDataHTTPClient,
 	}
-	pod, eps, err := feedService.ParseFeed(context.Background(), feedURL, nil)
+	_, err := podcasts.AddPodcast(
+		context.Background(), db, feedService, evs, feedURL, creds)
 	if err != nil {
 		panic(err)
 	}
-	return pod, eps
+	_, eps, err := feedService.ParseFeed(context.Background(), feedURL, creds)
+	if err != nil {
+		panic(err)
+	}
+	for _, ep := range eps {
+		ep.Status = epStatus
+		create(db, &ep)
+	}
 }
 
-func userFixture(id uint, username, password string, accessLevel users.AccessLevel) *users.User {
+func userFixture(db *gorm.DB, id uint, username, password string, accessLevel users.AccessLevel) {
 	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), 10)
 	if err != nil {
 		panic(err)
 	}
-	return &users.User{
+	create(db, &users.User{
 		Model:       gorm.Model{ID: id},
 		Username:    username,
 		Password:    string(passwordHash),
 		AccessLevel: accessLevel,
-	}
+	})
 }
 
-func sessionFixture(id string, userID uint, startTime, seenTime time.Time) *sessions.Session {
+func sessionFixture(db *gorm.DB, id string, userID uint, startTime, seenTime time.Time) {
 	h := sha256.New()
 	h.Write([]byte(id))
 	idHash := base64.RawStdEncoding.EncodeToString(h.Sum(nil))
-	return &sessions.Session{
+	create(db, &sessions.Session{
 		ID:           idHash,
 		UserID:       userID,
 		StartTime:    startTime,
 		LastSeenTime: seenTime,
-	}
+	})
 }
 
 func randomHex() string {
