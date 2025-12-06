@@ -12,6 +12,11 @@ var TestDataHTTPClient *http.Client = &http.Client{
 	Transport: &testDataTransport{},
 }
 
+const (
+	authenticatedFeedUsername = "fixtureUser"
+	authenticatedFeedPassword = "fixturePass"
+)
+
 type testDataTransport struct{}
 
 func (t *testDataTransport) RoundTrip(r *http.Request) (*http.Response, error) {
@@ -24,6 +29,15 @@ func (t *testDataTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		return &http.Response{
 			StatusCode: http.StatusInternalServerError,
 		}, nil
+	}
+
+	if strings.HasPrefix(r.URL.Path, "/authenticated") {
+		u, p, _ := r.BasicAuth()
+		if u != authenticatedFeedUsername || p != authenticatedFeedPassword {
+			return &http.Response{
+				StatusCode: http.StatusUnauthorized,
+			}, nil
+		}
 	}
 
 	testDataRoot, err := os.OpenRoot(path.Join(fixtureDir(), "testdata"))
