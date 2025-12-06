@@ -107,6 +107,22 @@ func TestParseFeed(t *testing.T) {
 	}
 }
 
+func TestParseFeed_AuthenticatedFeed(t *testing.T) {
+	feedService := podcasts.FeedService{
+		HTTPClient: fixtures.TestDataHTTPClient,
+	}
+
+	podcast, episodes, err := feedService.ParseFeed(
+		context.Background(),
+		"http://testdata/authenticated/feeds/valid.xml",
+		&fixtures.AuthenticatedFeedCreds,
+	)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "Test authenticated podcast", podcast.Title)
+	assert.Len(t, episodes, 1)
+}
+
 func TestParseFeedTruncation(t *testing.T) {
 	// intercepts HTTP requests and returns test data based on the URL
 	feedService := podcasts.FeedService{
