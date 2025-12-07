@@ -106,6 +106,9 @@ func NewAddPodcastHandler(
 			if errors.Is(err, gorm.ErrDuplicatedKey) {
 				return framework.Render(ctx, w, 200, partials.AddPodcast("This podcast is already added"))
 			}
+			if errors.Is(err, encryption.ErrEncryptionNotConfigured) {
+				return framework.Render(ctx, w, 200, partials.AddPodcast("Encryption must be configured to subscribe to password protected feeds"))
+			}
 			framework.GetLogger(ctx).ErrorContext(ctx, "failed to add podcast", "error", err)
 			// TODO better error message for users
 			return framework.Render(ctx, w, 200, partials.AddPodcast("Invalid feed"))

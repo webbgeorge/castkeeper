@@ -10,3 +10,7 @@ ObjectStorage:
   Driver: awss3
   S3Bucket: my-castkeeper-bucket
   S3Prefix: podcasts/
+
+Encryption:
+  Driver: local
+  LocalKeyEncryptionKey: "MUST_REPLACE_0000000000000000000"
