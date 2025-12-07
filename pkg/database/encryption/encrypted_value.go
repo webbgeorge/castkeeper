@@ -35,12 +35,14 @@ func NewEncryptedValueService(
 	}
 }
 
+var ErrEncryptionNotConfigured = errors.New("encryption is not configured")
+
 func (s *EncryptedValueService) Encrypt(
 	plaintext []byte,
 	additionalData []byte,
 ) (EncryptedValue, error) {
 	if s == nil {
-		return EncryptedValue{}, errors.New("encryption is not configured")
+		return EncryptedValue{}, ErrEncryptionNotConfigured
 	}
 
 	salt, err := randBytes(32)
