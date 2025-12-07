@@ -8,6 +8,7 @@ import (
 	"github.com/webbgeorge/castkeeper/pkg/auth"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/config"
+	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 	"github.com/webbgeorge/castkeeper/pkg/framework"
 	"github.com/webbgeorge/castkeeper/pkg/framework/middleware"
 	"github.com/webbgeorge/castkeeper/pkg/itunes"
@@ -24,6 +25,7 @@ func NewWebserver(
 	db *gorm.DB,
 	os objectstorage.ObjectStorage,
 	itunesAPI *itunes.ItunesAPI,
+	encService *encryption.EncryptedValueService,
 ) *framework.Server {
 	port := fmt.Sprintf(":%d", cfg.WebServer.Port)
 	server := framework.NewServer(port, logger)
@@ -61,10 +63,12 @@ func NewWebserver(
 		AddRoute("GET /podcasts/{guid}", NewViewPodcastHandler(cfg.BaseURL, db), requireReadOnly).
 		AddRoute("GET /podcasts/search", NewSearchPodcastsHandler(), requireManagePods).
 		AddRoute("POST /podcasts/search", NewSearchResultsHandler(itunesAPI), requireManagePods).
-		AddRoute("POST /podcasts/add", NewAddPodcastHandler(feedService, db, os), requireManagePods).
+		AddRoute("POST /podcasts/add", NewAddPodcastHandler(feedService, db, os, encService), requireManagePods).
 		AddRoute("GET /podcasts/{guid}/image", NewDownloadImageHandler(db, os), requireReadOnly).
 		AddRoute("GET /episodes/{guid}", NewViewEpisodeHandler(db), requireReadOnly).
 		AddRoute("GET /episodes/{guid}/download", NewDownloadEpisodeHandler(db, os), requireReadOnly).
 		AddRoute("POST /episodes/{guid}/requeue-download", NewRequeueDownloadHandler(db), requireManagePods).
-		AddRoute("GET /feeds/{guid}", NewFeedHandler(cfg.BaseURL, db), useBasicAuth, requireReadOnly)
+		AddRoute("GET /feeds/{guid}", NewFeedHandler(cfg.BaseURL, db), useBasicAuth, requireReadOnly).
+		AddRoute("GET /feeds/{guid}/image", NewDownloadImageHandler(db, os), useBasicAuth, requireReadOnly).
+		AddRoute("GET /feeds/episodes/{guid}/download", NewDownloadEpisodeHandler(db, os), useBasicAuth, requireReadOnly)
 }

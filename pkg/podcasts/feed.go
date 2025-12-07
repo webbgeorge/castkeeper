@@ -37,7 +37,7 @@ type FeedService struct {
 	HTTPClient *http.Client
 }
 
-func (s *FeedService) ParseFeed(ctx context.Context, feedURL string) (Podcast, []Episode, error) {
+func (s *FeedService) ParseFeed(ctx context.Context, feedURL string, creds *PodcastCredentials) (Podcast, []Episode, error) {
 	err := util.ValidateExtURL(feedURL)
 	if err != nil {
 		return Podcast{}, nil, fmt.Errorf("invalid feedURL '%s': %w", feedURL, err)
@@ -45,6 +45,13 @@ func (s *FeedService) ParseFeed(ctx context.Context, feedURL string) (Podcast, [
 
 	fp := gopodcast.NewParser()
 	fp.HTTPClient = s.HTTPClient
+
+	if creds != nil {
+		fp.AuthCredentials = &gopodcast.AuthCredentials{
+			Username: creds.Username,
+			Password: creds.Password,
+		}
+	}
 
 	feed, err := fp.ParseFeedFromURL(ctx, feedURL)
 	if err != nil {
@@ -276,7 +283,7 @@ func feedFromPodcast(baseURL string, pod Podcast, eps []Episode) (*gopodcast.Pod
 		Language:       pod.Language,
 		ITunesCategory: categories,
 		ITunesExplicit: gopodcast.Bool(pod.IsExplicit),
-		ITunesImage:    gopodcast.ITunesImage{Href: fmt.Sprintf("%s/podcasts/%s/image", baseURL, pod.GUID)},
+		ITunesImage:    gopodcast.ITunesImage{Href: fmt.Sprintf("%s/feeds/%s/image", baseURL, pod.GUID)},
 	}
 
 	for _, ep := range eps {
@@ -291,7 +298,7 @@ func feedFromPodcast(baseURL string, pod Podcast, eps []Episode) (*gopodcast.Pod
 			Enclosure: gopodcast.Enclosure{
 				Length: ep.Bytes,
 				Type:   ep.MimeType,
-				URL:    fmt.Sprintf("%s/episodes/%s/download", baseURL, ep.GUID),
+				URL:    fmt.Sprintf("%s/feeds/episodes/%s/download", baseURL, ep.GUID),
 			},
 			GUID:    gopodcast.ItemGUID{Text: ep.GUID},
 			PubDate: &pubDate,
