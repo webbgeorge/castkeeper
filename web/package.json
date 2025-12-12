@@ -4,9 +4,9 @@
     "buildjs": "esbuild src/main.js --bundle --minify --outfile=static/bundle.js"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.17",
+    "@tailwindcss/cli": "^4.1.18",
     "@tailwindcss/typography": "^0.5.19",
-    "daisyui": "^5.5.8",
+    "daisyui": "^5.5.13",
     "esbuild": "^0.27.1",
     "tailwindcss": "^4.1.7"
   },
