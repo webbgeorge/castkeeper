@@ -26,10 +26,12 @@ func ConfigureDBForTestWithFixtures() *gorm.DB {
 	if err != nil {
 		panic(err)
 	}
-	evs := encryption.NewEncryptedValueService(config.EncryptionConfig{
-		Driver:                config.EncryptionDriverLocal,
-		LocalKeyEncryptionKey: "00000000000000000000000000000000",
-	})
+
+	aead, err := encryption.DeriveAEADFromSecret("00000000")
+	if err != nil {
+		panic(err)
+	}
+	evs := encryption.NewEncryptedValueService(aead)
 
 	applyFixtures(db, evs)
 

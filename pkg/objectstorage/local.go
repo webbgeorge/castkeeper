@@ -78,18 +78,6 @@ func (s *LocalObjectStorage) ServeFile(ctx context.Context, r *http.Request, w h
 	return nil
 }
 
-func MustOpenLocalFSRoot(basePath string) *os.Root {
-	err := os.MkdirAll(basePath, 0750)
-	if err != nil {
-		panic(err)
-	}
-	root, err := os.OpenRoot(basePath)
-	if err != nil {
-		panic(err)
-	}
-	return root
-}
-
 func mkdirIfNotExists(root *os.Root, dir string) error {
 	err := root.Mkdir(dir, 0750)
 	if err != nil {

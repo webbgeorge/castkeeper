@@ -1,37 +1,23 @@
 package encryption
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"crypto/sha256"
 	"errors"
-	"io"
 
-	"github.com/webbgeorge/castkeeper/pkg/config"
-	"golang.org/x/crypto/hkdf"
+	"github.com/tink-crypto/tink-go/v2/tink"
 )
 
 type EncryptedValue struct {
 	EncryptedData []byte
-	KeyVersion    uint
-	Salt          []byte
+	// TODO store in new table with references, additionalData, etc
 }
 
 type EncryptedValueService struct {
-	masterKey  []byte
-	keyVersion uint
+	dekAEAD tink.AEAD
 }
 
-func NewEncryptedValueService(
-	cfg config.EncryptionConfig,
-) *EncryptedValueService {
-	if cfg.Driver != config.EncryptionDriverLocal {
-		return nil
-	}
+func NewEncryptedValueService(dekAEAD tink.AEAD) *EncryptedValueService {
 	return &EncryptedValueService{
-		masterKey:  []byte(cfg.LocalKeyEncryptionKey),
-		keyVersion: 1, // TODO replace when key rotation is implemented
+		dekAEAD: dekAEAD,
 	}
 }
 
@@ -45,21 +31,12 @@ func (s *EncryptedValueService) Encrypt(
 		return EncryptedValue{}, ErrEncryptionNotConfigured
 	}
 
-	salt, err := randBytes(32)
+	ciphertext, err := s.dekAEAD.Encrypt(plaintext, additionalData)
 	if err != nil {
 		return EncryptedValue{}, err
 	}
-
-	aead, err := s.getAEAD(salt, additionalData)
-	if err != nil {
-		return EncryptedValue{}, err
-	}
-
-	ciphertext := aead.Seal(nil, nil, plaintext, additionalData)
 
 	return EncryptedValue{
-		KeyVersion:    s.keyVersion,
-		Salt:          salt,
 		EncryptedData: ciphertext,
 	}, nil
 }
@@ -72,52 +49,5 @@ func (s *EncryptedValueService) Decrypt(
 		return nil, errors.New("encryption is not configured")
 	}
 
-	aead, err := s.getAEAD(ev.Salt, additionalData)
-	if err != nil {
-		return nil, err
-	}
-
-	plaintext, err := aead.Open(nil, nil, ev.EncryptedData, additionalData)
-	if err != nil {
-		return nil, err
-	}
-	return plaintext, nil
-}
-
-func (s *EncryptedValueService) getAEAD(
-	salt, additionalData []byte,
-) (cipher.AEAD, error) {
-	rowKey, err := s.deriveRowKey(salt, additionalData)
-	if err != nil {
-		return nil, err
-	}
-
-	block, err := aes.NewCipher(rowKey)
-	if err != nil {
-		return nil, err
-	}
-
-	return cipher.NewGCMWithRandomNonce(block)
-}
-
-func (s *EncryptedValueService) deriveRowKey(
-	salt, additionalData []byte,
-) ([]byte, error) {
-	h := hkdf.New(
-		sha256.New,
-		s.masterKey,
-		salt,
-		additionalData,
-	)
-	key := make([]byte, 32)
-	if _, err := io.ReadFull(h, key); err != nil {
-		return nil, err
-	}
-	return key, nil
-}
-
-func randBytes(n int) ([]byte, error) {
-	b := make([]byte, n)
-	_, err := rand.Read(b)
-	return b, err
+	return s.dekAEAD.Decrypt(ev.EncryptedData, additionalData)
 }
