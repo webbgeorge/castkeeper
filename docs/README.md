@@ -1,6 +1,6 @@
-# Website
+# CastKeeper Docs Website
 
-Source code for the [CastKeeper Website](https://castkeeper.org), built using
+Source code for the [CastKeeper Docs Website](https://castkeeper.org), built using
 [Docusaurus](https://docusaurus.io/).
 
 ## Local dev

@@ -36,7 +36,7 @@ const config = {
           routeBasePath: '/',
           sidebarPath: './sidebars.js',
           editUrl:
-            'https://github.com/webbgeorge/castkeeper/tree/main/website/',
+            'https://github.com/webbgeorge/castkeeper/tree/main/docs/',
         },
         theme: {
           customCss: './src/css/custom.css',
