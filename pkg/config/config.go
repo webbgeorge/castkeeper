@@ -48,7 +48,7 @@ type ObjectStorageConfig struct {
 
 type EncryptionConfig struct {
 	Driver                string `validate:"omitempty,oneof=local"`
-	LocalKeyEncryptionKey string `validate:"omitempty,required_if=Driver local,len=32" secret:"true"`
+	LocalKeyEncryptionKey string `validate:"omitempty,required_if=Driver local,gte=16,lte=64" secret:"true"`
 }
 
 func LoadConfig(configFilePath string) (Config, *slog.Logger, error) {

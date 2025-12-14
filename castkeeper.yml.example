@@ -11,6 +11,7 @@ ObjectStorage:
   S3Bucket: my-castkeeper-bucket
   S3Prefix: podcasts/
 
+# only required if subscribing to private podcast feeds which use usernames and passwords
 Encryption:
   Driver: local
   LocalKeyEncryptionKey: "MUST_REPLACE_0000000000000000000"

@@ -151,7 +151,7 @@ func TestLoadConfig_ValidationErr(t *testing.T) {
 		},
 		"invalidEncryptionKey": {
 			configFile:  "testdata/invalid-enc-key.yml",
-			expectedErr: "Key: 'Config.Encryption.LocalKeyEncryptionKey' Error:Field validation for 'LocalKeyEncryptionKey' failed on the 'len' tag",
+			expectedErr: "Key: 'Config.Encryption.LocalKeyEncryptionKey' Error:Field validation for 'LocalKeyEncryptionKey' failed on the 'gte' tag",
 		},
 	}
 
