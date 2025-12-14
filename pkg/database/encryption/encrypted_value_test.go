@@ -24,6 +24,25 @@ func TestEncryptDecrypt_Success(t *testing.T) {
 	assert.Equal(t, string(testData), string(decryptedPT))
 }
 
+func TestEncryptDecrypt_SuccessWithNewInstance(t *testing.T) {
+	evs := setupEVSFromSecret("testEncSecret")
+
+	testData := []byte("test_data")
+	testAD := []byte("test_ad")
+
+	ev, err := evs.Encrypt(testData, testAD)
+
+	assert.Nil(t, err)
+	assert.NotEqual(t, testData, ev.EncryptedData)
+
+	evs2 := setupEVSFromSecret("testEncSecret")
+
+	decryptedPT, err := evs2.Decrypt(ev, testAD)
+
+	assert.Nil(t, err)
+	assert.Equal(t, string(testData), string(decryptedPT))
+}
+
 func TestEncryptDecrypt_WrongKey(t *testing.T) {
 	evsKey1 := setupEVSFromSecret("testEncSecret")
 
