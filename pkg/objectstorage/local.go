@@ -11,6 +11,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"github.com/webbgeorge/castkeeper/pkg/util"
 )
 
@@ -19,7 +20,7 @@ type LocalObjectStorage struct {
 	Root       *os.Root
 }
 
-func (s *LocalObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation, podcastGUID, fileName string) (int64, error) {
+func (s *LocalObjectStorage) SaveRemoteFile(ctx context.Context, creds *podcasts.PodcastCredentials, remoteLocation, podcastGUID, fileName string) (int64, error) {
 	err := util.ValidateExtURL(remoteLocation)
 	if err != nil {
 		return -1, fmt.Errorf("invalid remoteLocation '%s': %w", remoteLocation, err)
@@ -42,6 +43,10 @@ func (s *LocalObjectStorage) SaveRemoteFile(ctx context.Context, remoteLocation,
 		return -1, err
 	}
 	req = req.WithContext(ctx)
+
+	if creds != nil {
+		req.SetBasicAuth(creds.Username, creds.Password)
+	}
 
 	resp, err := s.HTTPClient.Do(req)
 	if err != nil {

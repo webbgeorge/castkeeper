@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
 	"github.com/webbgeorge/castkeeper/pkg/util"
@@ -13,7 +14,11 @@ import (
 
 const DownloadWorkerQueueName = "downloadWorker"
 
-func NewDownloadWorkerQueueHandler(db *gorm.DB, os objectstorage.ObjectStorage) func(context.Context, any) error {
+func NewDownloadWorkerQueueHandler(
+	db *gorm.DB,
+	os objectstorage.ObjectStorage,
+	encService *encryption.EncryptedValueService,
+) func(context.Context, any) error {
 	return func(ctx context.Context, episodeGUIDAny any) error {
 		episodeGUID, ok := episodeGUIDAny.(string)
 		if !ok {
@@ -25,13 +30,22 @@ func NewDownloadWorkerQueueHandler(db *gorm.DB, os objectstorage.ObjectStorage) 
 			return fmt.Errorf("failed to get a pending episode: %w", err)
 		}
 
+		podcast, err := podcasts.GetPodcast(ctx, db, episode.PodcastGUID)
+		if err != nil {
+			return fmt.Errorf("failed to get podcast: %w", err)
+		}
+		creds, err := podcasts.GetCredentials(encService, podcast)
+		if err != nil {
+			return fmt.Errorf("failed to get podcast credentials: %w", err)
+		}
+
 		extension, err := podcasts.MIMETypeExtension(episode.MimeType)
 		if err != nil {
 			return fmt.Errorf("failed to get episode file extension from MimeType: %w", err)
 		}
 
 		fileName := fmt.Sprintf("%s.%s", util.SanitiseGUID(episode.GUID), extension)
-		n, err := os.SaveRemoteFile(ctx, episode.DownloadURL, util.SanitiseGUID(episode.PodcastGUID), fileName)
+		n, err := os.SaveRemoteFile(ctx, creds, episode.DownloadURL, util.SanitiseGUID(episode.PodcastGUID), fileName)
 		if err != nil {
 			upErr := podcasts.UpdateEpisodeStatus(ctx, db, &episode, podcasts.EpisodeStatusFailed, nil)
 			if upErr != nil {

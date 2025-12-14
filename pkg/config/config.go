@@ -18,6 +18,7 @@ const (
 	applicationName          = "castkeeper"
 	ObjectStorageDriverLocal = "local"
 	ObjectStorageDriverS3    = "awss3"
+	EncryptionDriverLocal    = "local"
 	LogLevelDebug            = "debug"
 	LogLevelInfo             = "info"
 	LogLevelWarn             = "warn"
@@ -31,6 +32,7 @@ type Config struct {
 	DataPath      string              `validate:"required"`
 	WebServer     WebServerConfig     `validate:"required"`
 	ObjectStorage ObjectStorageConfig `validate:"required"`
+	Encryption    EncryptionConfig    `validate:"omitempty"`
 }
 
 type WebServerConfig struct {
@@ -44,8 +46,14 @@ type ObjectStorageConfig struct {
 	S3ForcePathStyle bool   // used for localstack testing, unlikely to be ever used in prod
 }
 
+type EncryptionConfig struct {
+	Driver                string `validate:"omitempty,oneof=local"`
+	LocalKeyEncryptionKey string `validate:"omitempty,required_if=Driver local,gte=16,lte=64" secret:"true"`
+}
+
 func LoadConfig(configFilePath string) (Config, *slog.Logger, error) {
-	return loadConfig(viper.GetViper(), configFilePath)
+	v := viper.NewWithOptions(viper.ExperimentalBindStruct())
+	return loadConfig(v, configFilePath)
 }
 
 func loadConfig(v *viper.Viper, configFilePath string) (Config, *slog.Logger, error) {
@@ -116,6 +124,7 @@ func debugConfig(cfg Config) string {
 	debugStruct(cfg, "", &debugVals)
 	debugStruct(cfg.WebServer, "WebServer.", &debugVals)
 	debugStruct(cfg.ObjectStorage, "ObjectStorage.", &debugVals)
+	debugStruct(cfg.Encryption, "Encryption.", &debugVals)
 	return strings.Join(debugVals, ", ")
 }
 
@@ -125,7 +134,7 @@ func debugStruct(s any, prefix string, debugVals *[]string) {
 	ignoreKinds := []reflect.Kind{reflect.Slice, reflect.Struct}
 	sv := reflect.ValueOf(s)
 	tv := reflect.TypeOf(s)
-	for i := 0; i < sv.NumField(); i++ {
+	for i := range sv.NumField() {
 		if slices.Contains(ignoreKinds, sv.Field(i).Kind()) {
 			continue
 		}

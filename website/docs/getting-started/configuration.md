@@ -60,4 +60,6 @@ See the reference table below for the full list of environment variables.
 | ObjectStorage.Driver           | CASTKEEPER_OBJECTSTORAGE_DRIVER           | The object storage provider to use. Allowed values: `local`, `awss3`. Required. |
 | ObjectStorage.S3Bucket         | CASTKEEPER_OBJECTSTORAGE_S3BUCKET         | The S3 bucket to use for file storage when using the `awss3` provider. Required when `Driver` is `awss3`. |
 | ObjectStorage.S3Prefix         | CASTKEEPER_OBJECTSTORAGE_S3PREFIX         | Optional prefix for files when using the `awss3` provider. |
-| ObjectStorage.S3ForcePathStyle | CASTKEEPER_OBJECTSTORAGE_S3FORCEPATHSTYLE | Boolean value. Usually false, may need to be set to true for some S3 compatible storage services. Default value: false. |
+| ObjectStorage.S3ForcePathStyle | CASTKEEPER_OBJECTSTORAGE_S3FORCEPATHSTYLE | Boolean value. Usually false, may need to be set to true for some S3 compatible storage services. Default value: `false`. |
+| Encryption.Driver | CASTKEEPER_ENCRYPTION_DRIVER | The encryption driver to use. Optional, but required if subscribing to private feeds that use username and password. Allowed values: `local`. |
+| Encryption.LocalKeyEncryptionKey | CASTKEEPER_ENCRYPTION_LOCALKEYENCRYPTIONKEY | The master encryption key when using the `local` encryption driver. Must be between 16 and 64 characters long. Required when Driver is `local`. |

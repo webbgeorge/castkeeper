@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/config"
+	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/feedworker"
 	"github.com/webbgeorge/castkeeper/pkg/fixtures"
@@ -237,6 +238,55 @@ func TestAddPodcast_Success(t *testing.T) {
 		panic(result.Error)
 	}
 	assert.Equal(t, "Test podcast 2 description goes here", podcast.Description)
+
+	// assert image was created
+	f, err := root.Open(fmt.Sprintf("%s/%s.jpg", podcast.GUID, podcast.GUID))
+	if err != nil {
+		panic(err)
+	}
+	data, err := io.ReadAll(f)
+	if err != nil {
+		panic(err)
+	}
+	// compare against fixture content
+	assert.Equal(t, "Not a real JPG", strings.TrimSpace(string(data)))
+
+	// verify feed worker job was added to queue
+	_, err = framework.PopQueueTask(ctx, db, feedworker.FeedWorkerQueueName)
+	assert.Nil(t, err)
+}
+
+func TestAddPodcast_AuthenticatedFeed(t *testing.T) {
+	ctx, server, db, root, reset := setupServerForTest()
+	defer reset()
+
+	// from fixtures, not in DB yet
+	feedURL := "http://testdata/authenticated/feeds/valid-not-added.xml"
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Post("/podcasts/add").
+		WithContext(ctx).
+		Header("Content-Type", "application/x-www-form-urlencoded").
+		Body(fmt.Sprintf(
+			"feedUrl=%s&feedUsername=%s&feedPassword=%s",
+			feedURL,
+			fixtures.AuthenticatedFeedCreds.Username,
+			fixtures.AuthenticatedFeedCreds.Password,
+		)).
+		Cookie("Session-Id", "validSession1"). // from fixtures
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Podcast added")).
+		End()
+
+	// assert pod was added
+	var podcast podcasts.Podcast
+	result := db.First(&podcast, "feed_url = ?", feedURL)
+	if result.Error != nil {
+		panic(result.Error)
+	}
+	assert.Equal(t, "Test authenticated podcast 2 description goes here", podcast.Description)
 
 	// assert image was created
 	f, err := root.Open(fmt.Sprintf("%s/%s.jpg", podcast.GUID, podcast.GUID))
@@ -498,6 +548,36 @@ func TestGetFeed_NotFound(t *testing.T) {
 		BasicAuth("unittest", "unittestpw"). // from fixtures
 		Expect(t).
 		Status(http.StatusNotFound).
+		End()
+}
+
+func TestDownloadFeedImage(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get(fmt.Sprintf("/feeds/%s/image", genGUID("abc-123"))).
+		WithContext(ctx).
+		BasicAuth("unittest", "unittestpw"). // from fixtures
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Not a real JPG")). // fixture image has text content
+		End()
+}
+
+func TestDownloadFeedEpisode(t *testing.T) {
+	ctx, server, _, _, reset := setupServerForTest()
+	defer reset()
+
+	apitest.New().
+		HandlerFunc(server.Mux.ServeHTTP).
+		Get(fmt.Sprintf("/feeds/episodes/%s/download", genGUID("ep-1"))).
+		WithContext(ctx).
+		BasicAuth("unittest", "unittestpw"). // from fixtures
+		Expect(t).
+		Status(http.StatusOK).
+		Assert(selector.TextExists("Not a real MP3")). // fixture mp3 has text content
 		End()
 }
 
@@ -1051,6 +1131,10 @@ func setupServerForTest() (context.Context, *framework.Server, *gorm.DB, *os.Roo
 		WebServer: config.WebServerConfig{
 			Port: 8000,
 		},
+		Encryption: config.EncryptionConfig{
+			Driver:                config.EncryptionDriverLocal,
+			LocalKeyEncryptionKey: "00000000000000000000000000000000",
+		},
 	}
 	logger := slog.New(slog.DiscardHandler)
 	feedService := &podcasts.FeedService{
@@ -1064,8 +1148,11 @@ func setupServerForTest() (context.Context, *framework.Server, *gorm.DB, *os.Roo
 	itunesAPI := &itunes.ItunesAPI{
 		HTTPClient: fixtures.TestItunesHTTPClient,
 	}
+	encService := encryption.NewEncryptedValueService(
+		cfg.Encryption,
+	)
 
-	server := webserver.NewWebserver(cfg, logger, feedService, db, os, itunesAPI)
+	server := webserver.NewWebserver(cfg, logger, feedService, db, os, itunesAPI, encService)
 	ctx := context.Background()
 
 	return ctx, server, db, root, func() {

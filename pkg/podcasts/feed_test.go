@@ -95,7 +95,7 @@ func TestParseFeed(t *testing.T) {
 
 	for name, tc := range testCases {
 		t.Run(name, func(t *testing.T) {
-			podcast, episodes, err := feedService.ParseFeed(context.Background(), tc.url)
+			podcast, episodes, err := feedService.ParseFeed(context.Background(), tc.url, nil)
 
 			if err == nil {
 				assert.Equal(t, tc.expectedPodcast, podcast)
@@ -107,6 +107,22 @@ func TestParseFeed(t *testing.T) {
 	}
 }
 
+func TestParseFeed_AuthenticatedFeed(t *testing.T) {
+	feedService := podcasts.FeedService{
+		HTTPClient: fixtures.TestDataHTTPClient,
+	}
+
+	podcast, episodes, err := feedService.ParseFeed(
+		context.Background(),
+		"http://testdata/authenticated/feeds/valid.xml",
+		&fixtures.AuthenticatedFeedCreds,
+	)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "Test authenticated podcast", podcast.Title)
+	assert.Len(t, episodes, 1)
+}
+
 func TestParseFeedTruncation(t *testing.T) {
 	// intercepts HTTP requests and returns test data based on the URL
 	feedService := podcasts.FeedService{
@@ -116,6 +132,7 @@ func TestParseFeedTruncation(t *testing.T) {
 	podcast, episodes, err := feedService.ParseFeed(
 		context.Background(),
 		"http://testdata/feeds/very-long-pod-title.xml",
+		nil,
 	)
 
 	assert.Nil(t, err)
@@ -133,6 +150,7 @@ func TestParseFeedEpisodeGUIDFallback(t *testing.T) {
 	_, episodes, err := feedService.ParseFeed(
 		context.Background(),
 		"http://testdata/feeds/no-ep-guid.xml",
+		nil,
 	)
 
 	assert.Nil(t, err)

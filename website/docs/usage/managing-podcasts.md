@@ -15,7 +15,7 @@ Podcasts can be added in 2 ways:
   - For feeds which aren't available on the iTunes API (e.g. private or
     subscriber-only feeds)
   - Choose the "Add Feed URL" button on the Add Podcast page, and then enter
-    the Feed URL and credentials (coming soon).
+    the Feed URL and credentials (optional).
 
 When a podcast is added to CastKeeper, all previous episodes will be downloaded
 and any new episodes are automatically downloaded as they are released.

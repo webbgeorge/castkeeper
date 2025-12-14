@@ -1,5 +1,11 @@
 package partials
 
+type AddPodcastFormData struct {
+	FeedURL      string `schema:"feedUrl" validate:"required,lte=1000"`
+	FeedUsername string `schema:"feedUsername" validate:"lte=256"`
+	FeedPassword string `schema:"feedPassword" validate:"lte=256"`
+}
+
 templ AddFeedUrlModal() {
 	<div>
 		<button class="btn btn-neutral" onclick="addFeedUrlModal.showModal()">Add Feed URL</button>
@@ -28,6 +34,31 @@ templ AddFeedUrlModal() {
 							placeholder="Feed URL"
 						/>
 					</fieldset>
+					<details>
+						<summary class="my-4 marker:content-none link">
+							Add username and password
+						</summary>
+						<fieldset class="fieldset">
+							<legend class="fieldset-legend">Username</legend>
+							<input
+								name="feedUsername"
+								id="feedUsernameInput"
+								type="text"
+								class="input w-full"
+								placeholder="Username"
+							/>
+						</fieldset>
+						<fieldset class="fieldset">
+							<legend class="fieldset-legend">Password</legend>
+							<input
+								name="feedPassword"
+								id="feedPasswordInput"
+								type="password"
+								class="input w-full"
+								placeholder="Password"
+							/>
+						</fieldset>
+					</details>
 					<div class="flex justify-end mt-4">
 						<button type="submit" class="btn btn-primary">Add Podcast</button>
 					</div>
