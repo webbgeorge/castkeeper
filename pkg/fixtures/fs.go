@@ -1,6 +1,8 @@
 package fixtures
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -11,7 +13,7 @@ import (
 )
 
 func ConfigureFSForTestWithFixtures() (fs *os.Root, resetFn func()) {
-	rootPath := path.Join(os.TempDir(), "castkeepertest", randomHex())
+	rootPath := path.Join(os.TempDir(), "castkeepertest", RandomHex())
 	root := config.MustOpenLocalFSRoot(rootPath)
 
 	// matching valid.xml fixture
@@ -65,4 +67,12 @@ func writeFixtureFile(root *os.Root, path string, content []byte) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func RandomHex() string {
+	b := make([]byte, 6)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+	return hex.EncodeToString(b)
 }

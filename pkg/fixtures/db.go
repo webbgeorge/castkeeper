@@ -2,10 +2,8 @@ package fixtures
 
 import (
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/hex"
 	"io"
 	"log/slog"
 	"time"
@@ -115,12 +113,4 @@ func sessionFixture(db *gorm.DB, id string, userID uint, startTime, seenTime tim
 		StartTime:    startTime,
 		LastSeenTime: seenTime,
 	})
-}
-
-func randomHex() string {
-	b := make([]byte, 6)
-	if _, err := rand.Read(b); err != nil {
-		panic(err)
-	}
-	return hex.EncodeToString(b)
 }
