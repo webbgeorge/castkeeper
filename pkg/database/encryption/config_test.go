@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/tink-crypto/tink-go/v2/aead"
+	"github.com/tink-crypto/tink-go/v2/keyset"
 	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 )
-
-// TODO secret same, but file changed or deleted
 
 func TestConfigureEncryptedValueService_SecretKeyDriver_CreatesNewDEK(t *testing.T) {
 	randomHex := fixtures.RandomHex()
@@ -81,6 +81,31 @@ func TestConfigureEncryptedValueService_NoDriver(t *testing.T) {
 	assert.Equal(t, "encryption is not configured", err.Error())
 }
 
+func TestConfigureEncryptedValueService_SecretKeyDriver_DecryptionFailsWhenDEKChanges(t *testing.T) {
+	randomHex := fixtures.RandomHex()
+	secret := "secretKeyForTest111"
+	rootPath := path.Join(os.TempDir(), "castkeepertest", randomHex)
+
+	// this evs creates the DEK in the test dir for the first time
+	evs, _ := configureEVSForTest(randomHex, secret)
+
+	// encrypts with new dek after it was first created
+	ev, err := evs.Encrypt([]byte("test"), []byte("testad"))
+	if err != nil {
+		panic(err)
+	}
+
+	// modify DEK, disable the key which was used to encrypt `ev`
+	rotatePrimaryKey(rootPath, secret)
+
+	// this evs loads the updated DEK created by the previous evs
+	evs2, _ := configureEVSForTest(randomHex, "secretKeyForTest111")
+
+	// check we can decrypt with the loaded DEK
+	_, err = evs2.Decrypt(ev, []byte("testad"))
+	assert.Equal(t, "aead_factory: decryption failed", err.Error())
+}
+
 func configureEVSForTest(randomHex, secret string) (*encryption.EncryptedValueService, error) {
 	rootPath := path.Join(os.TempDir(), "castkeepertest", randomHex)
 	return encryption.ConfigureEncryptedValueService(config.Config{
@@ -90,4 +115,71 @@ func configureEVSForTest(randomHex, secret string) (*encryption.EncryptedValueSe
 			SecretKey: secret,
 		},
 	})
+}
+
+func rotatePrimaryKey(rootPath, secret string) {
+	handle := readKeyset(rootPath, secret)
+	mgr := keyset.NewManagerFromHandle(handle)
+
+	// add new key and make it primary
+	newKeyID, err := mgr.Add(aead.AES256GCMSIVKeyTemplate())
+	if err != nil {
+		panic(err)
+	}
+	err = mgr.SetPrimary(newKeyID)
+	if err != nil {
+		panic(err)
+	}
+
+	// disable previous key
+	err = mgr.Disable(handle.KeysetInfo().PrimaryKeyId)
+	if err != nil {
+		panic(err)
+	}
+
+	newHandle, err := mgr.Handle()
+	if err != nil {
+		panic(err)
+	}
+	writeKeyset(newHandle, rootPath, secret)
+}
+
+func readKeyset(rootPath, secret string) *keyset.Handle {
+	f, err := os.Open(path.Join(rootPath, "dek.json"))
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	kekAEAD, err := encryption.DeriveAEADFromSecret(secret)
+	if err != nil {
+		panic(err)
+	}
+
+	reader := keyset.NewJSONReader(f)
+	handle, err := keyset.Read(reader, kekAEAD)
+	if err != nil {
+		panic(err)
+	}
+
+	return handle
+}
+
+func writeKeyset(handle *keyset.Handle, rootPath, secret string) {
+	f, err := os.Create(path.Join(rootPath, "dek.json"))
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	kekAEAD, err := encryption.DeriveAEADFromSecret(secret)
+	if err != nil {
+		panic(err)
+	}
+
+	writer := keyset.NewJSONWriter(f)
+	err = handle.Write(writer, kekAEAD)
+	if err != nil {
+		panic(err)
+	}
 }
