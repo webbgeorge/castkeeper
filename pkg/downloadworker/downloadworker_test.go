@@ -9,8 +9,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/webbgeorge/castkeeper/pkg/config"
-	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
@@ -45,10 +43,7 @@ func TestDownloadWorker_PasswordProtectedFeed(t *testing.T) {
 	db := fixtures.ConfigureDBForTestWithFixtures()
 	root, resetFS := fixtures.ConfigureFSForTestWithFixtures()
 	defer resetFS()
-	encService := encryption.NewEncryptedValueService(config.EncryptionConfig{
-		Driver:                config.EncryptionDriverLocal,
-		LocalKeyEncryptionKey: "00000000000000000000000000000000",
-	})
+	encService := fixtures.ConfigureEncryptedValueServiceForTest()
 
 	dlWorker := downloadworker.NewDownloadWorkerQueueHandler(db, &objectstorage.LocalObjectStorage{
 		HTTPClient: fixtures.TestDataHTTPClient,

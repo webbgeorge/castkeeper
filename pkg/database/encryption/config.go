@@ -16,13 +16,13 @@ const dekFileName = "dek.json"
 func ConfigureEncryptedValueService(
 	cfg config.Config,
 ) (*EncryptedValueService, error) {
-	if cfg.Encryption.Driver != config.EncryptionDriverLocal {
+	if cfg.Encryption.Driver != config.EncryptionDriverSecretKey {
 		return nil, nil
 	}
 
 	// TODO KEK dependent on driver
 	kekAEAD, err := DeriveAEADFromSecret(
-		cfg.Encryption.LocalKeyEncryptionKey,
+		cfg.Encryption.SecretKey,
 	)
 	if err != nil {
 		return nil, err
