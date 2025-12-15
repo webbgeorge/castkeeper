@@ -1,18 +1,20 @@
 package fixtures
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path"
 
-	"github.com/webbgeorge/castkeeper/pkg/objectstorage"
+	"github.com/webbgeorge/castkeeper/pkg/config"
 )
 
 func ConfigureFSForTestWithFixtures() (fs *os.Root, resetFn func()) {
-	rootPath := path.Join(os.TempDir(), "castkeepertest", randomHex())
-	root := objectstorage.MustOpenLocalFSRoot(rootPath)
+	rootPath := path.Join(os.TempDir(), "castkeepertest", RandomHex())
+	root := config.MustOpenLocalFSRoot(rootPath)
 
 	// matching valid.xml fixture
 	podImageFixtureFile(root, "916ed63b-7e5e-5541-af78-e214a0c14d95")
@@ -65,4 +67,12 @@ func writeFixtureFile(root *os.Root, path string, content []byte) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func RandomHex() string {
+	b := make([]byte, 6)
+	if _, err := rand.Read(b); err != nil {
+		panic(err)
+	}
+	return hex.EncodeToString(b)
 }

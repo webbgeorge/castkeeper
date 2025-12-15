@@ -15,14 +15,14 @@ import (
 )
 
 const (
-	applicationName          = "castkeeper"
-	ObjectStorageDriverLocal = "local"
-	ObjectStorageDriverS3    = "awss3"
-	EncryptionDriverLocal    = "local"
-	LogLevelDebug            = "debug"
-	LogLevelInfo             = "info"
-	LogLevelWarn             = "warn"
-	LogLevelError            = "error"
+	applicationName           = "castkeeper"
+	ObjectStorageDriverLocal  = "local"
+	ObjectStorageDriverS3     = "awss3"
+	EncryptionDriverSecretKey = "secretkey"
+	LogLevelDebug             = "debug"
+	LogLevelInfo              = "info"
+	LogLevelWarn              = "warn"
+	LogLevelError             = "error"
 )
 
 type Config struct {
@@ -47,8 +47,8 @@ type ObjectStorageConfig struct {
 }
 
 type EncryptionConfig struct {
-	Driver                string `validate:"omitempty,oneof=local"`
-	LocalKeyEncryptionKey string `validate:"omitempty,required_if=Driver local,gte=16,lte=64" secret:"true"`
+	Driver    string `validate:"omitempty,oneof=secretkey"`
+	SecretKey string `validate:"omitempty,required_if=Driver secretkey,gte=16,lte=64" secret:"true"`
 }
 
 func LoadConfig(configFilePath string) (Config, *slog.Logger, error) {

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/webbgeorge/castkeeper/pkg/config"
 	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 	"github.com/webbgeorge/castkeeper/pkg/fixtures"
 	"github.com/webbgeorge/castkeeper/pkg/podcasts"
@@ -112,14 +111,11 @@ func TestGetCredentials_FailedToDecrypt(t *testing.T) {
 	}
 
 	_, err = podcasts.GetCredentials(evs(), pod)
-	assert.Equal(t, "cipher: message authentication failed", err.Error())
+	assert.Equal(t, "aes_gcm_siv: message authentication failure", err.Error())
 }
 
 func evs() *encryption.EncryptedValueService {
-	return encryption.NewEncryptedValueService(config.EncryptionConfig{
-		Driver:                config.EncryptionDriverLocal,
-		LocalKeyEncryptionKey: "00000000000000000000000000000000",
-	})
+	return fixtures.ConfigureEncryptedValueServiceForTest()
 }
 
 func feedService() *podcasts.FeedService {

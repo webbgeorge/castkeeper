@@ -23,8 +23,8 @@ func TestLoadConfig_ValidLocal(t *testing.T) {
 			Driver: "local",
 		},
 		Encryption: config.EncryptionConfig{
-			Driver:                "local",
-			LocalKeyEncryptionKey: "11111111111111111111111111111111",
+			Driver:    "secretkey",
+			SecretKey: "11111111111111111111111111111111",
 		},
 	}, cfg)
 }
@@ -57,8 +57,8 @@ func TestLoadConfig_EnvVarsOnly(t *testing.T) {
 	os.Setenv("CASTKEEPER_OBJECTSTORAGE_DRIVER", "awss3")
 	os.Setenv("CASTKEEPER_OBJECTSTORAGE_S3BUCKET", "my-bucket")
 	os.Setenv("CASTKEEPER_OBJECTSTORAGE_S3PREFIX", "some-prefix")
-	os.Setenv("CASTKEEPER_ENCRYPTION_DRIVER", "local")
-	os.Setenv("CASTKEEPER_ENCRYPTION_LOCALKEYENCRYPTIONKEY", "00000000000000000000000000000000")
+	os.Setenv("CASTKEEPER_ENCRYPTION_DRIVER", "secretkey")
+	os.Setenv("CASTKEEPER_ENCRYPTION_SECRETKEY", "00000000000000000000000000000000")
 	defer func() {
 		os.Unsetenv("CASTKEEPER_ENVNAME")
 		os.Unsetenv("CASTKEEPER_LOGLEVEL")
@@ -69,7 +69,7 @@ func TestLoadConfig_EnvVarsOnly(t *testing.T) {
 		os.Unsetenv("CASTKEEPER_OBJECTSTORAGE_S3BUCKET")
 		os.Unsetenv("CASTKEEPER_OBJECTSTORAGE_S3PREFIX")
 		os.Unsetenv("CASTKEEPER_ENCRYPTION_DRIVER")
-		os.Unsetenv("CASTKEEPER_ENCRYPTION_LOCALKEYENCRYPTIONKEY")
+		os.Unsetenv("CASTKEEPER_ENCRYPTION_SECRETKEY")
 	}()
 
 	cfg, _, err := config.LoadConfig("")
@@ -88,8 +88,8 @@ func TestLoadConfig_EnvVarsOnly(t *testing.T) {
 			S3Prefix: "some-prefix",
 		},
 		Encryption: config.EncryptionConfig{
-			Driver:                "local",
-			LocalKeyEncryptionKey: "00000000000000000000000000000000",
+			Driver:    "secretkey",
+			SecretKey: "00000000000000000000000000000000",
 		},
 	}, cfg)
 }
@@ -114,8 +114,8 @@ func TestLoadConfig_EnvVarOverride(t *testing.T) {
 			Driver: "local",
 		},
 		Encryption: config.EncryptionConfig{
-			Driver:                "local",
-			LocalKeyEncryptionKey: "11111111111111111111111111111111",
+			Driver:    "secretkey",
+			SecretKey: "11111111111111111111111111111111",
 		},
 	}, cfg)
 }
@@ -151,7 +151,7 @@ func TestLoadConfig_ValidationErr(t *testing.T) {
 		},
 		"invalidEncryptionKey": {
 			configFile:  "testdata/invalid-enc-key.yml",
-			expectedErr: "Key: 'Config.Encryption.LocalKeyEncryptionKey' Error:Field validation for 'LocalKeyEncryptionKey' failed on the 'gte' tag",
+			expectedErr: "Key: 'Config.Encryption.SecretKey' Error:Field validation for 'SecretKey' failed on the 'gte' tag",
 		},
 	}
 

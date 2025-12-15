@@ -10,5 +10,5 @@ ObjectStorage:
   Driver: local
 
 Encryption:
-  Driver: local
-  LocalKeyEncryptionKey: "tooshort"
+  Driver: secretkey
+  SecretKey: "tooshort"

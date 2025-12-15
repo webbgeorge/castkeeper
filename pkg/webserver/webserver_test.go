@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
 	"github.com/webbgeorge/castkeeper/pkg/config"
-	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 	"github.com/webbgeorge/castkeeper/pkg/downloadworker"
 	"github.com/webbgeorge/castkeeper/pkg/feedworker"
 	"github.com/webbgeorge/castkeeper/pkg/fixtures"
@@ -1132,8 +1131,8 @@ func setupServerForTest() (context.Context, *framework.Server, *gorm.DB, *os.Roo
 			Port: 8000,
 		},
 		Encryption: config.EncryptionConfig{
-			Driver:                config.EncryptionDriverLocal,
-			LocalKeyEncryptionKey: "00000000000000000000000000000000",
+			Driver:    config.EncryptionDriverSecretKey,
+			SecretKey: "00000000000000000000000000000000",
 		},
 	}
 	logger := slog.New(slog.DiscardHandler)
@@ -1148,9 +1147,7 @@ func setupServerForTest() (context.Context, *framework.Server, *gorm.DB, *os.Roo
 	itunesAPI := &itunes.ItunesAPI{
 		HTTPClient: fixtures.TestItunesHTTPClient,
 	}
-	encService := encryption.NewEncryptedValueService(
-		cfg.Encryption,
-	)
+	encService := fixtures.ConfigureEncryptedValueServiceForTest()
 
 	server := webserver.NewWebserver(cfg, logger, feedService, db, os, itunesAPI, encService)
 	ctx := context.Background()

@@ -12,5 +12,5 @@ ObjectStorage:
   Driver: local
 
 Encryption:
-  Driver: local
-  LocalKeyEncryptionKey: "00000000000000000000000000000000"
+  Driver: secretkey
+  SecretKey: "localDev00000000"
