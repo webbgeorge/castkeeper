@@ -8,10 +8,10 @@ import (
 )
 
 var VersionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Show the CastKeeper version",
-	Long:  "Show the CastKeeper version.",
-	Run:   run,
+	Use:     "version",
+	Short:   "Show the CastKeeper version",
+	GroupID: "commands",
+	Run:     run,
 }
 
 func run(cmd *cobra.Command, args []string) {
