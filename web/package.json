@@ -7,7 +7,7 @@
     "@tailwindcss/cli": "^4.1.18",
     "@tailwindcss/typography": "^0.5.19",
     "daisyui": "^5.5.14",
-    "esbuild": "^0.27.1",
+    "esbuild": "^0.27.2",
     "tailwindcss": "^4.1.7"
   },
   "dependencies": {
