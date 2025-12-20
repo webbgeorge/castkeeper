@@ -3,10 +3,12 @@ package listusers
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/spf13/cobra"
 	"github.com/webbgeorge/castkeeper/pkg/auth/users"
-	"github.com/webbgeorge/castkeeper/pkg/config/cli"
+	"github.com/webbgeorge/castkeeper/pkg/cli"
+	cliconfig "github.com/webbgeorge/castkeeper/pkg/config/cli"
 )
 
 var ListUsersCmd = &cobra.Command{
@@ -17,11 +19,11 @@ var ListUsersCmd = &cobra.Command{
 }
 
 func init() {
-	cli.InitGlobalFlags(ListUsersCmd)
+	cliconfig.InitGlobalFlags(ListUsersCmd)
 }
 
 func run(cmd *cobra.Command, args []string) {
-	ctx, _, db, err := cli.ConfigureCLI()
+	ctx, _, db, err := cliconfig.ConfigureCLI()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -35,7 +37,16 @@ func run(cmd *cobra.Command, args []string) {
 		fmt.Println("No users found")
 		return
 	}
-	for _, user := range userList {
-		fmt.Printf("%d\t%s (%s)\n", user.ID, user.Username, user.AccessLevel.Format())
+
+	rows := [][]string{
+		{"ID", "Username", "Access Level"},
 	}
+	for _, user := range userList {
+		rows = append(rows, []string{
+			strconv.FormatInt(int64(user.ID), 10),
+			user.Username,
+			user.AccessLevel.Format(),
+		})
+	}
+	cli.PrintTable(rows)
 }

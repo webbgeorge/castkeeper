@@ -1,11 +1,12 @@
 package listdatakeys
 
 import (
-	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/spf13/cobra"
-	"github.com/webbgeorge/castkeeper/pkg/config/cli"
+	"github.com/webbgeorge/castkeeper/pkg/cli"
+	cliconfig "github.com/webbgeorge/castkeeper/pkg/config/cli"
 	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 )
 
@@ -16,11 +17,11 @@ var ListDataKeysCmd = &cobra.Command{
 }
 
 func init() {
-	cli.InitGlobalFlags(ListDataKeysCmd)
+	cliconfig.InitGlobalFlags(ListDataKeysCmd)
 }
 
 func run(cmd *cobra.Command, args []string) {
-	_, cfg, _, err := cli.ConfigureCLI()
+	_, cfg, _, err := cliconfig.ConfigureCLI()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,9 +38,15 @@ func run(cmd *cobra.Command, args []string) {
 
 	// TODO get record count for each key
 
-	// TODO table display
-	fmt.Print("ID\tPrimary?\tStatus\n")
-	for _, key := range keys {
-		fmt.Printf("%d\t%t\t%s\n", key.ID, key.IsPrimary, key.Status)
+	rows := [][]string{
+		{"ID", "Is Primary?", "Status"},
 	}
+	for _, key := range keys {
+		rows = append(rows, []string{
+			strconv.FormatInt(int64(key.ID), 10),
+			strconv.FormatBool(key.IsPrimary),
+			key.Status,
+		})
+	}
+	cli.PrintTable(rows)
 }
