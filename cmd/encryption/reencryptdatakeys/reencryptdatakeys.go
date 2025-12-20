@@ -1,10 +1,12 @@
 package reencryptdatakeys
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/webbgeorge/castkeeper/pkg/config/cli"
+	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 )
 
 var ReEncryptDataKeysCmd = &cobra.Command{
@@ -19,10 +21,20 @@ func init() {
 }
 
 func run(cmd *cobra.Command, args []string) {
-	_, _, _, err := cli.ConfigureCLI()
+	_, cfg, _, err := cli.ConfigureCLI()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// TODO
+	dekService, err := encryption.NewDEKService(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = dekService.ReEncryptKeys(newCfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("data keys successfully rencrypted with new config")
 }

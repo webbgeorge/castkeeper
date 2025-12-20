@@ -1,6 +1,7 @@
 package reencryptdata
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
@@ -24,4 +25,5 @@ func run(cmd *cobra.Command, args []string) {
 	}
 
 	// TODO
+	fmt.Println("NOT IMPLEMENTED")
 }
