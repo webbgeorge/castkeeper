@@ -1,10 +1,12 @@
 package adddatakey
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/spf13/cobra"
 	"github.com/webbgeorge/castkeeper/pkg/config/cli"
+	"github.com/webbgeorge/castkeeper/pkg/database/encryption"
 )
 
 var AddDataKeyCmd = &cobra.Command{
@@ -19,10 +21,20 @@ func init() {
 }
 
 func run(cmd *cobra.Command, args []string) {
-	_, _, _, err := cli.ConfigureCLI()
+	_, cfg, _, err := cli.ConfigureCLI()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	// TODO
+	dekService, err := encryption.NewDEKService(cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	keyID, err := dekService.AddKey()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("New KeyID: %d\n", keyID)
 }
