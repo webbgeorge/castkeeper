@@ -21,10 +21,10 @@ import (
 )
 
 var ServeCmd = &cobra.Command{
-	Use:   "serve",
-	Short: "Start the CastKeeper server",
-	Long:  "TODO",
-	Run:   run,
+	Use:     "serve",
+	Short:   "Start the CastKeeper server",
+	GroupID: "commands",
+	Run:     run,
 }
 
 var cfgFile string
